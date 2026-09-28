@@ -1,0 +1,16 @@
+# Dependencies
+node_modules/
+
+# Production build
+dist/
+
+# Astro cache
+.astro/
+
+# Environment variables
+.env
+.env.*
+!.env.example
+
+# Agent Teams Lite
+.atl/

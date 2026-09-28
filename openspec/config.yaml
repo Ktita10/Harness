@@ -1,0 +1,64 @@
+schema: spec-driven
+
+context: |
+  Tech stack: Astro (static output), Tailwind CSS, GSAP (ScrollTrigger, Flip), Lenis, Playwright (planned).
+  Architecture: Static Astro site, content collections (src/content/), single unified service template.
+  Style: Neo-brutalism / anti-design, strict color tokens (tokens.css), hard offset shadows, no gradients or blurs.
+  Conventions: Documented in AGENTS.md and SPEC.md; single H1, strict WCAG AA, WhatsApp as primary CTA channel.
+  Testing: Playwright planned (npm run test); currently greenfield repository without package.json.
+
+testing:
+  strict_tdd: false
+  detected: "2026-09-28"
+  runner:
+    workspace: null
+    command: null
+    framework: null
+  layers:
+    unit:
+      available: false
+      tool: null
+    integration:
+      available: false
+      tool: null
+    e2e:
+      available: false
+      tool: "Playwright (planned per AGENTS.md)"
+  coverage:
+    available: false
+    command: null
+  quality:
+    linter:
+      available: false
+      command: null
+    type_checker:
+      available: false
+      command: null
+    formatter:
+      available: false
+      command: null
+
+rules:
+  proposal:
+    - Include rollback plan for risky changes
+    - Validate alignment with AGENTS.md and SPEC.md specifications
+  specs:
+    - Use Given/When/Then for scenarios
+    - Use RFC 2119 keywords (MUST, SHALL, SHOULD, MAY)
+  design:
+    - Include sequence or component diagrams for complex flows
+    - Document architecture decisions with rationale conforming to AGENTS.md design tokens
+  tasks:
+    - Group by phase, use hierarchical numbering
+    - Keep tasks completable in one session
+  apply:
+    - Follow existing code patterns and AGENTS.md rules
+    - Maintain neo-brutalism design tokens strictly (no gradients, blur, or soft shadows)
+    tdd: false
+    test_command: ""
+  verify:
+    test_command: ""
+    build_command: ""
+    coverage_threshold: 0
+  archive:
+    - Warn before merging destructive deltas
