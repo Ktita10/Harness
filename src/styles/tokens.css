@@ -1,0 +1,19 @@
+:root {
+  /* Palette - Sole source of color truth */
+  --black: #0A0A0A;
+  --white: #FFFFFF;
+  --gray-100: #EDEDED;
+  --gray-300: #BDBDBD;
+  --gray-500: #8A8A8A;
+  --gray-800: #2B2B2B;
+  --orange: #FF5A00; /* único color de acento */
+
+  /* Neo-brutalist structural tokens */
+  --border: 3px solid var(--black);
+  --shadow-hard: 6px 6px 0 var(--black);
+  --shadow-hard-hover: 2px 2px 0 var(--black);
+
+  /* Typography */
+  --font-display: 'Bricolage Grotesque', system-ui, sans-serif;
+  --font-body: system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+}

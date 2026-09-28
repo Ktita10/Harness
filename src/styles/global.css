@@ -1,0 +1,93 @@
+@import "tailwindcss";
+@import "@fontsource/bricolage-grotesque/400.css";
+@import "@fontsource/bricolage-grotesque/600.css";
+@import "@fontsource/bricolage-grotesque/700.css";
+@import "@fontsource/bricolage-grotesque/800.css";
+@import "./tokens.css";
+
+/* Base Resets & Defaults */
+html {
+  font-family: var(--font-body);
+  background-color: var(--white);
+  color: var(--black);
+}
+
+body {
+  margin: 0;
+  padding: 0;
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+}
+
+/* Accessible focus visible with high contrast */
+:focus-visible {
+  outline: 3px solid var(--orange);
+  outline-offset: 3px;
+}
+
+/* Skip link for keyboard accessibility */
+.skip-link {
+  position: absolute;
+  top: -1000px;
+  left: 1rem;
+  z-index: 9999;
+  background-color: var(--orange);
+  color: var(--black);
+  padding: 0.75rem 1.25rem;
+  font-weight: 700;
+  text-decoration: none;
+  border: var(--border);
+  box-shadow: var(--shadow-hard);
+  transition: top 0.1s ease;
+}
+
+.skip-link:focus {
+  top: 1rem;
+}
+
+/* Neo-brutalist Utility Classes */
+.font-display {
+  font-family: var(--font-display);
+}
+
+.border-brutal {
+  border: var(--border);
+}
+
+.shadow-brutal {
+  box-shadow: var(--shadow-hard);
+}
+
+.btn-brutal {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: 700;
+  border: var(--border);
+  box-shadow: var(--shadow-hard);
+  transition: transform 0.1s ease, box-shadow 0.1s ease;
+  cursor: pointer;
+}
+
+.btn-brutal:hover {
+  transform: translate(4px, 4px);
+  box-shadow: var(--shadow-hard-hover);
+}
+
+.btn-brutal:active {
+  transform: translate(6px, 6px);
+  box-shadow: none;
+}
+
+/* Respect prefers-reduced-motion */
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
+}

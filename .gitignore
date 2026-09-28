@@ -12,5 +12,9 @@ dist/
 .env.*
 !.env.example
 
+# Test outputs
+test-results/
+playwright-report/
+
 # Agent Teams Lite
 .atl/

@@ -11,29 +11,29 @@ testing:
   strict_tdd: false
   detected: "2026-09-28"
   runner:
-    workspace: null
-    command: null
-    framework: null
+    workspace: "npm run test"
+    command: "npx playwright test"
+    framework: "playwright"
   layers:
     unit:
       available: false
       tool: null
     integration:
-      available: false
-      tool: null
+      available: true
+      tool: "playwright"
     e2e:
-      available: false
-      tool: "Playwright (planned per AGENTS.md)"
+      available: true
+      tool: "playwright"
   coverage:
     available: false
     command: null
   quality:
     linter:
-      available: false
-      command: null
+      available: true
+      command: "npm run lint"
     type_checker:
-      available: false
-      command: null
+      available: true
+      command: "npm run check"
     formatter:
       available: false
       command: null
@@ -55,10 +55,10 @@ rules:
     - Follow existing code patterns and AGENTS.md rules
     - Maintain neo-brutalism design tokens strictly (no gradients, blur, or soft shadows)
     tdd: false
-    test_command: ""
+    test_command: "npm run test"
   verify:
-    test_command: ""
-    build_command: ""
+    test_command: "npm run test"
+    build_command: "npm run build"
     coverage_threshold: 0
   archive:
     - Warn before merging destructive deltas
