@@ -1,0 +1,144 @@
+---
+import Button from '../ui/Button.astro';
+
+const navLinks = [
+  { href: '#servicios', label: 'Servicios' },
+  { href: '#proceso', label: 'Cómo trabajamos' },
+  { href: '#confianza', label: 'Confianza' },
+  { href: '#faq', label: 'FAQ' },
+];
+---
+
+<header role="banner" class="fixed top-0 left-0 right-0 z-40 bg-white border-b-3 border-black h-20">
+  <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-20 flex items-center justify-between">
+    <!-- Brand Logo -->
+    <a
+      href="/"
+      class="font-display font-extrabold text-xl sm:text-2xl tracking-tighter text-black uppercase flex items-center gap-2 group"
+    >
+      <span class="w-4 h-4 bg-orange border-2 border-black inline-block group-hover:rotate-45 transition-transform"></span>
+      <span>HARNESS STUDIO</span>
+    </a>
+
+    <!-- Desktop Navigation Links -->
+    <nav class="hidden md:flex items-center gap-8 font-bold text-base" aria-label="Navegación principal">
+      {
+        navLinks.map((link) => (
+          <a
+            href={link.href}
+            class="text-black hover:text-orange transition-colors uppercase tracking-wider text-sm"
+          >
+            {link.label}
+          </a>
+        ))
+      }
+    </nav>
+
+    <!-- Desktop WhatsApp CTA -->
+    <div class="hidden md:block">
+      <Button
+        href="https://wa.me/?text=Hola%20Harness%20Studio%2C%20quiero%20cotizar%20un%20proyecto"
+        target="_blank"
+        rel="noopener noreferrer"
+        variant="primary"
+        size="sm"
+      >
+        Contactar
+      </Button>
+    </div>
+
+    <!-- Mobile Menu Toggle Button -->
+    <button
+      id="mobile-menu-btn"
+      type="button"
+      class="md:hidden p-2 border-2 border-black bg-white shadow-brutal hover:bg-orange transition-colors"
+      aria-expanded="false"
+      aria-controls="mobile-menu-drawer"
+      aria-label="Abrir menú de navegación"
+    >
+      <svg
+        id="menu-open-icon"
+        xmlns="http://www.w3.org/2000/svg"
+        fill="none"
+        viewBox="0 0 24 24"
+        stroke-width="2.5"
+        stroke="currentColor"
+        class="w-6 h-6"
+      >
+        <path stroke-linecap="square" stroke-linejoin="miter" d="M3.75 6.75h16.5M3.75 12h16.5m-16.5 5.25h16.5" />
+      </svg>
+      <svg
+        id="menu-close-icon"
+        xmlns="http://www.w3.org/2000/svg"
+        fill="none"
+        viewBox="0 0 24 24"
+        stroke-width="2.5"
+        stroke="currentColor"
+        class="w-6 h-6 hidden"
+      >
+        <path stroke-linecap="square" stroke-linejoin="miter" d="M6 18L18 6M6 6l12 12" />
+      </svg>
+    </button>
+  </div>
+
+  <!-- Mobile Menu Overlay -->
+  <div
+    id="mobile-menu-drawer"
+    class="md:hidden hidden border-b-3 border-black bg-white px-6 py-8 flex-col gap-6 shadow-brutal"
+    aria-hidden="true"
+  >
+    <nav class="flex flex-col gap-5 text-xl font-bold uppercase tracking-wider" aria-label="Navegación móvil">
+      {
+        navLinks.map((link) => (
+          <a
+            href={link.href}
+            class="mobile-nav-link text-black hover:text-orange py-2 border-b-2 border-gray-100"
+          >
+            {link.label}
+          </a>
+        ))
+      }
+    </nav>
+    <div class="pt-4">
+      <Button
+        href="https://wa.me/?text=Hola%20Harness%20Studio%2C%20quiero%20cotizar%20un%20proyecto"
+        target="_blank"
+        rel="noopener noreferrer"
+        variant="primary"
+        size="md"
+        class="w-full text-center"
+      >
+        Hablar por WhatsApp
+      </Button>
+    </div>
+  </div>
+</header>
+
+<script>
+  const menuBtn = document.getElementById('mobile-menu-btn');
+  const drawer = document.getElementById('mobile-menu-drawer');
+  const openIcon = document.getElementById('menu-open-icon');
+  const closeIcon = document.getElementById('menu-close-icon');
+  const navLinks = document.querySelectorAll('.mobile-nav-link');
+
+  function toggleMenu() {
+    const isExpanded = menuBtn?.getAttribute('aria-expanded') === 'true';
+    menuBtn?.setAttribute('aria-expanded', String(!isExpanded));
+    menuBtn?.setAttribute('aria-label', isExpanded ? 'Abrir menú de navegación' : 'Cerrar menú de navegación');
+    drawer?.classList.toggle('hidden');
+    drawer?.classList.toggle('flex');
+    drawer?.setAttribute('aria-hidden', String(isExpanded));
+    openIcon?.classList.toggle('hidden');
+    closeIcon?.classList.toggle('hidden');
+  }
+
+  menuBtn?.addEventListener('click', toggleMenu);
+
+  navLinks.forEach((link) => {
+    link.addEventListener('click', () => {
+      if (!drawer?.classList.contains('hidden')) {
+        toggleMenu();
+      }
+    });
+  });
+</script>

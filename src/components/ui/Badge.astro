@@ -1,0 +1,36 @@
+---
+interface Props {
+  variant?: 'orange' | 'black' | 'gray' | 'white';
+  rotate?: -3 | -2 | -1 | 0 | 1 | 2 | 3;
+  class?: string;
+}
+
+const {
+  variant = 'orange',
+  rotate = 0,
+  class: className = '',
+} = Astro.props;
+
+const variantClasses = {
+  orange: 'bg-orange text-black border-black',
+  black: 'bg-black text-white border-black',
+  gray: 'bg-gray-100 text-black border-black',
+  white: 'bg-white text-black border-black',
+};
+
+const rotateClasses = {
+  [-3]: '-rotate-3',
+  [-2]: '-rotate-2',
+  [-1]: '-rotate-1',
+  [0]: 'rotate-0',
+  [1]: 'rotate-1',
+  [2]: 'rotate-2',
+  [3]: 'rotate-3',
+};
+---
+
+<span
+  class={`inline-block px-3 py-1 text-xs sm:text-sm font-extrabold uppercase tracking-widest border-2 border-brutal shadow-sm ${variantClasses[variant]} ${rotateClasses[rotate]} ${className}`}
+>
+  <slot />
+</span>

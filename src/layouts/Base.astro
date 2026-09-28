@@ -1,11 +1,13 @@
 ---
 import '../styles/global.css';
+import JsonLd from '../components/seo/JsonLd.astro';
 
 interface Props {
   title: string;
   description: string;
   ogImage?: string;
   canonical?: string;
+  faqs?: { pregunta: string; respuesta: string }[];
 }
 
 const {
@@ -13,6 +15,7 @@ const {
   description,
   ogImage = '/og-image.png',
   canonical,
+  faqs = [],
 } = Astro.props;
 
 const siteUrl = Astro.site ? Astro.site.href : 'https://harness.studio';
@@ -45,22 +48,21 @@ const canonicalURL = canonical || new URL(Astro.url.pathname, siteUrl).href;
     <meta property="twitter:title" content={title} />
     <meta property="twitter:description" content={description} />
     <meta property="twitter:image" content={new URL(ogImage, siteUrl).href} />
+
+    <!-- Structured Data -->
+    <JsonLd type="All" faqs={faqs} />
   </head>
   <body class="min-h-screen flex flex-col bg-white text-black selection:bg-orange selection:text-black">
     <a href="#main-content" class="skip-link">
       Saltar al contenido principal
     </a>
 
-    <header role="banner">
-      <slot name="header" />
-    </header>
+    <slot name="header" />
 
     <main id="main-content" role="main" class="flex-1 w-full">
       <slot />
     </main>
 
-    <footer role="contentinfo">
-      <slot name="footer" />
-    </footer>
+    <slot name="footer" />
   </body>
 </html>

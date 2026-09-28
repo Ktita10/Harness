@@ -1,35 +1,47 @@
 ---
+import { getCollection } from 'astro:content';
 import Base from '../layouts/Base.astro';
+import Nav from '../components/sections/Nav.astro';
+import Hero from '../components/sections/Hero.astro';
+import ServicesSection from '../components/sections/ServicesSection.astro';
+import Process from '../components/sections/Process.astro';
+import Trust from '../components/sections/Trust.astro';
+import FAQSection from '../components/sections/FAQSection.astro';
+import CTASection from '../components/sections/CTASection.astro';
+import Footer from '../components/sections/Footer.astro';
+import WhatsAppFloat from '../components/ui/WhatsAppFloat.astro';
+import Marquee from '../components/ui/Marquee.astro';
+
+const allFaqs = await getCollection('faqs');
+const sortedFaqs = allFaqs.sort((a, b) => (a.data.orden ?? 0) - (b.data.orden ?? 0));
+const faqData = sortedFaqs.map((f) => ({
+  pregunta: f.data.pregunta,
+  respuesta: f.data.respuesta,
+}));
 ---
 
 <Base
-  title="HARNESS STUDIO | Desarrollo Web y Software a Medida"
-  description="Creamos webs audaces, landing pages de alta conversión y software a medida para pymes y emprendedores."
+  title="HARNESS STUDIO | Desarrollo Web, Tiendas y Software a Medida"
+  description="Desarrollo de sitios web ultrarrápidos, personalización de Tienda Nube, tiendas online y software a medida para pymes y emprendedores."
+  faqs={faqData}
 >
-  <div class="min-h-screen flex flex-col justify-center items-center px-4 py-12 bg-white">
-    <div class="max-w-2xl w-full border-brutal shadow-brutal p-8 bg-gray-100 flex flex-col gap-6">
-      <div class="inline-block self-start px-3 py-1 bg-black text-white font-bold text-sm tracking-wider uppercase">
-        Fase 0 · Fundaciones
-      </div>
-      
-      <h1 class="font-display text-4xl sm:text-5xl md:text-6xl font-extrabold tracking-tight text-black leading-none uppercase">
-        HARNESS STUDIO
-      </h1>
-      
-      <p class="text-lg text-gray-800 font-medium leading-relaxed">
-        Web y software a medida para pymes y comercios. Base técnica inicial activa: Astro 5, Tailwind CSS, Content Collections y sistema de diseño neo-brutalista.
-      </p>
+  <Nav slot="header" />
 
-      <div class="flex flex-wrap gap-4 pt-2">
-        <a
-          href="https://wa.me/?text=Hola%20Harness%20Studio"
-          target="_blank"
-          rel="noopener noreferrer"
-          class="btn-brutal px-6 py-3 bg-orange text-black font-bold uppercase tracking-wider"
-        >
-          Contactar por WhatsApp
-        </a>
-      </div>
-    </div>
-  </div>
+  <Hero />
+
+  <Marquee text="LIGHTHOUSE 95+ ✦ DESARROLLO A MEDIDA ✦ CERO COMISIONES ✦ ASTRO Y TAILWIND ✦ CÓDIGO 100% TUYO" />
+
+  <ServicesSection />
+
+  <Process />
+
+  <Trust />
+
+  <FAQSection />
+
+  <CTASection />
+
+  <Footer slot="footer" />
+
+  <WhatsAppFloat />
 </Base>

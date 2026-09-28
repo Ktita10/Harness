@@ -1,0 +1,99 @@
+---
+import { getCollection } from 'astro:content';
+import Badge from '../ui/Badge.astro';
+import Button from '../ui/Button.astro';
+
+const services = await getCollection('services');
+
+// Defined sorting order matching SPEC.md
+const order = ['landing-pages', 'tiendanube', 'tienda-online', 'software-a-medida'];
+const sortedServices = services.sort((a, b) => {
+  const slugA = (a.data.slug || a.id).replace(/\.md$/, '');
+  const slugB = (b.data.slug || b.id).replace(/\.md$/, '');
+  const indexA = order.indexOf(slugA);
+  const indexB = order.indexOf(slugB);
+  return (indexA === -1 ? 99 : indexA) - (indexB === -1 ? 99 : indexB);
+});
+---
+
+<section
+  id="servicios"
+  aria-labelledby="services-title"
+  class="py-20 sm:py-28 px-4 sm:px-6 lg:px-8 max-w-7xl mx-auto border-t-3 border-black"
+>
+  <div class="flex flex-col md:flex-row md:items-end justify-between gap-6 mb-12 sm:mb-16">
+    <div>
+      <Badge variant="black" class="mb-3">Soluciones</Badge>
+      <h2
+        id="services-title"
+        class="font-display text-3xl sm:text-5xl lg:text-6xl font-black uppercase text-black leading-tight tracking-tight"
+      >
+        Servicios que ofrecemos
+      </h2>
+    </div>
+    <p class="text-base sm:text-lg text-gray-800 font-medium max-w-md">
+      Elegí la solución exacta para la etapa de tu negocio. Sin presupuestos opacos ni tecnología innecesaria.
+    </p>
+  </div>
+
+  <div class="grid grid-cols-1 md:grid-cols-2 gap-8">
+    {
+      sortedServices.map((service, index) => {
+        const slug = (service.data.slug || service.id).replace(/\.md$/, '');
+        const mainPlan = service.data.planes[0];
+        return (
+          <article class="border-brutal shadow-brutal bg-white p-6 sm:p-8 flex flex-col justify-between hover:bg-gray-100 transition-colors group">
+            <div>
+              <div class="flex justify-between items-start gap-4 mb-4">
+                <span class="font-display text-4xl sm:text-5xl font-black text-orange">
+                  0{index + 1}
+                </span>
+                <Badge variant="gray">
+                  {mainPlan?.plazo ?? 'A convenir'}
+                </Badge>
+              </div>
+
+              <h3 class="font-display text-2xl sm:text-3xl font-extrabold uppercase text-black mb-3 group-hover:text-orange transition-colors">
+                {service.data.nombre}
+              </h3>
+
+              <p class="text-gray-800 text-base sm:text-lg font-medium mb-6 leading-relaxed">
+                {service.data.bajada}
+              </p>
+
+              <div class="border-t-2 border-black/10 pt-4 mb-6">
+                <span class="text-xs uppercase font-bold text-gray-500 tracking-wider block mb-2">
+                  Incluye principalmente:
+                </span>
+                <ul class="space-y-1.5 text-sm sm:text-base text-gray-800 font-medium">
+                  {service.data.incluye.map((item) => (
+                    <li class="flex items-center gap-2">
+                      <span class="text-orange font-bold">✔</span>
+                      <span>{item.titulo}</span>
+                    </li>
+                  ))}
+                </ul>
+              </div>
+            </div>
+
+            <div class="pt-4 border-t-2 border-black flex items-center justify-between gap-4">
+              <div>
+                <span class="block text-xs uppercase font-bold text-gray-500">Inversión</span>
+                <span class="font-display font-extrabold text-xl text-black">
+                  {mainPlan?.precio ?? 'Consultar'}
+                </span>
+              </div>
+              <Button
+                href={`/servicios/${slug}`}
+                variant="primary"
+                size="sm"
+              >
+                Ver Servicio →
+              </Button>
+            </div>
+          </article>
+        );
+      })
+    }
+  </div>
+</section>

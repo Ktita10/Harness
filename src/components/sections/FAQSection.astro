@@ -1,0 +1,58 @@
+---
+import { getCollection } from 'astro:content';
+import Badge from '../ui/Badge.astro';
+import Accordion from '../ui/Accordion.astro';
+
+const allFaqs = await getCollection('faqs');
+const sortedFaqs = allFaqs.sort((a, b) => (a.data.orden ?? 0) - (b.data.orden ?? 0));
+---
+
+<section
+  id="faq"
+  aria-labelledby="faq-title"
+  class="py-20 sm:py-28 px-4 sm:px-6 lg:px-8 max-w-5xl mx-auto border-t-3 border-black bg-white"
+>
+  <div class="text-center mb-12 sm:mb-16">
+    <Badge variant="black" class="mb-3">Respuestas directas</Badge>
+    <h2
+      id="faq-title"
+      class="font-display text-3xl sm:text-5xl lg:text-6xl font-black uppercase text-black leading-tight tracking-tight mb-4"
+    >
+      Preguntas frecuentes
+    </h2>
+    <p class="text-base sm:text-lg text-gray-800 font-medium max-w-xl mx-auto">
+      Todo lo que necesitás saber sobre plazos, pagos, tecnología y formas de trabajo antes de arrancar.
+    </p>
+  </div>
+
+  <div class="space-y-4">
+    {
+      sortedFaqs.map((faq, index) => (
+        <Accordion
+          question={faq.data.pregunta}
+          answer={faq.data.respuesta}
+          open={index === 0}
+        />
+      ))
+    }
+  </div>
+
+  <div class="mt-12 text-center p-8 border-brutal bg-gray-100 flex flex-col sm:flex-row items-center justify-between gap-4">
+    <div class="text-left">
+      <h3 class="font-display font-extrabold text-xl uppercase text-black">
+        ¿Tenés otra consulta puntual?
+      </h3>
+      <p class="text-sm text-gray-800 font-medium">
+        Escribinos directamente y te respondemos en minutos.
+      </p>
+    </div>
+    <a
+      href="https://wa.me/?text=Hola%20Harness%20Studio%2C%20tengo%20una%20consulta%20adicional"
+      target="_blank"
+      rel="noopener noreferrer"
+      class="btn-brutal px-6 py-3 bg-orange text-black font-bold uppercase text-sm tracking-wider shrink-0"
+    >
+      Consultar por WhatsApp
+    </a>
+  </div>
+</section>

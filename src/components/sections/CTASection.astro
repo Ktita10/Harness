@@ -1,0 +1,44 @@
+---
+import Button from '../ui/Button.astro';
+import Badge from '../ui/Badge.astro';
+---
+
+<section
+  id="contacto"
+  aria-labelledby="cta-title"
+  class="py-20 sm:py-28 px-4 sm:px-6 lg:px-8 border-t-3 border-black bg-orange text-black"
+>
+  <div class="max-w-5xl mx-auto border-3 border-black bg-white p-8 sm:p-14 shadow-brutal flex flex-col items-center text-center gap-6">
+    <Badge variant="black" rotate={-2}>
+      Lanzá tu proyecto
+    </Badge>
+
+    <h2
+      id="cta-title"
+      class="font-display text-4xl sm:text-6xl md:text-7xl font-black uppercase text-black leading-tight tracking-tight max-w-3xl"
+    >
+      ¿Listo para construir una web que realmente venda?
+    </h2>
+
+    <p class="text-lg sm:text-2xl text-gray-800 font-medium max-w-2xl leading-relaxed">
+      Dejanos tu mensaje por WhatsApp y contanos qué necesitás. Te respondemos con un presupuesto exacto en el día.
+    </p>
+
+    <div class="pt-4 flex flex-col sm:flex-row gap-4 items-center">
+      <Button
+        href="https://wa.me/?text=Hola%20Harness%20Studio%2C%20quiero%20cotizar%20un%20proyecto"
+        target="_blank"
+        rel="noopener noreferrer"
+        variant="primary"
+        size="lg"
+        class="text-lg sm:text-xl px-10 py-5"
+      >
+        Escribir por WhatsApp ahora ➔
+      </Button>
+    </div>
+
+    <span class="text-xs uppercase font-extrabold tracking-widest text-gray-500 pt-2">
+      Respuesta garantizada en menos de 2 horas en horario laboral
+    </span>
+  </div>
+</section>

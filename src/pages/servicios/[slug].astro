@@ -1,0 +1,138 @@
+---
+import { getCollection } from 'astro:content';
+import Base from '../../layouts/Base.astro';
+import Nav from '../../components/sections/Nav.astro';
+import Footer from '../../components/sections/Footer.astro';
+import WhatsAppFloat from '../../components/ui/WhatsAppFloat.astro';
+import Button from '../../components/ui/Button.astro';
+import Badge from '../../components/ui/Badge.astro';
+import Accordion from '../../components/ui/Accordion.astro';
+import Trust from '../../components/sections/Trust.astro';
+
+export async function getStaticPaths() {
+  const services = await getCollection('services');
+  return services.map((entry) => ({
+    params: { slug: (entry.data.slug || entry.id).replace(/\.md$/, '') },
+    props: { entry },
+  }));
+}
+
+const { entry } = Astro.props;
+const { data } = entry;
+const waUrl = `https://wa.me/?text=${encodeURIComponent(data.whatsappMensaje)}`;
+---
+
+<Base
+  title={data.metaTitle}
+  description={data.metaDescription}
+>
+  <Nav slot="header" />
+
+  <!-- Hero del servicio -->
+  <section class="pt-32 pb-20 sm:pt-40 sm:pb-24 px-4 sm:px-6 lg:px-8 max-w-7xl mx-auto">
+    <div class="max-w-4xl flex flex-col gap-6">
+      <div class="self-start">
+        <Badge variant="orange">{data.nombre}</Badge>
+      </div>
+      <h1 class="font-display text-4xl sm:text-6xl lg:text-7xl font-black uppercase text-black leading-tight tracking-tight">
+        {data.h1}
+      </h1>
+      <p class="text-xl sm:text-2xl text-gray-800 font-medium leading-relaxed">
+        {data.bajada}
+      </p>
+      <div class="pt-4 flex flex-wrap gap-4">
+        <Button href={waUrl} target="_blank" rel="noopener noreferrer" variant="primary" size="lg">
+          Consultar por WhatsApp
+        </Button>
+        <Button href="#precios" variant="secondary" size="lg">
+          Ver Planes ↓
+        </Button>
+      </div>
+    </div>
+  </section>
+
+  <!-- Qué incluye -->
+  <section class="py-20 px-4 sm:px-6 lg:px-8 max-w-7xl mx-auto border-t-3 border-black bg-gray-100">
+    <h2 class="font-display text-3xl sm:text-5xl font-black uppercase text-black mb-10">
+      Qué incluye el servicio
+    </h2>
+    <div class="grid grid-cols-1 md:grid-cols-2 gap-8">
+      {
+        data.incluye.map((item) => (
+          <div class="border-brutal shadow-brutal p-6 sm:p-8 bg-white">
+            <h3 class="font-display text-xl sm:text-2xl font-bold uppercase text-black mb-3 flex items-center gap-2">
+              <span class="text-orange">✔</span> {item.titulo}
+            </h3>
+            <p class="text-gray-800 text-base sm:text-lg font-medium leading-relaxed">
+              {item.descripcion}
+            </p>
+          </div>
+        ))
+      }
+    </div>
+  </section>
+
+  <!-- Sección de Precios -->
+  <section id="precios" class="py-20 px-4 sm:px-6 lg:px-8 max-w-7xl mx-auto border-t-3 border-black bg-white">
+    <h2 class="font-display text-3xl sm:text-5xl font-black uppercase text-black mb-10">
+      Planes y estimaciones
+    </h2>
+    <div class="grid grid-cols-1 md:grid-cols-3 gap-8">
+      {
+        data.planes.map((plan) => (
+          <div class={`border-brutal shadow-brutal p-8 flex flex-col justify-between ${plan.destacado ? 'bg-orange/10 border-orange' : 'bg-white'}`}>
+            <div>
+              <span class="text-xs uppercase font-extrabold text-orange tracking-widest block mb-2">
+                {plan.plazo}
+              </span>
+              <h3 class="font-display text-2xl font-black uppercase text-black mb-4">
+                {plan.nombre}
+              </h3>
+              <div class="text-3xl font-display font-black text-black mb-6">
+                {plan.precio}
+              </div>
+              <ul class="space-y-2.5 text-sm sm:text-base text-gray-800 font-medium mb-8">
+                {plan.incluye.map((feat) => (
+                  <li class="flex items-center gap-2">
+                    <span class="text-orange font-bold">▪</span> {feat}
+                  </li>
+                ))}
+              </ul>
+            </div>
+            <Button
+              href={waUrl}
+              target="_blank"
+              rel="noopener noreferrer"
+              variant={plan.destacado ? 'primary' : 'secondary'}
+              size="md"
+            >
+              Elegir este plan
+            </Button>
+          </div>
+        ))
+      }
+    </div>
+  </section>
+
+  <!-- Confianza -->
+  <Trust />
+
+  <!-- FAQ específica del servicio -->
+  {
+    data.faqs && data.faqs.length > 0 && (
+      <section class="py-20 px-4 sm:px-6 lg:px-8 max-w-5xl mx-auto border-t-3 border-black bg-white">
+        <h2 class="font-display text-3xl sm:text-5xl font-black uppercase text-black mb-10 text-center">
+          Preguntas sobre este servicio
+        </h2>
+        <div class="space-y-4">
+          {data.faqs.map((f, i) => (
+            <Accordion question={f.pregunta} answer={f.respuesta} open={i === 0} />
+          ))}
+        </div>
+      </section>
+    )
+  }
+
+  <Footer slot="footer" />
+  <WhatsAppFloat message={data.whatsappMensaje} />
+</Base>

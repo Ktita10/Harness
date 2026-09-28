@@ -1,0 +1,70 @@
+---
+import Badge from '../ui/Badge.astro';
+
+const steps = [
+  {
+    number: '01',
+    title: 'Brief inicial',
+    description: 'Conversamos por WhatsApp o videollamada para entender tu negocio, propuesta de valor y requerimientos puntuales.',
+  },
+  {
+    number: '02',
+    title: 'Propuesta clara',
+    description: 'Te enviamos un alcance cerrado con plazos exactos, precio fijo y los entregables detallados, sin sorpresas.',
+  },
+  {
+    number: '03',
+    title: 'Diseño enfocado',
+    description: 'Creamos una interfaz audaz adaptada a tu público objetivo, optimizada para convertir visitas en consultas.',
+  },
+  {
+    number: '04',
+    title: 'Desarrollo veloz',
+    description: 'Construimos el sitio con Astro y código limpio, alcanzando 95+ en Lighthouse y tiempos de carga instantáneos.',
+  },
+  {
+    number: '05',
+    title: 'Lanzamiento & Soporte',
+    description: 'Conectamos tu dominio, publicamos en producción y te damos 30 días de garantía con soporte técnico directo.',
+  },
+];
+---
+
+<section
+  id="proceso"
+  aria-labelledby="process-title"
+  class="py-20 sm:py-28 px-4 sm:px-6 lg:px-8 max-w-7xl mx-auto border-t-3 border-black bg-gray-100"
+>
+  <div class="mb-12 sm:mb-16">
+    <Badge variant="orange" class="mb-3">Metodología</Badge>
+    <h2
+      id="process-title"
+      class="font-display text-3xl sm:text-5xl lg:text-6xl font-black uppercase text-black leading-tight tracking-tight mb-4"
+    >
+      Cómo trabajamos
+    </h2>
+    <p class="text-base sm:text-lg text-gray-800 font-medium max-w-2xl">
+      Un proceso transparente de 5 pasos diseñado para entregarte una herramienta comercial funcional sin demoras burocráticas.
+    </p>
+  </div>
+
+  <div class="grid grid-cols-1 md:grid-cols-3 lg:grid-cols-5 gap-6">
+    {
+      steps.map((step) => (
+        <div class="border-brutal shadow-brutal bg-white p-6 flex flex-col justify-between hover:-translate-y-1 transition-transform">
+          <div>
+            <span class="font-display text-4xl sm:text-5xl font-black text-orange block mb-3">
+              {step.number}
+            </span>
+            <h3 class="font-display text-xl sm:text-2xl font-bold uppercase text-black mb-3">
+              {step.title}
+            </h3>
+            <p class="text-sm sm:text-base text-gray-800 font-medium leading-relaxed">
+              {step.description}
+            </p>
+          </div>
+        </div>
+      ))
+    }
+  </div>
+</section>

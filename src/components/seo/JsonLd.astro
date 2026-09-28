@@ -1,0 +1,54 @@
+---
+interface FAQItem {
+  pregunta: string;
+  respuesta: string;
+}
+
+interface Props {
+  type?: 'Organization' | 'FAQPage' | 'All';
+  faqs?: FAQItem[];
+}
+
+const { type = 'All', faqs = [] } = Astro.props;
+
+const siteUrl = Astro.site ? Astro.site.href : 'https://harness.studio';
+
+const organizationSchema = {
+  '@context': 'https://schema.org',
+  '@type': 'Organization',
+  name: 'HARNESS STUDIO',
+  url: siteUrl,
+  logo: `${siteUrl}favicon.svg`,
+  description: 'Startup de desarrollo web, landing pages y software a medida para pymes.',
+  contactPoint: {
+    '@type': 'ContactPoint',
+    contactType: 'customer service',
+    availableLanguage: ['Spanish', 'English'],
+  },
+};
+
+const faqSchema = faqs.length > 0 ? {
+  '@context': 'https://schema.org',
+  '@type': 'FAQPage',
+  mainEntity: faqs.map((faq) => ({
+    '@type': 'Question',
+    name: faq.pregunta,
+    acceptedAnswer: {
+      '@type': 'Answer',
+      text: faq.respuesta,
+    },
+  })),
+} : null;
+---
+
+{
+  (type === 'Organization' || type === 'All') && (
+    <script type="application/ld+json" set:html={JSON.stringify(organizationSchema)} />
+  )
+}
+
+{
+  (type === 'FAQPage' || type === 'All') && faqSchema && (
+    <script type="application/ld+json" set:html={JSON.stringify(faqSchema)} />
+  )
+}

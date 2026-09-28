@@ -1,0 +1,46 @@
+---
+interface Props {
+  text: string;
+  repeat?: number;
+  class?: string;
+}
+
+const { text, repeat = 6, class: className = '' } = Astro.props;
+const items = Array.from({ length: repeat });
+---
+
+<div class={`overflow-hidden whitespace-nowrap border-y-3 border-black bg-orange py-3 select-none ${className}`}>
+  <div class="inline-flex animate-marquee gap-8 font-display text-lg sm:text-xl font-extrabold uppercase tracking-widest text-black">
+    {
+      items.map(() => (
+        <span class="inline-flex items-center gap-6">
+          <span>{text}</span>
+          <span class="text-black font-black">✦</span>
+        </span>
+      ))
+    }
+  </div>
+</div>
+
+<style>
+  @keyframes marquee {
+    0% {
+      transform: translateX(0%);
+    }
+    100% {
+      transform: translateX(-50%);
+    }
+  }
+
+  .animate-marquee {
+    display: inline-flex;
+    width: max-content;
+    animation: marquee 25s linear infinite;
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    .animate-marquee {
+      animation: none;
+    }
+  }
+</style>

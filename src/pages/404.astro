@@ -1,0 +1,37 @@
+---
+import Base from '../layouts/Base.astro';
+import Nav from '../components/sections/Nav.astro';
+import Footer from '../components/sections/Footer.astro';
+import Button from '../components/ui/Button.astro';
+import Badge from '../components/ui/Badge.astro';
+---
+
+<Base
+  title="Página no encontrada | HARNESS STUDIO"
+  description="La página que buscás no existe o ha sido movida. Volvé al inicio de Harness Studio."
+>
+  <Nav slot="header" />
+
+  <section class="min-h-[70vh] flex flex-col items-center justify-center px-4 py-32 text-center max-w-4xl mx-auto">
+    <Badge variant="orange" rotate={-2} class="mb-4">Error 404</Badge>
+    
+    <h1 class="font-display text-5xl sm:text-7xl font-black uppercase text-black leading-none mb-6">
+      Página no encontrada
+    </h1>
+    
+    <p class="text-xl text-gray-800 font-medium max-w-lg mb-8 leading-relaxed">
+      La dirección a la que intentás ingresar no existe o fue modificada.
+    </p>
+
+    <div class="flex flex-wrap gap-4 justify-center">
+      <Button href="/" variant="primary" size="lg">
+        Volver a la Home ➔
+      </Button>
+      <Button href="/#servicios" variant="secondary" size="lg">
+        Ver Servicios
+      </Button>
+    </div>
+  </section>
+
+  <Footer slot="footer" />
+</Base>
