@@ -3,11 +3,13 @@ import { getCollection } from 'astro:content';
 import Base from '../../layouts/Base.astro';
 import Nav from '../../components/sections/Nav.astro';
 import Footer from '../../components/sections/Footer.astro';
+import Process from '../../components/sections/Process.astro';
+import Trust from '../../components/sections/Trust.astro';
+import CTASection from '../../components/sections/CTASection.astro';
 import WhatsAppFloat from '../../components/ui/WhatsAppFloat.astro';
 import Button from '../../components/ui/Button.astro';
 import Badge from '../../components/ui/Badge.astro';
 import Accordion from '../../components/ui/Accordion.astro';
-import Trust from '../../components/sections/Trust.astro';
 
 export async function getStaticPaths() {
   const services = await getCollection('services');
@@ -19,119 +21,300 @@ export async function getStaticPaths() {
 
 const { entry } = Astro.props;
 const { data } = entry;
-const waUrl = `https://wa.me/?text=${encodeURIComponent(data.whatsappMensaje)}`;
+const slug = (data.slug || entry.id).replace(/\.md$/, '');
+
+const waHeroUrl = `https://wa.me/?text=${encodeURIComponent(data.whatsappMensaje)}`;
+const planWaUrl = (planName: string) =>
+  `https://wa.me/?text=${encodeURIComponent(`Hola, me interesa el plan "${planName}" para el servicio de ${data.nombre}. ¿Podemos coordinar?`)}`;
+
+const breadcrumbs = [
+  { name: 'Inicio', item: '/' },
+  { name: 'Servicios', item: '/#servicios' },
+  { name: data.nombre, item: `/servicios/${slug}` },
+];
+
+const serviceSchemaData = {
+  name: data.nombre,
+  description: data.bajada,
+  url: `/servicios/${slug}`,
+  offers: data.planes.map((p) => ({ name: p.nombre, price: p.precio })),
+};
+
+const faqItems = (data.faqs || []).map((f) => ({
+  pregunta: f.pregunta,
+  respuesta: f.respuesta,
+}));
 ---
 
 <Base
   title={data.metaTitle}
   description={data.metaDescription}
+  canonical={`https://harness.studio/servicios/${slug}`}
+  service={serviceSchemaData}
+  breadcrumbs={breadcrumbs}
+  faqs={faqItems}
 >
   <Nav slot="header" />
 
-  <!-- Hero del servicio -->
+  <!-- 1. Hero del servicio -->
   <section class="pt-32 pb-20 sm:pt-40 sm:pb-24 px-4 sm:px-6 lg:px-8 max-w-7xl mx-auto">
+    <!-- Breadcrumb visual y semántico -->
+    <nav aria-label="Breadcrumb" class="mb-6">
+      <ol class="flex items-center flex-wrap gap-2 text-xs sm:text-sm font-bold uppercase tracking-wider text-gray-500">
+        <li>
+          <a href="/" class="hover:text-black transition-colors underline-offset-4 hover:underline">
+            Inicio
+          </a>
+        </li>
+        <li aria-hidden="true" class="text-gray-400">/</li>
+        <li>
+          <a href="/#servicios" class="hover:text-black transition-colors underline-offset-4 hover:underline">
+            Servicios
+          </a>
+        </li>
+        <li aria-hidden="true" class="text-gray-400">/</li>
+        <li class="text-black font-extrabold" aria-current="page">
+          {data.nombre}
+        </li>
+      </ol>
+    </nav>
+
     <div class="max-w-4xl flex flex-col gap-6">
       <div class="self-start">
         <Badge variant="orange">{data.nombre}</Badge>
       </div>
+
       <h1 class="font-display text-4xl sm:text-6xl lg:text-7xl font-black uppercase text-black leading-tight tracking-tight">
         {data.h1}
       </h1>
-      <p class="text-xl sm:text-2xl text-gray-800 font-medium leading-relaxed">
+
+      <p class="text-xl sm:text-2xl text-gray-800 font-medium leading-relaxed max-w-3xl">
         {data.bajada}
       </p>
-      <div class="pt-4 flex flex-wrap gap-4">
-        <Button href={waUrl} target="_blank" rel="noopener noreferrer" variant="primary" size="lg">
+
+      <div class="pt-4 flex flex-wrap gap-4 items-center">
+        <Button
+          href={waHeroUrl}
+          target="_blank"
+          rel="noopener noreferrer"
+          variant="primary"
+          size="lg"
+        >
           Consultar por WhatsApp
         </Button>
         <Button href="#precios" variant="secondary" size="lg">
-          Ver Planes ↓
+          Ver planes y precios ↓
         </Button>
       </div>
     </div>
   </section>
 
-  <!-- Qué incluye -->
-  <section class="py-20 px-4 sm:px-6 lg:px-8 max-w-7xl mx-auto border-t-3 border-black bg-gray-100">
-    <h2 class="font-display text-3xl sm:text-5xl font-black uppercase text-black mb-10">
-      Qué incluye el servicio
-    </h2>
-    <div class="grid grid-cols-1 md:grid-cols-2 gap-8">
-      {
-        data.incluye.map((item) => (
-          <div class="border-brutal shadow-brutal p-6 sm:p-8 bg-white">
-            <h3 class="font-display text-xl sm:text-2xl font-bold uppercase text-black mb-3 flex items-center gap-2">
-              <span class="text-orange">✔</span> {item.titulo}
-            </h3>
-            <p class="text-gray-800 text-base sm:text-lg font-medium leading-relaxed">
-              {item.descripcion}
-            </p>
-          </div>
-        ))
-      }
-    </div>
-  </section>
+  <!-- 2. Qué incluye -->
+  <section
+    aria-labelledby="incluye-heading"
+    class="py-20 sm:py-28 px-4 sm:px-6 lg:px-8 border-t-3 border-black bg-gray-100"
+  >
+    <div class="max-w-7xl mx-auto">
+      <div class="mb-12 sm:mb-16">
+        <span class="text-xs sm:text-sm font-black uppercase tracking-widest text-orange mb-3 block">
+          Entregables claros
+        </span>
+        <h2
+          id="incluye-heading"
+          class="font-display text-3xl sm:text-5xl lg:text-6xl font-black uppercase text-black leading-tight tracking-tight"
+        >
+          Qué incluye el servicio
+        </h2>
+      </div>
 
-  <!-- Sección de Precios -->
-  <section id="precios" class="py-20 px-4 sm:px-6 lg:px-8 max-w-7xl mx-auto border-t-3 border-black bg-white">
-    <h2 class="font-display text-3xl sm:text-5xl font-black uppercase text-black mb-10">
-      Planes y estimaciones
-    </h2>
-    <div class="grid grid-cols-1 md:grid-cols-3 gap-8">
-      {
-        data.planes.map((plan) => (
-          <div class={`border-brutal shadow-brutal p-8 flex flex-col justify-between ${plan.destacado ? 'bg-orange/10 border-orange' : 'bg-white'}`}>
-            <div>
-              <span class="text-xs uppercase font-extrabold text-orange tracking-widest block mb-2">
-                {plan.plazo}
-              </span>
-              <h3 class="font-display text-2xl font-black uppercase text-black mb-4">
-                {plan.nombre}
+      <div class="grid grid-cols-1 md:grid-cols-2 gap-8">
+        {
+          data.incluye.map((item) => (
+            <div class="border-brutal shadow-brutal p-6 sm:p-8 bg-white flex flex-col gap-3">
+              <h3 class="font-display text-xl sm:text-2xl font-bold uppercase text-black flex items-center gap-3">
+                <span class="inline-flex items-center justify-center w-7 h-7 bg-orange border-2 border-black text-black font-black text-sm shrink-0">
+                  ✔
+                </span>
+                {item.titulo}
               </h3>
-              <div class="text-3xl font-display font-black text-black mb-6">
-                {plan.precio}
-              </div>
-              <ul class="space-y-2.5 text-sm sm:text-base text-gray-800 font-medium mb-8">
-                {plan.incluye.map((feat) => (
-                  <li class="flex items-center gap-2">
-                    <span class="text-orange font-bold">▪</span> {feat}
-                  </li>
-                ))}
-              </ul>
+              <p class="text-gray-800 text-base sm:text-lg font-medium leading-relaxed">
+                {item.descripcion}
+              </p>
             </div>
-            <Button
-              href={waUrl}
-              target="_blank"
-              rel="noopener noreferrer"
-              variant={plan.destacado ? 'primary' : 'secondary'}
-              size="md"
-            >
-              Elegir este plan
-            </Button>
-          </div>
-        ))
-      }
+          ))
+        }
+      </div>
     </div>
   </section>
 
-  <!-- Confianza -->
+  <!-- 3. Precios y planes -->
+  <section
+    id="precios"
+    aria-labelledby="precios-heading"
+    class="py-20 sm:py-28 px-4 sm:px-6 lg:px-8 border-t-3 border-black bg-white"
+  >
+    <div class="max-w-7xl mx-auto">
+      <div class="mb-12 sm:mb-16">
+        <span class="text-xs sm:text-sm font-black uppercase tracking-widest text-orange mb-3 block">
+          Inversión clara
+        </span>
+        <h2
+          id="precios-heading"
+          class="font-display text-3xl sm:text-5xl lg:text-6xl font-black uppercase text-black leading-tight tracking-tight"
+        >
+          Planes y estimaciones
+        </h2>
+        <p class="mt-4 text-lg sm:text-xl text-gray-500 font-medium max-w-2xl">
+          Precios transparentes y plazos concretos. Sin sorpresas ni costos ocultos.
+        </p>
+      </div>
+
+      <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8 items-stretch">
+        {
+          data.planes.map((plan) => (
+            <div
+              data-plan-card
+              class={`border-brutal p-8 flex flex-col justify-between transition-transform relative ${
+                plan.destacado
+                  ? 'bg-orange/5 border-3 border-orange shadow-[6px_6px_0_var(--orange)]'
+                  : 'bg-white shadow-brutal'
+              }`}
+            >
+              {plan.destacado && (
+                <div class="absolute -top-3.5 right-6">
+                  <Badge variant="orange">Recomendado</Badge>
+                </div>
+              )}
+
+              <div>
+                <span class="text-xs uppercase font-extrabold text-orange tracking-widest block mb-2">
+                  Tiempo estimado: {plan.plazo}
+                </span>
+
+                <h3 class="font-display text-2xl sm:text-3xl font-black uppercase text-black mb-3">
+                  {plan.nombre}
+                </h3>
+
+                <div class="text-3xl sm:text-4xl font-display font-black text-black mb-6">
+                  {plan.precio}
+                </div>
+
+                <div class="border-t-2 border-gray-100 pt-6 mb-8">
+                  <span class="text-xs font-bold uppercase text-gray-500 tracking-wider block mb-4">
+                    Incluye:
+                  </span>
+                  <ul class="space-y-3 text-sm sm:text-base text-gray-800 font-medium">
+                    {plan.incluye.map((feat) => (
+                      <li class="flex items-start gap-2.5">
+                        <span class="text-orange font-bold leading-none mt-1">▪</span>
+                        <span>{feat}</span>
+                      </li>
+                    ))}
+                  </ul>
+                </div>
+              </div>
+
+              <Button
+                href={planWaUrl(plan.nombre)}
+                target="_blank"
+                rel="noopener noreferrer"
+                variant={plan.destacado ? 'primary' : 'secondary'}
+                size="md"
+                class="w-full text-center justify-center"
+              >
+                Elegir este plan ➔
+              </Button>
+            </div>
+          ))
+        }
+      </div>
+    </div>
+  </section>
+
+  <!-- 4. Cómo trabajamos (Proceso) -->
+  {
+    data.proceso && data.proceso.length > 0 ? (
+      <section
+        aria-labelledby="proceso-servicio-heading"
+        class="py-20 sm:py-28 px-4 sm:px-6 lg:px-8 border-t-3 border-black bg-gray-100"
+      >
+        <div class="max-w-7xl mx-auto">
+          <div class="mb-12 sm:mb-16">
+            <span class="text-xs sm:text-sm font-black uppercase tracking-widest text-orange mb-3 block">
+              Paso a paso
+            </span>
+            <h2
+              id="proceso-servicio-heading"
+              class="font-display text-3xl sm:text-5xl lg:text-6xl font-black uppercase text-black leading-tight tracking-tight"
+            >
+              Cómo trabajamos este servicio
+            </h2>
+          </div>
+
+          <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+            {data.proceso.map((paso, idx) => (
+              <div class="border-brutal shadow-brutal p-6 sm:p-8 bg-white flex flex-col justify-between">
+                <div>
+                  <span class="font-display text-4xl font-black text-orange block mb-3">
+                    0{idx + 1}
+                  </span>
+                  <h3 class="font-display text-xl sm:text-2xl font-black uppercase text-black mb-3">
+                    {paso.titulo}
+                  </h3>
+                  <p class="text-gray-800 text-sm sm:text-base font-medium leading-relaxed">
+                    {paso.descripcion}
+                  </p>
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+      </section>
+    ) : (
+      <Process />
+    )
+  }
+
+  <!-- 5. Confianza -->
   <Trust />
 
-  <!-- FAQ específica del servicio -->
+  <!-- 6. FAQs específicas del servicio -->
   {
-    data.faqs && data.faqs.length > 0 && (
-      <section class="py-20 px-4 sm:px-6 lg:px-8 max-w-5xl mx-auto border-t-3 border-black bg-white">
-        <h2 class="font-display text-3xl sm:text-5xl font-black uppercase text-black mb-10 text-center">
-          Preguntas sobre este servicio
-        </h2>
-        <div class="space-y-4">
-          {data.faqs.map((f, i) => (
-            <Accordion question={f.pregunta} answer={f.respuesta} open={i === 0} />
-          ))}
+    faqItems.length > 0 && (
+      <section
+        aria-labelledby="faqs-servicio-heading"
+        class="py-20 sm:py-28 px-4 sm:px-6 lg:px-8 border-t-3 border-black bg-white"
+      >
+        <div class="max-w-4xl mx-auto">
+          <div class="text-center mb-12 sm:mb-16">
+            <span class="text-xs sm:text-sm font-black uppercase tracking-widest text-orange mb-3 block">
+              Dudas comunes
+            </span>
+            <h2
+              id="faqs-servicio-heading"
+              class="font-display text-3xl sm:text-5xl font-black uppercase text-black leading-tight tracking-tight"
+            >
+              Preguntas sobre este servicio
+            </h2>
+          </div>
+
+          <div class="space-y-4">
+            {faqItems.map((f, i) => (
+              <Accordion question={f.pregunta} answer={f.respuesta} open={i === 0} />
+            ))}
+          </div>
         </div>
       </section>
     )
   }
+
+  <!-- 7. CTA final contextual -->
+  <CTASection
+    badge="Hablemos de tu proyecto"
+    title={`¿Listo para avanzar con ${data.nombre}?`}
+    subtitle="Escribinos por WhatsApp para coordinar los detalles y empezar esta misma semana."
+    message={data.whatsappMensaje}
+  />
 
   <Footer slot="footer" />
   <WhatsAppFloat message={data.whatsappMensaje} />

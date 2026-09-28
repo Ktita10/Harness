@@ -4,12 +4,26 @@ interface FAQItem {
   respuesta: string;
 }
 
-interface Props {
-  type?: 'Organization' | 'FAQPage' | 'All';
-  faqs?: FAQItem[];
+interface ServiceData {
+  name: string;
+  description: string;
+  url: string;
+  offers?: { name: string; price: string }[];
 }
 
-const { type = 'All', faqs = [] } = Astro.props;
+interface BreadcrumbItem {
+  name: string;
+  item: string;
+}
+
+interface Props {
+  type?: 'Organization' | 'FAQPage' | 'Service' | 'BreadcrumbList' | 'All';
+  faqs?: FAQItem[];
+  service?: ServiceData;
+  breadcrumbs?: BreadcrumbItem[];
+}
+
+const { type = 'All', faqs = [], service, breadcrumbs = [] } = Astro.props;
 
 const siteUrl = Astro.site ? Astro.site.href : 'https://harness.studio';
 
@@ -39,6 +53,42 @@ const faqSchema = faqs.length > 0 ? {
     },
   })),
 } : null;
+
+const breadcrumbSchema = breadcrumbs.length > 0 ? {
+  '@context': 'https://schema.org',
+  '@type': 'BreadcrumbList',
+  itemListElement: breadcrumbs.map((crumb, idx) => ({
+    '@type': 'ListItem',
+    position: idx + 1,
+    name: crumb.name,
+    item: crumb.item.startsWith('http') ? crumb.item : new URL(crumb.item, siteUrl).href,
+  })),
+} : null;
+
+const serviceSchema = service ? {
+  '@context': 'https://schema.org',
+  '@type': 'Service',
+  name: service.name,
+  description: service.description,
+  url: service.url.startsWith('http') ? service.url : new URL(service.url, siteUrl).href,
+  provider: {
+    '@type': 'Organization',
+    name: 'HARNESS STUDIO',
+    url: siteUrl,
+  },
+  serviceType: service.name,
+  ...(service.offers && service.offers.length > 0 ? {
+    hasOfferCatalog: {
+      '@type': 'OfferCatalog',
+      name: service.name,
+      itemListElement: service.offers.map((offer) => ({
+        '@type': 'Offer',
+        name: offer.name,
+        price: offer.price,
+      })),
+    },
+  } : {}),
+} : null;
 ---
 
 {
@@ -50,5 +100,17 @@ const faqSchema = faqs.length > 0 ? {
 {
   (type === 'FAQPage' || type === 'All') && faqSchema && (
     <script type="application/ld+json" set:html={JSON.stringify(faqSchema)} />
+  )
+}
+
+{
+  (type === 'BreadcrumbList' || type === 'All') && breadcrumbSchema && (
+    <script type="application/ld+json" set:html={JSON.stringify(breadcrumbSchema)} />
+  )
+}
+
+{
+  (type === 'Service' || type === 'All') && serviceSchema && (
+    <script type="application/ld+json" set:html={JSON.stringify(serviceSchema)} />
   )
 }

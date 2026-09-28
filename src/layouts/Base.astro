@@ -8,6 +8,13 @@ interface Props {
   ogImage?: string;
   canonical?: string;
   faqs?: { pregunta: string; respuesta: string }[];
+  service?: {
+    name: string;
+    description: string;
+    url: string;
+    offers?: { name: string; price: string }[];
+  };
+  breadcrumbs?: { name: string; item: string }[];
 }
 
 const {
@@ -16,6 +23,8 @@ const {
   ogImage = '/og-image.png',
   canonical,
   faqs = [],
+  service,
+  breadcrumbs = [],
 } = Astro.props;
 
 const siteUrl = Astro.site ? Astro.site.href : 'https://harness.studio';
@@ -50,7 +59,7 @@ const canonicalURL = canonical || new URL(Astro.url.pathname, siteUrl).href;
     <meta property="twitter:image" content={new URL(ogImage, siteUrl).href} />
 
     <!-- Structured Data -->
-    <JsonLd type="All" faqs={faqs} />
+    <JsonLd type="All" faqs={faqs} service={service} breadcrumbs={breadcrumbs} />
   </head>
   <body class="min-h-screen flex flex-col bg-white text-black selection:bg-orange selection:text-black">
     <a href="#main-content" class="skip-link">
@@ -59,7 +68,7 @@ const canonicalURL = canonical || new URL(Astro.url.pathname, siteUrl).href;
 
     <slot name="header" />
 
-    <main id="main-content" role="main" class="flex-1 w-full">
+    <main id="main-content" class="flex-grow">
       <slot />
     </main>
 

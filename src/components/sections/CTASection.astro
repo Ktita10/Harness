@@ -1,6 +1,22 @@
 ---
 import Button from '../ui/Button.astro';
 import Badge from '../ui/Badge.astro';
+
+interface Props {
+  badge?: string;
+  title?: string;
+  subtitle?: string;
+  message?: string;
+}
+
+const {
+  badge = 'Lanzá tu proyecto',
+  title = '¿Listo para construir una web que realmente venda?',
+  subtitle = 'Dejanos tu mensaje por WhatsApp y contanos qué necesitás. Te respondemos con un presupuesto exacto en el día.',
+  message = 'Hola Harness Studio, quiero cotizar un proyecto',
+} = Astro.props;
+
+const waUrl = `https://wa.me/?text=${encodeURIComponent(message)}`;
 ---
 
 <section
@@ -10,23 +26,23 @@ import Badge from '../ui/Badge.astro';
 >
   <div class="max-w-5xl mx-auto border-3 border-black bg-white p-8 sm:p-14 shadow-brutal flex flex-col items-center text-center gap-6">
     <Badge variant="black" rotate={-2}>
-      Lanzá tu proyecto
+      {badge}
     </Badge>
 
     <h2
       id="cta-title"
       class="font-display text-4xl sm:text-6xl md:text-7xl font-black uppercase text-black leading-tight tracking-tight max-w-3xl"
     >
-      ¿Listo para construir una web que realmente venda?
+      {title}
     </h2>
 
     <p class="text-lg sm:text-2xl text-gray-800 font-medium max-w-2xl leading-relaxed">
-      Dejanos tu mensaje por WhatsApp y contanos qué necesitás. Te respondemos con un presupuesto exacto en el día.
+      {subtitle}
     </p>
 
     <div class="pt-4 flex flex-col sm:flex-row gap-4 items-center">
       <Button
-        href="https://wa.me/?text=Hola%20Harness%20Studio%2C%20quiero%20cotizar%20un%20proyecto"
+        href={waUrl}
         target="_blank"
         rel="noopener noreferrer"
         variant="primary"
