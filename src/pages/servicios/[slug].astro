@@ -6,7 +6,6 @@ import Footer from '../../components/sections/Footer.astro';
 import Process from '../../components/sections/Process.astro';
 import Trust from '../../components/sections/Trust.astro';
 import CTASection from '../../components/sections/CTASection.astro';
-import WhatsAppFloat from '../../components/ui/WhatsAppFloat.astro';
 import Button from '../../components/ui/Button.astro';
 import Badge from '../../components/ui/Badge.astro';
 import Accordion from '../../components/ui/Accordion.astro';
@@ -50,6 +49,7 @@ const faqItems = (data.faqs || []).map((f) => ({
   title={data.metaTitle}
   description={data.metaDescription}
   canonical={`https://harness.studio/servicios/${slug}`}
+  whatsappMessage={data.whatsappMensaje}
   service={serviceSchemaData}
   breadcrumbs={breadcrumbs}
   faqs={faqItems}
@@ -317,5 +317,4 @@ const faqItems = (data.faqs || []).map((f) => ({
   />
 
   <Footer slot="footer" />
-  <WhatsAppFloat message={data.whatsappMensaje} />
 </Base>

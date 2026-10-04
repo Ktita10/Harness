@@ -1,12 +1,15 @@
 ---
 import '../styles/global.css';
 import JsonLd from '../components/seo/JsonLd.astro';
+import WhatsAppFloat from '../components/ui/WhatsAppFloat.astro';
 
 interface Props {
   title: string;
   description: string;
   ogImage?: string;
   canonical?: string;
+  whatsappMessage?: string;
+  whatsappPhone?: string;
   faqs?: { pregunta: string; respuesta: string }[];
   service?: {
     name: string;
@@ -22,6 +25,8 @@ const {
   description,
   ogImage = '/og-image.png',
   canonical,
+  whatsappMessage,
+  whatsappPhone,
   faqs = [],
   service,
   breadcrumbs = [],
@@ -29,6 +34,7 @@ const {
 
 const siteUrl = Astro.site ? Astro.site.href : 'https://harness.studio';
 const canonicalURL = canonical || new URL(Astro.url.pathname, siteUrl).href;
+const fullOgImageUrl = new URL(ogImage, siteUrl).href;
 ---
 
 <!doctype html>
@@ -36,7 +42,13 @@ const canonicalURL = canonical || new URL(Astro.url.pathname, siteUrl).href;
   <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    
+    <!-- Favicon Bundle -->
     <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+    <link rel="icon" type="image/png" sizes="32x32" href="/favicon-32x32.png" />
+    <link rel="icon" type="image/png" sizes="192x192" href="/favicon-192x192.png" />
+    <link rel="icon" type="image/png" sizes="512x512" href="/favicon-512x512.png" />
+    <link rel="apple-touch-icon" sizes="180x180" href="/apple-touch-icon.png" />
     
     <!-- Primary Meta Tags -->
     <title>{title}</title>
@@ -49,14 +61,17 @@ const canonicalURL = canonical || new URL(Astro.url.pathname, siteUrl).href;
     <meta property="og:url" content={canonicalURL} />
     <meta property="og:title" content={title} />
     <meta property="og:description" content={description} />
-    <meta property="og:image" content={new URL(ogImage, siteUrl).href} />
+    <meta property="og:image" content={fullOgImageUrl} />
+    <meta property="og:image:width" content="1200" />
+    <meta property="og:image:height" content="630" />
+    <meta property="og:image:alt" content="HARNESS STUDIO — Desarrollo Web y Software a Medida" />
 
     <!-- Twitter -->
     <meta property="twitter:card" content="summary_large_image" />
     <meta property="twitter:url" content={canonicalURL} />
     <meta property="twitter:title" content={title} />
     <meta property="twitter:description" content={description} />
-    <meta property="twitter:image" content={new URL(ogImage, siteUrl).href} />
+    <meta property="twitter:image" content={fullOgImageUrl} />
 
     <!-- Structured Data -->
     <JsonLd type="All" faqs={faqs} service={service} breadcrumbs={breadcrumbs} />
@@ -73,5 +88,7 @@ const canonicalURL = canonical || new URL(Astro.url.pathname, siteUrl).href;
     </main>
 
     <slot name="footer" />
+
+    <WhatsAppFloat message={whatsappMessage} phone={whatsappPhone} />
   </body>
 </html>

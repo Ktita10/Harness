@@ -5,12 +5,12 @@ export default defineConfig({
   fullyParallel: true,
   retries: 0,
   use: {
-    baseURL: 'http://localhost:4321',
+    baseURL: 'http://localhost:4322',
   },
   webServer: {
-    command: 'npm run preview -- --port 4321',
-    port: 4321,
-    reuseExistingServer: true,
+    command: 'npm run preview -- --port 4322',
+    port: 4322,
+    reuseExistingServer: false,
   },
   projects: [
     {

@@ -13,19 +13,19 @@ const encodedMessage = encodeURIComponent(message);
 const waUrl = phone ? `https://wa.me/${phone}?text=${encodedMessage}` : `https://wa.me/?text=${encodedMessage}`;
 ---
 
-<aside class="fixed bottom-6 right-6 z-50 pointer-events-auto" aria-label="Contacto directo por WhatsApp">
+<aside class="fixed bottom-4 right-4 sm:bottom-6 sm:right-6 z-50 pointer-events-auto" aria-label="Contacto directo por WhatsApp">
   <a
     href={waUrl}
     target="_blank"
     rel="noopener noreferrer"
     aria-label="Contactar por WhatsApp"
-    class="btn-brutal flex items-center gap-3 bg-orange text-black px-4 py-3 sm:px-5 sm:py-3.5 border-brutal shadow-brutal hover:bg-orange transition-all"
+    class="btn-brutal flex items-center gap-2 sm:gap-3 bg-orange text-black px-3.5 py-2.5 sm:px-5 sm:py-3.5 border-brutal shadow-brutal hover:bg-orange transition-all"
   >
     <svg
       xmlns="http://www.w3.org/2000/svg"
       viewBox="0 0 24 24"
       fill="currentColor"
-      class="w-6 h-6 shrink-0"
+      class="w-5 h-5 sm:w-6 sm:h-6 shrink-0"
       aria-hidden="true"
     >
       <path d="M12.031 2c-5.516 0-9.999 4.479-9.999 9.995 0 1.761.459 3.477 1.332 4.992l-1.417 5.178 5.305-1.391c1.458.796 3.104 1.217 4.779 1.217h.004c5.516 0 9.998-4.479 9.998-9.995 0-2.671-1.04-5.182-2.929-7.071-1.888-1.89-4.398-2.925-7.073-2.925zm5.859 14.152c-.244.686-1.418 1.309-1.96 1.378-.499.063-1.152.09-1.86-.135-.432-.137-.991-.323-1.705-.632-3.003-1.298-4.962-4.354-5.112-4.554-.149-.2-1.222-1.626-1.222-3.1 0-1.474.773-2.198 1.047-2.496.274-.298.598-.372.798-.372.199 0 .399.002.573.01.187.01.436-.071.684.526.248.598.847 2.068.921 2.218.075.149.124.323.025.522-.099.198-.149.323-.298.497-.15.174-.315.388-.45.522-.15.149-.306.312-.132.61.175.298.775 1.277 1.662 2.068 1.141 1.018 2.103 1.333 2.402 1.482.299.15.473.125.648-.075.175-.199.748-.871.947-1.17.199-.299.399-.249.673-.149.274.1.1.748 3.518 1.743 3.692.175.174.299.273.348.348.05.075.05.423-.194 1.109z" />

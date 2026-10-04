@@ -32,7 +32,7 @@ const organizationSchema = {
   '@type': 'Organization',
   name: 'HARNESS STUDIO',
   url: siteUrl,
-  logo: `${siteUrl}favicon.svg`,
+  logo: new URL('/favicon.svg', siteUrl).href,
   description: 'Startup de desarrollo web, landing pages y software a medida para pymes.',
   contactPoint: {
     '@type': 'ContactPoint',

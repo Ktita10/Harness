@@ -9,7 +9,6 @@ import Trust from '../components/sections/Trust.astro';
 import FAQSection from '../components/sections/FAQSection.astro';
 import CTASection from '../components/sections/CTASection.astro';
 import Footer from '../components/sections/Footer.astro';
-import WhatsAppFloat from '../components/ui/WhatsAppFloat.astro';
 import Marquee from '../components/ui/Marquee.astro';
 
 const allFaqs = await getCollection('faqs');
@@ -42,6 +41,4 @@ const faqData = sortedFaqs.map((f) => ({
   <CTASection />
 
   <Footer slot="footer" />
-
-  <WhatsAppFloat />
 </Base>
