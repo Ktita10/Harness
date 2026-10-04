@@ -6,12 +6,20 @@ const commitments = [
     icon: '⚡',
     title: 'Velocidad garantizada',
     subtitle: 'Lighthouse 95+ en móviles',
+    counterValue: '95',
+    counterSuffix: '+',
+    counterPrefix: 'Lighthouse ',
+    counterRest: ' en móviles',
     description: 'Optimizamos cada línea de código e imagen. Si tu sitio no alcanza el estándar de velocidad acordado en móvil, no pagás el saldo final.',
   },
   {
     icon: '🛡️',
     title: 'Propiedad total',
     subtitle: 'Código 100% tuyo',
+    counterValue: '100',
+    counterSuffix: '%',
+    counterPrefix: 'Código ',
+    counterRest: ' tuyo',
     description: 'Sin letra chica ni ataduras de suscripción. El repositorio, los archivos y las cuentas de despliegue te pertenecen desde el primer día.',
   },
   {
@@ -23,7 +31,11 @@ const commitments = [
   {
     icon: '🎯',
     title: 'Precio cerrado',
-    subtitle: 'Cero sorpresas',
+    subtitle: '0 costos ocultos',
+    counterValue: '0',
+    counterSuffix: ' costos ocultos',
+    counterPrefix: '',
+    counterRest: '',
     description: 'Cotizamos con alcance fijo y plazos claros. No hay costos ocultos ni adiciones imprevistas al momento del lanzamiento.',
   },
 ];
@@ -59,7 +71,20 @@ const commitments = [
               {item.title}
             </h3>
             <span class="text-xs uppercase font-extrabold text-orange tracking-widest block mb-4">
-              {item.subtitle}
+              {item.counterValue ? (
+                <span>
+                  {item.counterPrefix}
+                  <span
+                    data-counter={item.counterValue}
+                    data-counter-suffix={item.counterSuffix}
+                  >
+                    {item.counterValue}{item.counterSuffix}
+                  </span>
+                  {item.counterRest}
+                </span>
+              ) : (
+                item.subtitle
+              )}
             </span>
             <p class="text-sm sm:text-base text-gray-800 font-medium leading-relaxed">
               {item.description}
