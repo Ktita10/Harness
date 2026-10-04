@@ -1,8 +1,8 @@
-# layout-foundation Specification
+# Capability: layout-foundation
 
 ## Purpose
 
-Defines the semantic HTML5 layout structure, technical SEO tags, local font preloads, and accessibility requirements for `src/layouts/Base.astro`.
+Defines the semantic HTML5 layout structure, technical SEO tags, local font preloads, favicon assets, social previews, and accessibility requirements for `src/layouts/Base.astro`.
 
 ## Requirements
 
@@ -28,12 +28,12 @@ The `<head>` section of `Base.astro` MUST inject:
 - Viewport configuration: `width=device-width, initial-scale=1`
 - Open Graph (`og:title`, `og:description`, `og:type`, `og:url`, `og:image`)
 - Twitter Cards (`twitter:card`, `twitter:title`, `twitter:description`, `twitter:image`)
-- Favicon links (`favicon.svg`, apple touch icon)
+- Full favicon link bundle: SVG (`favicon.svg`), PNGs (`favicon-32x32.png`, `favicon-192x192.png`, `favicon-512x512.png`), and Apple Touch Icon (`apple-touch-icon.png`)
 
-#### Scenario: Absolute canonical link generation
-- GIVEN a request for route `/servicios/landing-pages`
+#### Scenario: Absolute canonical and social preview link generation
+- GIVEN a request for any route
 - WHEN the page HTML is generated
-- THEN the canonical link href MUST be an absolute URL ending with `/servicios/landing-pages`.
+- THEN canonical, `og:image`, and `twitter:image` URLs MUST be absolute URLs referencing valid paths.
 
 ### Requirement: Accessible Skip Navigation
 
