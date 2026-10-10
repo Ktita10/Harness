@@ -5,11 +5,27 @@
 @import "@fontsource/bricolage-grotesque/800.css";
 @import "./tokens.css";
 
+@theme {
+  --color-bg-primary: var(--bg-primary);
+  --color-bg-surface: var(--bg-surface);
+  --color-bg-surface-hover: var(--bg-surface-hover);
+  --color-text-primary: var(--text-primary);
+  --color-text-secondary: var(--text-secondary);
+  --color-text-muted: var(--text-muted);
+  --color-accent: var(--accent);
+  --color-accent-hover: var(--accent-hover);
+  --color-accent-contrast: var(--accent-contrast);
+  --color-border-subtle: var(--border-subtle);
+  --color-border-medium: var(--border-medium);
+  --color-border-active: var(--border-active);
+}
+
 /* Base Resets & Defaults */
 html {
   font-family: var(--font-body);
-  background-color: var(--white);
-  color: var(--black);
+  background-color: var(--bg-primary);
+  color: var(--text-primary);
+  color-scheme: dark;
 }
 
 body {
@@ -18,11 +34,13 @@ body {
   min-height: 100vh;
   display: flex;
   flex-direction: column;
+  background-color: var(--bg-primary);
+  color: var(--text-primary);
 }
 
-/* Accessible focus visible with high contrast */
+/* Accessible focus visible */
 :focus-visible {
-  outline: 3px solid var(--orange);
+  outline: 2px solid var(--accent);
   outline-offset: 3px;
 }
 
@@ -32,31 +50,45 @@ body {
   top: -1000px;
   left: 1rem;
   z-index: 9999;
-  background-color: var(--orange);
-  color: var(--black);
+  background-color: var(--accent);
+  color: var(--accent-contrast);
   padding: 0.75rem 1.25rem;
   font-weight: 700;
   text-decoration: none;
-  border: var(--border);
-  box-shadow: var(--shadow-hard);
-  transition: top 0.1s ease;
+  border-radius: var(--radius-sm);
+  box-shadow: var(--shadow-glow);
+  transition: top 0.15s ease;
 }
 
 .skip-link:focus {
   top: 1rem;
 }
 
-/* Neo-brutalist Utility Classes */
+/* Modern High-Performance Utilities */
 .font-display {
   font-family: var(--font-display);
 }
 
+.card-surface {
+  background-color: var(--bg-surface);
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--radius-md);
+  transition: border-color 0.2s ease, background-color 0.2s ease, box-shadow 0.2s ease;
+}
+
+.card-surface:hover {
+  border-color: var(--border-medium);
+  background-color: var(--bg-surface-hover);
+}
+
+/* Transitional mappings for existing components */
 .border-brutal {
-  border: var(--border);
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--radius-md);
 }
 
 .shadow-brutal {
-  box-shadow: var(--shadow-hard);
+  box-shadow: var(--shadow-card);
 }
 
 .btn-brutal {
@@ -64,20 +96,18 @@ body {
   align-items: center;
   justify-content: center;
   font-weight: 700;
-  border: var(--border);
-  box-shadow: var(--shadow-hard);
-  transition: transform 0.1s ease, box-shadow 0.1s ease;
+  border-radius: var(--radius-md);
+  transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
   cursor: pointer;
 }
 
 .btn-brutal:hover {
-  transform: translate(4px, 4px);
-  box-shadow: var(--shadow-hard-hover);
+  transform: translateY(-2px);
+  box-shadow: var(--shadow-glow);
 }
 
 .btn-brutal:active {
-  transform: translate(6px, 6px);
-  box-shadow: none;
+  transform: translateY(0);
 }
 
 /* Respect prefers-reduced-motion */

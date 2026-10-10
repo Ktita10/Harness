@@ -1,19 +1,48 @@
 :root {
-  /* Palette - Sole source of color truth */
+  /* Lienzo y superficies (Dark High-Performance) */
+  --bg-primary: #0A0A0A;
+  --bg-surface: #121214;
+  --bg-surface-hover: #18181B;
+
+  /* Textos y contrastes */
+  --text-primary: #FFFFFF;
+  --text-secondary: #A1A1AA;
+  --text-muted: #71717A;
+
+  /* Acento de marca (Electric Papaya) */
+  --accent: #FF5A00;
+  --accent-hover: #FF701A;
+  --accent-contrast: #0A0A0A;
+  --accent-glow: rgba(255, 90, 0, 0.25);
+
+  /* Estructura y elevación */
+  --border-subtle: rgba(255, 255, 255, 0.08);
+  --border-medium: rgba(255, 255, 255, 0.16);
+  --border-active: rgba(255, 90, 0, 0.5);
+  --border: 1px solid var(--border-subtle);
+
+  /* Radios de curvatura */
+  --radius-sm: 6px;
+  --radius-md: 12px;
+  --radius-lg: 20px;
+  --radius-full: 9999px;
+
+  /* Sombras y efectos de iluminación */
+  --shadow-card: 0 4px 24px -1px rgba(0, 0, 0, 0.6);
+  --shadow-glow: 0 0 25px -5px var(--accent-glow);
+  --shadow-hard: 0 4px 20px -2px rgba(0, 0, 0, 0.5);
+  --shadow-hard-hover: 0 0 25px -2px var(--accent-glow);
+
+  /* Tokens de compatibilidad transicional */
   --black: #0A0A0A;
   --white: #FFFFFF;
-  --gray-100: #EDEDED;
-  --gray-300: #BDBDBD;
-  --gray-500: #8A8A8A;
-  --gray-800: #2B2B2B;
-  --orange: #FF5A00; /* único color de acento */
+  --gray-100: #141416;
+  --gray-300: #27272A;
+  --gray-500: #71717A;
+  --gray-800: #A1A1AA;
+  --orange: #FF5A00;
 
-  /* Neo-brutalist structural tokens */
-  --border: 3px solid var(--black);
-  --shadow-hard: 6px 6px 0 var(--black);
-  --shadow-hard-hover: 2px 2px 0 var(--black);
-
-  /* Typography */
+  /* Tipografía */
   --font-display: 'Bricolage Grotesque', system-ui, sans-serif;
   --font-body: system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
 }
