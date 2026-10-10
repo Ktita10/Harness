@@ -1,15 +1,13 @@
 ---
-import '../styles/global.css';
 import JsonLd from '../components/seo/JsonLd.astro';
 import WhatsAppFloat from '../components/ui/WhatsAppFloat.astro';
+import '../styles/global.css';
 
 interface Props {
-  title: string;
-  description: string;
-  ogImage?: string;
+  title?: string;
+  description?: string;
   canonical?: string;
-  whatsappMessage?: string;
-  whatsappPhone?: string;
+  ogImage?: string;
   faqs?: { pregunta: string; respuesta: string }[];
   service?: {
     name: string;
@@ -18,18 +16,20 @@ interface Props {
     offers?: { name: string; price: string }[];
   };
   breadcrumbs?: { name: string; item: string }[];
+  whatsappMessage?: string;
+  whatsappPhone?: string;
 }
 
 const {
-  title,
-  description,
-  ogImage = '/og-image.png',
+  title = 'HARNESS STUDIO | Desarrollo Web y Software a Medida',
+  description = 'Startup de desarrollo web y software a medida para pymes y emprendedores. Landing pages, Tienda Nube, tiendas online y sistemas.',
   canonical,
-  whatsappMessage,
-  whatsappPhone,
+  ogImage = '/og-image.png',
   faqs = [],
   service,
   breadcrumbs = [],
+  whatsappMessage,
+  whatsappPhone,
 } = Astro.props;
 
 const siteUrl = Astro.site ? Astro.site.href : 'https://harness.studio';
@@ -76,14 +76,14 @@ const fullOgImageUrl = new URL(ogImage, siteUrl).href;
     <!-- Structured Data -->
     <JsonLd type="All" faqs={faqs} service={service} breadcrumbs={breadcrumbs} />
   </head>
-  <body class="min-h-screen flex flex-col bg-white text-black selection:bg-orange selection:text-black">
+  <body class="min-h-screen flex flex-col bg-bg-primary text-text-primary selection:bg-accent selection:text-black overflow-x-clip">
     <a href="#main-content" class="skip-link">
       Saltar al contenido principal
     </a>
 
     <slot name="header" />
 
-    <main id="main-content" class="flex-grow">
+    <main id="main-content" class="flex-grow w-full max-w-full overflow-x-clip">
       <slot />
     </main>
 
