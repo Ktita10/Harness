@@ -9,24 +9,36 @@ const navLinks = [
 ];
 ---
 
-<header role="banner" class="fixed top-0 left-0 right-0 z-40 bg-white border-b-3 border-black h-20">
+<header
+  role="banner"
+  class="fixed top-0 left-0 right-0 z-50 bg-[#0A0A0A]/85 backdrop-blur-md border-b border-white/10 transition-colors duration-200"
+>
   <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-20 flex items-center justify-between">
     <!-- Brand Logo -->
     <a
       href="/"
-      class="font-display font-extrabold text-xl sm:text-2xl tracking-tighter text-black uppercase flex items-center gap-2 group"
+      class="font-display font-black text-xl sm:text-2xl tracking-tight text-white uppercase flex items-center gap-2.5 group"
     >
-      <span class="w-4 h-4 bg-orange border-2 border-black inline-block group-hover:rotate-45 transition-transform"></span>
-      <span>HARNESS STUDIO</span>
+      <span
+        class="w-2.5 h-6 bg-accent rounded-xs -skew-x-12 inline-block group-hover:shadow-[0_0_15px_var(--accent)] group-hover:brightness-125 transition-all duration-300"
+      ></span>
+      <span class="flex items-center gap-1.5">
+        <span>HARNESS</span>
+        <span
+          class="text-accent text-[11px] font-bold tracking-widest border border-accent/40 rounded-sm px-1.5 py-0.5"
+        >
+          STUDIO
+        </span>
+      </span>
     </a>
 
     <!-- Desktop Navigation Links -->
-    <nav class="hidden md:flex items-center gap-8 font-bold text-base" aria-label="Navegación principal">
+    <nav class="hidden md:flex items-center gap-8 text-xs font-semibold uppercase tracking-widest" aria-label="Navegación principal">
       {
         navLinks.map((link) => (
           <a
             href={link.href}
-            class="text-black hover:text-orange transition-colors uppercase tracking-wider text-sm"
+            class="text-zinc-400 hover:text-white transition-colors relative py-1 hover:after:w-full after:w-0 after:h-[2px] after:bg-accent after:absolute after:bottom-0 after:left-0 after:transition-all after:duration-250"
           >
             {link.label}
           </a>
@@ -34,7 +46,7 @@ const navLinks = [
       }
     </nav>
 
-    <!-- Desktop WhatsApp CTA -->
+    <!-- Desktop CTA Button -->
     <div class="hidden md:block">
       <Button
         href="https://wa.me/?text=Hola%20Harness%20Studio%2C%20quiero%20cotizar%20un%20proyecto"
@@ -42,8 +54,12 @@ const navLinks = [
         rel="noopener noreferrer"
         variant="primary"
         size="sm"
+        class="flex items-center gap-2"
       >
-        Contactar
+        <span>Contactar</span>
+        <svg class="w-3.5 h-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+          <path stroke-linecap="round" stroke-linejoin="round" d="M4.5 19.5l15-15m0 0H8.25m11.25 0v11.25" />
+        </svg>
       </Button>
     </div>
 
@@ -51,7 +67,7 @@ const navLinks = [
     <button
       id="mobile-menu-btn"
       type="button"
-      class="md:hidden p-2 border-2 border-black bg-white shadow-brutal hover:bg-orange transition-colors"
+      class="md:hidden p-2.5 rounded-lg border border-white/10 bg-white/5 text-white hover:border-accent hover:text-accent transition-colors"
       aria-expanded="false"
       aria-controls="mobile-menu-drawer"
       aria-label="Abrir menú de navegación"
@@ -61,54 +77,60 @@ const navLinks = [
         xmlns="http://www.w3.org/2000/svg"
         fill="none"
         viewBox="0 0 24 24"
-        stroke-width="2.5"
+        stroke-width="2"
         stroke="currentColor"
         class="w-6 h-6"
       >
-        <path stroke-linecap="square" stroke-linejoin="miter" d="M3.75 6.75h16.5M3.75 12h16.5m-16.5 5.25h16.5" />
+        <path stroke-linecap="round" stroke-linejoin="round" d="M3.75 6.75h16.5M3.75 12h16.5m-16.5 5.25h16.5" />
       </svg>
       <svg
         id="menu-close-icon"
         xmlns="http://www.w3.org/2000/svg"
         fill="none"
         viewBox="0 0 24 24"
-        stroke-width="2.5"
+        stroke-width="2"
         stroke="currentColor"
         class="w-6 h-6 hidden"
       >
-        <path stroke-linecap="square" stroke-linejoin="miter" d="M6 18L18 6M6 6l12 12" />
+        <path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12" />
       </svg>
     </button>
   </div>
 
-  <!-- Mobile Menu Overlay -->
+  <!-- Mobile Menu Overlay Drawer -->
   <div
     id="mobile-menu-drawer"
-    class="md:hidden hidden border-b-3 border-black bg-white px-6 py-8 flex-col gap-6 shadow-brutal"
+    class="md:hidden hidden border-b border-white/10 bg-[#0A0A0A]/95 backdrop-blur-xl px-6 py-8 flex-col gap-6 shadow-2xl"
     aria-hidden="true"
   >
-    <nav class="flex flex-col gap-5 text-xl font-bold uppercase tracking-wider" aria-label="Navegación móvil">
+    <nav class="flex flex-col gap-2 font-display text-base font-bold uppercase tracking-wider" aria-label="Navegación móvil">
       {
         navLinks.map((link) => (
           <a
             href={link.href}
-            class="mobile-nav-link text-black hover:text-orange py-2 border-b-2 border-gray-100"
+            class="mobile-nav-link text-zinc-300 hover:text-accent py-3 border-b border-white/5 flex items-center justify-between transition-colors"
           >
-            {link.label}
+            <span>{link.label}</span>
+            <svg class="w-4 h-4 text-zinc-600" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <path stroke-linecap="round" stroke-linejoin="round" d="M8.25 4.5l7.5 7.5-7.5 7.5" />
+            </svg>
           </a>
         ))
       }
     </nav>
-    <div class="pt-4">
+    <div class="pt-2">
       <Button
         href="https://wa.me/?text=Hola%20Harness%20Studio%2C%20quiero%20cotizar%20un%20proyecto"
         target="_blank"
         rel="noopener noreferrer"
         variant="primary"
         size="md"
-        class="w-full text-center"
+        class="w-full text-center flex items-center justify-center gap-2"
       >
-        Hablar por WhatsApp
+        <span>Hablar por WhatsApp</span>
+        <svg class="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+          <path stroke-linecap="round" stroke-linejoin="round" d="M4.5 19.5l15-15m0 0H8.25m11.25 0v11.25" />
+        </svg>
       </Button>
     </div>
   </div>
