@@ -6,7 +6,7 @@ Versión 1.0 · Documento de especificación funcional, de diseño y técnica.
 
 ## 1. Resumen
 
-HARNESS STUDIO es una startup dedicada al desarrollo web y de software. Este proyecto construye su sitio oficial: una **Home** y **cuatro páginas de servicio**, con estilo neo-brutalista / anti-diseño, animaciones entrelazadas entre secciones y una base de SEO técnico sólida.
+HARNESS STUDIO es una startup dedicada al desarrollo web y de software. Este proyecto construye su sitio oficial: una **Home** y **cuatro páginas de servicio**, con un sistema de diseño modular y adaptable, animaciones entrelazadas entre secciones y una base de SEO técnico sólida.
 
 ### Objetivos
 
@@ -144,39 +144,40 @@ Todas las páginas se generan con **una plantilla única** (`src/pages/servicios
 
 ## 8. Diseño
 
-**Dirección**: neo-brutalismo / anti-diseño. Tipografía grande y creativa, composición audaz, sin excesos de profundidad.
+**Dirección**: Diseño profesional, centrado en el usuario y modular, guiado por un sistema de diseño escalable. La identidad visual se define mediante tokens en `src/styles/tokens.css` (color, tipografía, elevación, espaciado) permitiendo adaptarse a cualquier dirección de diseño que se elija sin rehacer la arquitectura base.
 
 ### Paleta
 
-| Token | Valor | Uso |
+La paleta se organiza mediante tokens semánticos definidos en `src/styles/tokens.css` y consumidos en Tailwind:
+
+| Capa de color | Propósito | Criterio de uso |
 |---|---|---|
-| `--black` | `#0A0A0A` | Texto, bordes, fondos oscuros |
-| `--white` | `#FFFFFF` | Fondos, texto sobre negro |
-| `--gray-100` | `#EDEDED` | Fondos alternos |
-| `--gray-300` | `#BDBDBD` | Bordes secundarios |
-| `--gray-500` | `#8A8A8A` | Texto de apoyo |
-| `--gray-800` | `#2B2B2B` | Fondos oscuros secundarios |
-| `--orange` | `#FF5A00` | Acento (un foco por pantalla) |
+| **Fondos y superficies** | Lienzo principal, tarjetas y contenedores | Contraste nítido y separación visual clara entre secciones |
+| **Texto y contrastes** | Títulos, párrafos y texto atenuado | Jerarquía tipográfica legible y cumplimiento estricto WCAG AA |
+| **Acento de marca** | Botones principales, llamados a la acción, destaques | Uso estratégico y dosificado para guiar la atención del usuario |
+| **Bordes y divisores** | Delimitación estructural de componentes | Consistencia en grosor y color según el nivel de elevación |
+
+*Nota: Los valores concretos de los tokens se configuran centralizadamente en `tokens.css` según la dirección visual acordada.*
 
 ### Lenguaje visual
 
-- Bordes negros gruesos (3–4 px).
-- Sombras duras con offset y sin blur (`6px 6px 0 #000`) como única profundidad.
-- Botones que se "hunden" al hover.
-- Stickers o etiquetas rotadas, marquees de texto, numeración grande y grillas visibles.
-- Bloques de color plano.
-- Sin gradientes, sin blur, sin sombras suaves, sin efectos 3D.
+- **Coherencia basada en componentes**: La interfaz se construye con componentes modulares y reutilizables (botones, tarjetas, badges, acordeones) con variantes visuales bien definidas.
+- **Espaciado y ritmo**: Sistema de espaciado proporcional y predecible (márgenes y paddings consistentes en desktop y móvil).
+- **Elevación y profundidad**: Definida a través del sistema de tokens (sombras, bordes o superficies planas) aplicada con criterio uniforme en toda la web.
+- **Microinteracciones y feedback**: Estados interactivos claros (hover, active, focus-visible) en todos los elementos interactivos que comuniquen respuesta inmediata.
+- **Diseño responsive**: Adaptabilidad fluida desde móvil (360px) hasta pantallas grandes (1280px+), sin desbordes horizontales ni pérdida de jerarquía.
 
 ### Tipografía
 
-- Una familia display de gran tamaño para titulares (fluida con `clamp()`, interlineado ajustado, mayúsculas permitidas) y una familia simple y legible para el cuerpo. Máximo 2 familias.
-- Candidatas display: Bricolage Grotesque, Anton, Unbounded, Space Grotesk. La elección final se valida en el prototipo (P2).
+- Sistema tipográfico con un máximo de 2 familias (titulares/display y cuerpo de texto).
+- Escala tipográfica fluida utilizando `clamp()` para transiciones naturales entre viewports.
+- Tipografía de titulares con personalidad de marca y cuerpo optimizado para máxima legibilidad (mínimo 16px).
 
 ### Accesibilidad visual
 
-- Contraste WCAG AA en todo texto (sobre naranja se usa negro).
-- Foco visible con estilo propio.
-- Tamaño mínimo de texto de cuerpo: 16 px.
+- Cumplimiento de ratio de contraste WCAG AA en todos los textos e interactivos sobre cualquier fondo.
+- Indicadores de foco visibles y accesibles para navegación por teclado.
+- Jerarquía visual que no dependa exclusivamente del color para transmitir información o estado.
 
 ---
 
@@ -237,7 +238,7 @@ Todas las páginas se generan con **una plantilla única** (`src/pages/servicios
 - [ ] Jerarquía de headings válida (un `h1` por página).
 - [ ] Responsive sin scroll horizontal en 360 / 768 / 1280 px.
 - [ ] Cero enlaces rotos.
-- [ ] Paleta y estilo respetados (sin gradientes, blur ni sombras suaves).
+- [ ] Sistema de diseño respetado (tokens centralizados, sin estilos arbitrarios).
 - [ ] Animaciones entrelazadas y con `prefers-reduced-motion`.
 - [ ] Lighthouse dentro de las metas.
 

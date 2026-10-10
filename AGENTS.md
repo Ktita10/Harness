@@ -81,36 +81,43 @@ Slugs en minúsculas, sin acentos, con guiones. Cada página con URL canónica a
 
 ## 6. Sistema de diseño
 
-Estilo: **neo-brutalismo / anti-diseño**. Tipografía enorme y creativa, composición audaz, sin profundidad excesiva.
+El sitio se construye sobre un sistema de diseño modular, escalable y guiado por tokens en `src/styles/tokens.css`. La arquitectura visual no está acoplada a una estética fija, sino que sirve de guía para cualquier dirección de diseño que se defina, priorizando coherencia, jerarquía y accesibilidad.
 
 ### Tokens (fuente única en `src/styles/tokens.css`)
 
+Toda propiedad visual (colores, tipografía, espaciado, bordes, radios y sombras) debe declararse mediante variables CSS y consumirse a través de Tailwind:
+
 ```css
 :root {
-  --black: #0A0A0A;
-  --white: #FFFFFF;
-  --gray-100: #EDEDED;
-  --gray-300: #BDBDBD;
-  --gray-500: #8A8A8A;
-  --gray-800: #2B2B2B;
-  --orange: #FF5A00;      /* único color de acento */
+  /* Paleta semántica y neutros */
+  --bg-primary: #FFFFFF;
+  --bg-secondary: #F8F9FA;
+  --text-primary: #0A0A0A;
+  --text-muted: #6B7280;
+  --accent: #FF5A00;
+  --accent-contrast: #FFFFFF;
 
-  --border: 3px solid var(--black);
-  --shadow-hard: 6px 6px 0 var(--black);
-  --shadow-hard-hover: 2px 2px 0 var(--black);
+  /* Superficies, bordes y elevación */
+  --border-color: #E5E7EB;
+  --radius-sm: 4px;
+  --radius-md: 8px;
+  --radius-lg: 16px;
+  --shadow-subtle: 0 1px 3px rgba(0, 0, 0, 0.1);
+  --shadow-card: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
 }
 ```
 
+*Nota: Los valores concretos de los tokens se adaptan a la identidad visual acordada, pero siempre deben consumirse centralizadamente.*
+
 ### Reglas
 
-- **Solo** estos colores. Prohibido introducir otros. El naranja es acento: no más de un foco naranja dominante por pantalla.
-- **Sin blur, sin gradientes, sin sombras suaves, sin glassmorphism, sin 3D.** La única "profundidad" es la sombra dura con offset (`--shadow-hard`).
-- Bordes gruesos y negros en tarjetas, botones e inputs.
-- Botones: al hover se "hunden" (la sombra se reduce y el elemento se traslada).
-- Tipografía display grande (`clamp()` fluido), interlineado ajustado, mayúsculas permitidas en titulares. Cuerpo en una fuente simple y legible. Máximo 2 familias.
-- Elementos permitidos: stickers/etiquetas rotadas, marquees de texto, grillas visibles, numeración grande, bloques de color plano.
-- Mantener contraste WCAG AA (texto sobre naranja: usar negro).
-- Nada de sombras o efectos que simulen volumen realista.
+- **Fidelidad al sistema de tokens**: Prohibido hardcodear colores, espaciados o estilos arbitrarios en los componentes. Toda propiedad visual debe provenir de `tokens.css` o del tema de Tailwind.
+- **Componentes reutilizables**: Construir mediante componentes atómicos y modulares (botones, tarjetas, badges, contenedores) con variantes claras y consistentes.
+- **Jerarquía y ritmo visual**: Cada pantalla debe tener un punto focal claro. Mantener una escala tipográfica coherente y espaciados armónicos para asegurar legibilidad y orden.
+- **Estados interactivos**: Botones, enlaces e interactivos deben contar con estados claros de hover, active y focus visible, manteniendo coherencia de respuesta en todo el sitio.
+- **Tipografía**: Máximo 2 familias tipográficas (titulares y cuerpo de texto). Titulares con escala fluida (`clamp()`) y cuerpo optimizado para legibilidad (mínimo 16px).
+- **Accesibilidad visual**: Garantizar ratio de contraste WCAG AA en todas las combinaciones de texto y fondo.
+- **Adaptabilidad responsive**: Diseño mobile-first con verificación obligatoria en 360, 768 y 1280 px.
 
 ## 7. Contenido, headings y SEO
 
@@ -185,7 +192,8 @@ Si algo de la especificación es ambiguo o falta un dato (precios, textos, núme
 
 ## 14. Prohibido
 
-- Colores fuera de la paleta, gradientes, blur o sombras suaves.
+- Colores, espaciados o estilos hardcodeados fuera del sistema de tokens (`tokens.css`) o Tailwind.
+- Romper la coherencia visual del sistema de diseño acordado con estilos ad-hoc.
 - Instalar dependencias pesadas sin necesidad.
 - Duplicar páginas de servicio en vez de usar la plantilla única.
 - Inventar precios, métricas, testimonios o logos de clientes.
