@@ -1,31 +1,39 @@
 ---
-import Badge from '../ui/Badge.astro';
-
 const steps = [
   {
     number: '01',
+    phase: 'FASE 01',
     title: 'Brief inicial',
     description: 'Conversamos por WhatsApp o videollamada para entender tu negocio, propuesta de valor y requerimientos puntuales.',
+    position: 'bottom',
   },
   {
     number: '02',
+    phase: 'FASE 02',
     title: 'Propuesta clara',
     description: 'Te enviamos un alcance cerrado con plazos exactos, precio fijo y los entregables detallados, sin sorpresas.',
+    position: 'top',
   },
   {
     number: '03',
+    phase: 'FASE 03',
     title: 'Diseño enfocado',
     description: 'Creamos una interfaz audaz adaptada a tu público objetivo, optimizada para convertir visitas en consultas.',
+    position: 'bottom',
   },
   {
     number: '04',
+    phase: 'FASE 04',
     title: 'Desarrollo veloz',
     description: 'Construimos el sitio con Astro y código limpio, alcanzando 95+ en Lighthouse y tiempos de carga instantáneos.',
+    position: 'top',
   },
   {
     number: '05',
+    phase: 'FASE 05',
     title: 'Lanzamiento & Soporte',
     description: 'Conectamos tu dominio, publicamos en producción y te damos 30 días de garantía con soporte técnico directo.',
+    position: 'bottom',
   },
 ];
 ---
@@ -33,43 +41,186 @@ const steps = [
 <section
   id="proceso"
   aria-labelledby="process-title"
-  class="py-20 sm:py-28 px-4 sm:px-6 lg:px-8 max-w-7xl mx-auto border-t-3 border-black bg-gray-100"
+  class="relative w-full max-w-full overflow-hidden transition-colors duration-200 border-t border-white/10"
+  style="--process-bg: #0A0A0A; --process-text: #FFFFFF; --process-muted: #A1A1AA; --process-border: rgba(255, 255, 255, 0.1); background-color: var(--process-bg);"
 >
-  <div class="mb-12 sm:mb-16">
-    <Badge variant="orange" class="mb-3">Metodología</Badge>
-    <h2
-      id="process-title"
-      class="font-display text-3xl sm:text-5xl lg:text-6xl font-black uppercase text-black leading-tight tracking-tight mb-4"
-    >
-      Cómo trabajamos
-    </h2>
-    <p class="text-base sm:text-lg text-gray-800 font-medium max-w-2xl">
+  <!-- 1. Header (Liberated width, flush to left) -->
+  <div
+    data-process-header
+    class="w-full px-6 sm:px-10 lg:px-16 pt-16 sm:pt-20 pb-8 flex flex-col md:flex-row md:items-end justify-between gap-6 border-b border-[var(--process-border)] relative z-20"
+  >
+    <div>
+      <div class="flex items-center gap-3 mb-3 font-mono text-xs uppercase tracking-widest text-accent font-bold">
+        <span class="inline-block w-2 h-2 rounded-full bg-accent animate-pulse"></span>
+        <span>03 / METODOLOGÍA</span>
+      </div>
+      <h2
+        id="process-title"
+        class="font-display text-3xl sm:text-5xl lg:text-6xl font-black uppercase tracking-tight text-[var(--process-text)] leading-none"
+      >
+        Cómo trabajamos
+      </h2>
+    </div>
+    <p class="text-xs sm:text-sm lg:text-base font-normal max-w-md text-[var(--process-muted)] leading-relaxed">
       Un proceso transparente de 5 pasos diseñado para entregarte una herramienta comercial funcional sin demoras burocráticas.
     </p>
   </div>
 
-  <!-- Wire harness connecting line -->
-  <div data-process-wire class="hidden lg:block w-full h-1 bg-black mb-6 relative" aria-hidden="true">
-    <div class="absolute right-0 top-1/2 -translate-y-1/2 w-3.5 h-3.5 bg-orange border-2 border-black rotate-45"></div>
+  <!-- 2. Desktop Horizontal Track with Pinned Wire & Alternating Slides (lg:flex) -->
+  <div
+    data-process-desktop
+    class="hidden lg:flex flex-col h-[75vh] min-h-[580px] max-h-[820px] justify-between relative overflow-hidden"
+  >
+    <div
+      data-process-track
+      class="flex flex-row items-stretch h-full relative will-change-transform"
+    >
+      <!-- Continuous Guide Wire SVG spanning full width of track -->
+      <svg
+        data-process-wire
+        class="absolute inset-0 w-full h-full pointer-events-none z-10 overflow-visible"
+        viewBox="0 0 5000 700"
+        preserveAspectRatio="none"
+        fill="none"
+        xmlns="http://www.w3.org/2000/svg"
+        aria-hidden="true"
+      >
+        <!-- Background guide track -->
+        <path
+          d="M 0 160 L 500 160 C 850 160 1150 540 1500 540 C 1850 540 2150 150 2500 150 C 2850 150 3150 550 3500 550 C 3850 550 4150 280 4500 280 L 5000 280"
+          stroke="var(--accent)"
+          stroke-width="1.5"
+          stroke-opacity="0.18"
+          vector-effect="non-scaling-stroke"
+        />
+        <!-- Active wire animated via GSAP strokeDashoffset -->
+        <path
+          data-process-wire-path
+          d="M 0 160 L 500 160 C 850 160 1150 540 1500 540 C 1850 540 2150 150 2500 150 C 2850 150 3150 550 3500 550 C 3850 550 4150 280 4500 280 L 5000 280"
+          stroke="var(--accent)"
+          stroke-width="2.5"
+          pathLength="1"
+          stroke-dasharray="1"
+          stroke-dashoffset="1"
+          vector-effect="non-scaling-stroke"
+        />
+        <!-- Nodes at step coordinates -->
+        <g class="process-node" data-node="1" transform="translate(500, 160)">
+          <circle r="14" fill="var(--accent)" fill-opacity="0.2" />
+          <circle r="5" fill="var(--accent)" />
+          <circle r="2" fill="#FFFFFF" />
+        </g>
+        <g class="process-node" data-node="2" transform="translate(1500, 540)">
+          <circle r="14" fill="var(--accent)" fill-opacity="0.2" />
+          <circle r="5" fill="var(--accent)" />
+          <circle r="2" fill="#FFFFFF" />
+        </g>
+        <g class="process-node" data-node="3" transform="translate(2500, 150)">
+          <circle r="14" fill="var(--accent)" fill-opacity="0.2" />
+          <circle r="5" fill="var(--accent)" />
+          <circle r="2" fill="#FFFFFF" />
+        </g>
+        <g class="process-node" data-node="4" transform="translate(3500, 550)">
+          <circle r="14" fill="var(--accent)" fill-opacity="0.2" />
+          <circle r="5" fill="var(--accent)" />
+          <circle r="2" fill="#FFFFFF" />
+        </g>
+        <g class="process-node" data-node="5" transform="translate(4500, 280)">
+          <circle r="14" fill="var(--accent)" fill-opacity="0.2" />
+          <circle r="5" fill="var(--accent)" />
+          <circle r="2" fill="#FFFFFF" />
+        </g>
+      </svg>
+
+      <!-- 5 Alternating Slides -->
+      {
+        steps.map((step) => {
+          const isTop = step.position === 'top';
+          return (
+            <article
+              data-process-slide
+              class={`w-[45vw] xl:w-[40vw] h-full flex-shrink-0 relative px-10 xl:px-14 flex flex-col ${
+                isTop ? 'justify-start pt-14 pb-32' : 'justify-end pb-14 pt-32'
+              } border-r border-[var(--process-border)] transition-colors duration-300`}
+            >
+              <div class="relative z-20">
+                <div
+                  data-process-number
+                  class="font-display text-7xl xl:text-8xl font-black tracking-tighter select-none leading-none mb-3 text-[var(--process-text)] transition-colors duration-300"
+                  style="-webkit-text-stroke: 1.5px currentColor; color: transparent;"
+                >
+                  {step.number}
+                </div>
+                <span class="inline-block font-mono text-xs uppercase tracking-widest text-accent font-bold mb-2">
+                  // {step.phase}
+                </span>
+                <h3 class="font-display text-2xl xl:text-3xl font-extrabold uppercase tracking-tight text-[var(--process-text)] leading-tight mb-3 transition-colors duration-300">
+                  {step.title}
+                </h3>
+                <p class="text-sm xl:text-base text-[var(--process-muted)] leading-relaxed max-w-sm font-normal transition-colors duration-300">
+                  {step.description}
+                </p>
+              </div>
+            </article>
+          );
+        })
+      }
+    </div>
+
+    <!-- Bottom Telemetry Bar -->
+    <div class="w-full px-6 sm:px-10 lg:px-16 py-4 flex items-center justify-between border-t border-[var(--process-border)] text-[10px] font-mono tracking-widest uppercase text-[var(--process-muted)] relative z-20">
+      <span class="flex items-center gap-2">
+        <span class="w-1.5 h-1.5 rounded-full bg-accent"></span>
+        DESPLAZAMIENTO LINEAL DE FASES
+      </span>
+      <span>SCROLL PARA NAVEGAR EL PROCESO →</span>
+    </div>
   </div>
 
-  <div class="grid grid-cols-1 md:grid-cols-3 lg:grid-cols-5 gap-6">
-    {
-      steps.map((step) => (
-        <div class="border-brutal shadow-brutal bg-white p-6 flex flex-col justify-between hover:-translate-y-1 transition-transform">
-          <div>
-            <span class="font-display text-4xl sm:text-5xl font-black text-orange block mb-3">
+  <!-- 3. Mobile Vertical Timeline (< 1024px) -->
+  <div class="block lg:hidden px-6 sm:px-10 py-12 relative">
+    <!-- Vertical guide line down the left edge -->
+    <div
+      class="absolute left-8 sm:left-12 top-14 bottom-14 w-0.5 bg-accent/20 pointer-events-none"
+      aria-hidden="true"
+    >
+      <div
+        data-process-mobile-progress
+        class="w-full bg-accent h-0 transition-all"
+      ></div>
+    </div>
+
+    <div class="space-y-12 sm:space-y-16 relative z-10 pl-8 sm:pl-12">
+      {
+        steps.map((step) => (
+          <article class="relative">
+            <!-- Node indicator dot on the vertical wire -->
+            <div
+              class="absolute -left-[39px] sm:-left-[55px] top-1.5 flex items-center justify-center w-5 h-5 rounded-full bg-[var(--process-bg)] border border-accent"
+              aria-hidden="true"
+            >
+              <span class="w-1.5 h-1.5 rounded-full bg-accent"></span>
+            </div>
+
+            <div
+              data-process-number
+              class="font-display text-5xl sm:text-6xl font-black tracking-tighter select-none leading-none mb-2 text-[var(--process-text)]"
+              style="-webkit-text-stroke: 1.5px currentColor; color: transparent;"
+            >
               {step.number}
+            </div>
+            <span class="inline-block font-mono text-xs uppercase tracking-widest text-accent font-bold mb-1">
+              // {step.phase}
             </span>
-            <h3 class="font-display text-xl sm:text-2xl font-bold uppercase text-black mb-3">
+            <h3 class="font-display text-xl sm:text-2xl font-bold uppercase tracking-tight text-[var(--process-text)] leading-tight mb-2">
               {step.title}
             </h3>
-            <p class="text-sm sm:text-base text-gray-800 font-medium leading-relaxed">
+            <p class="text-sm text-[var(--process-muted)] leading-relaxed max-w-md font-normal">
               {step.description}
             </p>
-          </div>
-        </div>
-      ))
-    }
+          </article>
+        ))
+      }
+    </div>
   </div>
 </section>
