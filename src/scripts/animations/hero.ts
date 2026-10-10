@@ -14,7 +14,7 @@ export function initHeroAnimation(): gsap.core.Timeline | null {
   }
 
   if (h1) {
-    tl.from(h1, { y: '35%', opacity: 0, duration: 1, ease: 'power3.out' }, 0.25);
+    tl.from(h1, { y: 40, opacity: 0, duration: 1, ease: 'power3.out' }, 0.25);
   }
 
   return tl;
