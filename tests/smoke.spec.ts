@@ -8,7 +8,7 @@ test.describe('Foundation & Smoke Tests', () => {
     const h1 = page.locator('h1');
     await expect(h1).toHaveCount(1);
     await expect(h1).toBeVisible();
-    await expect(h1).toContainText('Hacemos webs que');
+    await expect(h1).toContainText('HARNESS');
 
     // Check skip link targets main content
     const skipLink = page.locator('a.skip-link');

@@ -1,69 +1,72 @@
 ---
-import Button from '../ui/Button.astro';
-import Badge from '../ui/Badge.astro';
 ---
 
 <section
   id="hero"
   aria-labelledby="hero-title"
-  class="pt-32 pb-20 sm:pt-40 sm:pb-28 px-4 sm:px-6 lg:px-8 max-w-7xl mx-auto flex flex-col justify-center min-h-[85vh]"
+  class="relative pt-28 sm:pt-36 lg:pt-40 min-h-[90vh] flex flex-col justify-between overflow-hidden bg-bg-primary select-none"
 >
-  <div class="flex flex-col gap-6 max-w-5xl">
-    <!-- Top Sticker Badge -->
-    <div class="self-start">
-      <Badge variant="orange" rotate={-1}>
-        Desarrollo Web & Software a Medida
-      </Badge>
-    </div>
+  <!-- Ambient Atmospheric Glow & Tech Grid -->
+  <div
+    class="absolute inset-0 pointer-events-none -z-10 bg-[radial-gradient(ellipse_70%_55%_at_50%_40%,rgba(255,90,0,0.10),transparent_70%)]"
+    aria-hidden="true"
+  ></div>
+  <div
+    class="absolute inset-0 pointer-events-none -z-10 opacity-[0.03] bg-[linear-gradient(to_right,#ffffff_1px,transparent_1px),linear-gradient(to_bottom,#ffffff_1px,transparent_1px)] bg-[size:4rem_4rem]"
+    aria-hidden="true"
+  ></div>
 
-    <!-- Main H1 (Single H1 on page) -->
+  <!-- Top Asymmetrical Narrative Grid -->
+  <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 w-full z-10 flex-1 flex flex-col justify-center">
+    <div class="grid grid-cols-1 md:grid-cols-12 gap-8 lg:gap-12 items-start relative">
+      <!-- Bloque Izquierdo (Elevado) -->
+      <div class="md:col-span-5 lg:col-span-4 flex flex-col gap-3 md:pt-4">
+        <div class="inline-flex items-center gap-2 text-[11px] font-mono tracking-widest uppercase text-accent font-semibold">
+          <span class="w-1.5 h-1.5 rounded-full bg-accent animate-pulse"></span>
+          <span>01 / VELOCIDAD & PRECISIÓN</span>
+        </div>
+        <h2 class="font-display font-black text-xl sm:text-2xl lg:text-3xl uppercase tracking-tight text-text-primary leading-[1.1]">
+          Donde la velocidad bruta se encuentra con el diseño de culto.
+        </h2>
+        <p class="text-sm sm:text-base text-text-secondary leading-relaxed font-normal">
+          Diseñamos y programamos plataformas pensadas para dominar la pantalla y transformar tráfico en tracción real.
+        </p>
+      </div>
+
+      <!-- Centro (Espacio reservado para el futuro elemento 3D del nodo de cables) -->
+      <div
+        id="hero-3d-slot"
+        class="hidden md:flex md:col-span-2 lg:col-span-4 min-h-[140px] lg:min-h-[200px] items-center justify-center relative pointer-events-none"
+        aria-hidden="true"
+      >
+        <div class="w-28 h-28 rounded-full border border-white/5 flex items-center justify-center">
+          <div class="w-14 h-14 rounded-full border border-accent/20 animate-pulse"></div>
+        </div>
+      </div>
+
+      <!-- Bloque Derecho (Más bajo, ritmo asimétrico) -->
+      <div class="md:col-span-5 lg:col-span-4 flex flex-col gap-3 md:mt-16 lg:mt-24">
+        <div class="inline-flex items-center gap-2 text-[11px] font-mono tracking-widest uppercase text-accent font-semibold">
+          <span class="w-1.5 h-1.5 rounded-full bg-accent/60"></span>
+          <span>02 / INFRAESTRUCTURA</span>
+        </div>
+        <h2 class="font-display font-black text-xl sm:text-2xl lg:text-3xl uppercase tracking-tight text-text-primary leading-[1.1]">
+          Sin deuda técnica. Sin atajos.
+        </h2>
+        <p class="text-sm sm:text-base text-text-secondary leading-relaxed font-normal">
+          Rendimiento quirúrgico, cero código inflado y tecnología construida a la medida de tu ambición.
+        </p>
+      </div>
+    </div>
+  </div>
+
+  <!-- Bottom Centered H1 — HARNESS (Cortado ~25% en la base) -->
+  <div class="w-full overflow-hidden flex justify-center items-end pt-8 md:pt-12 mt-auto pointer-events-none">
     <h1
       id="hero-title"
-      class="font-display text-4xl sm:text-6xl md:text-7xl lg:text-8xl font-black uppercase text-black leading-[0.95] tracking-tight"
+      class="font-display font-black text-[18vw] sm:text-[19vw] lg:text-[20vw] leading-[0.78] tracking-tighter uppercase text-center select-none text-transparent bg-clip-text bg-gradient-to-b from-white via-white/80 to-white/15 translate-y-[24%] drop-shadow-[0_20px_60px_rgba(255,90,0,0.12)]"
     >
-      Hacemos webs que <span class="bg-orange px-2 border-2 border-black inline-block mt-1 sm:mt-0 shadow-brutal rotate-1">convierten</span> y software que escala.
+      HARNESS
     </h1>
-
-    <!-- Subtitle -->
-    <p class="text-xl sm:text-2xl md:text-3xl text-gray-800 font-medium max-w-3xl leading-snug pt-2">
-      Sitios veloces, sin plantillas genéricas ni código inflado. Para pymes y emprendedores que se toman en serio su presencia digital.
-    </p>
-
-    <!-- CTAs -->
-    <div class="flex flex-wrap items-center gap-4 sm:gap-6 pt-6">
-      <Button
-        href="https://wa.me/?text=Hola%20Harness%20Studio%2C%20quiero%20cotizar%20un%20proyecto"
-        target="_blank"
-        rel="noopener noreferrer"
-        variant="primary"
-        size="lg"
-      >
-        Cotizar por WhatsApp
-      </Button>
-
-      <Button
-        href="#servicios"
-        variant="secondary"
-        size="lg"
-      >
-        Ver Servicios ↓
-      </Button>
-    </div>
-
-    <!-- Quick proof badges -->
-    <div class="grid grid-cols-2 sm:grid-cols-4 gap-4 pt-10 border-t-3 border-black mt-6 text-sm font-bold uppercase tracking-wider">
-      <div class="flex items-center gap-2">
-        <span class="text-orange text-lg">■</span> Lighthouse 95+ Garantizado
-      </div>
-      <div class="flex items-center gap-2">
-        <span class="text-orange text-lg">■</span> Sin comisiones por venta
-      </div>
-      <div class="flex items-center gap-2">
-        <span class="text-orange text-lg">■</span> Código 100% tuyo
-      </div>
-      <div class="flex items-center gap-2">
-        <span class="text-orange text-lg">■</span> Trato directo por WhatsApp
-      </div>
-    </div>
   </div>
 </section>

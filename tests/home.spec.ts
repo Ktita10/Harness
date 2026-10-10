@@ -9,7 +9,7 @@ test.describe('Home Page - Structural & Functional Verification', () => {
     const h1 = page.locator('h1');
     await expect(h1).toHaveCount(1);
     await expect(h1).toBeVisible();
-    await expect(h1).toContainText('Hacemos webs que');
+    await expect(h1).toContainText('HARNESS');
   });
 
   test('renders all 8 sections in proper semantic structure', async ({ page }) => {

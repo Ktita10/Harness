@@ -9,7 +9,7 @@ test.describe('Progressive Enhancement & No-JS Fallback', () => {
     // 1. H1 is visible and legible
     const h1 = page.locator('h1');
     await expect(h1).toBeVisible();
-    await expect(h1).toContainText('Hacemos webs que');
+    await expect(h1).toContainText('HARNESS');
 
     // 2. All 8 sections are attached and visible
     const sections = [
