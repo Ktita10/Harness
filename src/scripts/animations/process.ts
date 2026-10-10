@@ -3,18 +3,31 @@ import { ScrollTrigger } from 'gsap/ScrollTrigger';
 
 gsap.registerPlugin(ScrollTrigger);
 
+// Single source of truth: every text/stroke in the section reads these CSS
+// variables, so tweening them on the section drives all colors in sync.
+const LIGHT = { bg: '#FFFFFF', text: '#0A0A0A', muted: '#52525B' };
+
+function addColorTransition(tl: gsap.core.Timeline, section: HTMLElement, total: number): void {
+  // Background glides across the whole scroll.
+  tl.to(section, { '--process-bg': LIGHT.bg, backgroundColor: LIGHT.bg, ease: 'none', duration: total }, 0);
+
+  // Text flips in a short window around the midpoint, while the background is
+  // mid-gray, so contrast never collapses for a long stretch.
+  tl.to(
+    section,
+    { '--process-text': LIGHT.text, '--process-muted': LIGHT.muted, ease: 'power2.inOut', duration: total * 0.2 },
+    total * 0.4
+  );
+}
+
 export function initProcessAnimation(): gsap.core.Timeline | null {
   const section = document.getElementById('proceso');
   if (!section) return null;
 
   const track = section.querySelector<HTMLElement>('[data-process-track]');
-  const headings = section.querySelectorAll<HTMLElement>('#process-title, h2, h3');
-  const numbers = section.querySelectorAll<HTMLElement>('[data-process-number]');
-  const paragraphs = section.querySelectorAll<HTMLElement>('p, span');
-
   const mm = gsap.matchMedia();
 
-  // Desktop (>= 1024px): Pinned horizontal track glide with background color scrub
+  // Desktop: pinned horizontal glide
   mm.add('(min-width: 1024px)', () => {
     if (!track) return;
 
@@ -24,96 +37,37 @@ export function initProcessAnimation(): gsap.core.Timeline | null {
       scrollTrigger: {
         trigger: section,
         pin: true,
-        scrub: 1.2,
+        scrub: 1,
         start: 'top top',
         end: () => `+=${scrollDistance() + 400}`,
         invalidateOnRefresh: true,
       },
     });
 
-    // 1. Fluid horizontal slide
-    tl.to(
-      track,
-      {
-        x: () => -scrollDistance(),
-        ease: 'none',
-      },
-      0
-    );
+    tl.to(track, { x: () => -scrollDistance(), ease: 'none', duration: 1 }, 0);
+    addColorTransition(tl, section, 1);
 
-    // 2. Background transition from deep black (#0A0A0A) to pure white (#FFFFFF)
-    tl.to(
-      section,
-      {
-        backgroundColor: '#FFFFFF',
-        ease: 'none',
-      },
-      0
-    );
-
-    // 3. Invert text and numbers for AA contrast
-    tl.to(
-      section,
-      {
-        '--process-bg': '#FFFFFF',
-        '--process-text': '#0A0A0A',
-        '--process-muted': '#52525B',
-        ease: 'power1.inOut',
-      },
-      0.15
-    );
-
-    if (headings.length > 0) {
-      tl.to(headings, { color: '#0A0A0A', ease: 'power1.inOut' }, 0.15);
-    }
-    if (numbers.length > 0) {
-      tl.to(numbers, { color: '#0A0A0A', ease: 'power1.inOut' }, 0.15);
-    }
-    if (paragraphs.length > 0) {
-      tl.to(paragraphs, { color: '#52525B', ease: 'power1.inOut' }, 0.15);
-    }
+    return () => {
+      gsap.set(section, { clearProps: '--process-bg,--process-text,--process-muted,backgroundColor' });
+    };
   });
 
-  // Mobile (< 1024px): Vertical flow with background transition to white
+  // Mobile / tablet: vertical flow
   mm.add('(max-width: 1023px)', () => {
-    const mobileTl = gsap.timeline({
+    const tl = gsap.timeline({
       scrollTrigger: {
         trigger: section,
         start: 'top 70%',
         end: 'bottom 85%',
-        scrub: 1.2,
+        scrub: 1,
       },
     });
 
-    mobileTl.to(
-      section,
-      {
-        backgroundColor: '#FFFFFF',
-        ease: 'none',
-      },
-      0
-    );
+    addColorTransition(tl, section, 1);
 
-    mobileTl.to(
-      section,
-      {
-        '--process-bg': '#FFFFFF',
-        '--process-text': '#0A0A0A',
-        '--process-muted': '#52525B',
-        ease: 'power1.inOut',
-      },
-      0.15
-    );
-
-    if (headings.length > 0) {
-      mobileTl.to(headings, { color: '#0A0A0A', ease: 'power1.inOut' }, 0.15);
-    }
-    if (numbers.length > 0) {
-      mobileTl.to(numbers, { color: '#0A0A0A', ease: 'power1.inOut' }, 0.15);
-    }
-    if (paragraphs.length > 0) {
-      mobileTl.to(paragraphs, { color: '#52525B', ease: 'power1.inOut' }, 0.15);
-    }
+    return () => {
+      gsap.set(section, { clearProps: '--process-bg,--process-text,--process-muted,backgroundColor' });
+    };
   });
 
   return null;
