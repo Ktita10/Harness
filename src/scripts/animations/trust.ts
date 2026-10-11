@@ -7,59 +7,49 @@ export function initTrustAnimation(): gsap.core.Timeline | null {
   const section = document.getElementById('confianza');
   if (!section) return null;
 
-  const header = section.querySelector('.mb-12, .mb-16');
-  const cards = section.querySelectorAll('.grid > div');
-  const counterElements = section.querySelectorAll<HTMLElement>('[data-counter]');
+  const header = section.querySelector<HTMLElement>('[data-trust-header]');
+  const leftRows = section.querySelectorAll<HTMLElement>('[data-trust-row][data-align="left"]');
+  const rightRows = section.querySelectorAll<HTMLElement>('[data-trust-row][data-align="right"]');
 
   const tl = gsap.timeline({
     scrollTrigger: {
       trigger: section,
-      start: 'top 78%',
+      start: 'top 80%',
       toggleActions: 'play none none none',
     },
-    defaults: { ease: 'power2.out' },
+    defaults: { ease: 'power3.out' },
   });
 
   if (header) {
-    tl.from(header, { y: 25, opacity: 0, duration: 0.6 });
+    tl.from(header, { y: 30, opacity: 0, duration: 0.7 });
   }
 
-  if (cards.length > 0) {
+  // Interleaved entrance: left rows from left, right rows from right
+  if (leftRows.length > 0) {
     tl.from(
-      cards,
+      leftRows,
       {
-        y: 35,
+        x: -40,
         opacity: 0,
-        stagger: 0.12,
-        duration: 0.6,
+        stagger: 0.2,
+        duration: 0.8,
       },
-      '-=0.3'
+      '-=0.4'
     );
   }
 
-  // Animate numeric counters smoothly up to their target values
-  counterElements.forEach((el) => {
-    const target = parseFloat(el.getAttribute('data-counter') || '0');
-    const suffix = el.getAttribute('data-counter-suffix') || '';
-    const prefix = el.getAttribute('data-counter-prefix') || '';
-    const proxy = { val: 0 };
-
-    tl.to(
-      proxy,
+  if (rightRows.length > 0) {
+    tl.from(
+      rightRows,
       {
-        val: target,
-        duration: 1.4,
-        ease: 'power2.out',
-        onUpdate: () => {
-          el.textContent = `${prefix}${Math.round(proxy.val)}${suffix}`;
-        },
-        onComplete: () => {
-          el.textContent = `${prefix}${target}${suffix}`;
-        },
+        x: 40,
+        opacity: 0,
+        stagger: 0.2,
+        duration: 0.8,
       },
-      '-=0.5'
+      '-=0.6'
     );
-  });
+  }
 
   return tl;
 }

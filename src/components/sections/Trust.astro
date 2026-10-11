@@ -1,42 +1,44 @@
 ---
-import Badge from '../ui/Badge.astro';
-
 const commitments = [
   {
-    icon: '⚡',
+    number: '01',
     title: 'Velocidad garantizada',
-    subtitle: 'Lighthouse 95+ en móviles',
+    subtitlePrefix: 'Lighthouse ',
+    metric: '95+',
     counterValue: '95',
     counterSuffix: '+',
-    counterPrefix: 'Lighthouse ',
-    counterRest: ' en móviles',
+    subtitleSuffix: ' en móviles',
     description: 'Optimizamos cada línea de código e imagen. Si tu sitio no alcanza el estándar de velocidad acordado en móvil, no pagás el saldo final.',
+    align: 'left',
   },
   {
-    icon: '🛡️',
+    number: '02',
     title: 'Propiedad total',
-    subtitle: 'Código 100% tuyo',
+    subtitlePrefix: 'Código ',
+    metric: '100%',
     counterValue: '100',
     counterSuffix: '%',
-    counterPrefix: 'Código ',
-    counterRest: ' tuyo',
+    subtitleSuffix: ' tuyo',
     description: 'Sin letra chica ni ataduras de suscripción. El repositorio, los archivos y las cuentas de despliegue te pertenecen desde el primer día.',
+    align: 'right',
   },
   {
-    icon: '💬',
+    number: '03',
     title: 'Atención directa',
-    subtitle: 'Sin intermediarios',
+    subtitlePrefix: 'Sin intermediarios // ',
+    metric: 'Contacto 1:1',
+    subtitleSuffix: '',
     description: 'Hablás directamente por WhatsApp con quien programa tu sitio. Respuestas rápidas, decisiones inmediatas y feedback continuo.',
+    align: 'left',
   },
   {
-    icon: '🎯',
+    number: '04',
     title: 'Precio cerrado',
-    subtitle: '0 costos ocultos',
-    counterValue: '0',
-    counterSuffix: ' costos ocultos',
-    counterPrefix: '',
-    counterRest: '',
+    subtitlePrefix: '',
+    metric: '0 costos ocultos',
+    subtitleSuffix: ' // Alcance fijo',
     description: 'Cotizamos con alcance fijo y plazos claros. No hay costos ocultos ni adiciones imprevistas al momento del lanzamiento.',
+    align: 'right',
   },
 ];
 ---
@@ -44,54 +46,78 @@ const commitments = [
 <section
   id="confianza"
   aria-labelledby="trust-title"
-  class="py-20 sm:py-28 px-4 sm:px-6 lg:px-8 max-w-7xl mx-auto border-t-3 border-black bg-white"
+  class="w-full max-w-full overflow-hidden bg-white text-black py-24 sm:py-32 px-6 sm:px-12 lg:px-20 border-t border-black/10 relative"
 >
-  <div class="flex flex-col md:flex-row md:items-end justify-between gap-6 mb-12 sm:mb-16">
-    <div>
-      <Badge variant="orange" class="mb-3">Credibilidad</Badge>
-      <h2
-        id="trust-title"
-        class="font-display text-3xl sm:text-5xl lg:text-6xl font-black uppercase text-black leading-tight tracking-tight"
-      >
-        Compromisos reales
-      </h2>
+  <!-- 1. Header Centrado (Width Liberado) -->
+  <div data-trust-header class="text-center max-w-3xl mx-auto mb-20 sm:mb-28">
+    <div class="inline-flex items-center gap-2 mb-4 font-mono text-xs uppercase tracking-widest text-accent font-bold">
+      <span class="inline-block w-2 h-2 rounded-full bg-accent animate-pulse"></span>
+      <span>04 / COMPROMISOS</span>
     </div>
-    <p class="text-base sm:text-lg text-gray-800 font-medium max-w-md">
+    <h2
+      id="trust-title"
+      class="font-display text-4xl sm:text-6xl lg:text-7xl font-black uppercase text-black leading-none tracking-tight mb-6"
+    >
+      Compromisos reales
+    </h2>
+    <p class="text-base sm:text-xl text-zinc-600 font-normal leading-relaxed">
       Sin testimonios inventados ni logos genéricos. Te mostramos exactamente las garantías técnicas y comerciales con las que trabajamos.
     </p>
   </div>
 
-  <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+  <!-- 2. Filas Intercaladas (Izquierda y Derecha) -->
+  <div class="grid grid-cols-1 divide-y divide-black/10 border-y border-black/10">
     {
-      commitments.map((item) => (
-        <div class="border-brutal shadow-brutal p-6 sm:p-8 bg-white flex flex-col justify-between hover:bg-gray-100 transition-colors">
-          <div>
-            <span class="text-4xl block mb-4">{item.icon}</span>
-            <h3 class="font-display text-xl sm:text-2xl font-black uppercase text-black mb-1">
-              {item.title}
-            </h3>
-            <span class="text-xs uppercase font-extrabold text-orange tracking-widest block mb-4">
-              {item.counterValue ? (
-                <span>
-                  {item.counterPrefix}
-                  <span
-                    data-counter={item.counterValue}
-                    data-counter-suffix={item.counterSuffix}
-                  >
-                    {item.counterValue}{item.counterSuffix}
-                  </span>
-                  {item.counterRest}
+      commitments.map((item) => {
+        const isRight = item.align === 'right';
+        return (
+          <div
+            data-trust-row
+            data-align={item.align}
+            class="py-14 sm:py-20 flex flex-col transition-all"
+          >
+            <div
+              class={`w-full lg:w-[58%] flex flex-col sm:flex-row items-start gap-6 sm:gap-10 ${
+                isRight ? 'lg:ml-auto lg:pl-8' : 'lg:mr-auto lg:pr-8'
+              }`}
+            >
+              <!-- Número de orden en outline -->
+              <span
+                class="font-display text-6xl sm:text-7xl lg:text-8xl font-black tracking-tighter select-none leading-none text-black flex-shrink-0"
+                style="-webkit-text-stroke: 1.5px currentColor; color: transparent;"
+              >
+                {item.number}
+              </span>
+
+              <!-- Contenido principal -->
+              <div class="flex-1">
+                <span class="inline-block font-mono text-xs uppercase tracking-widest text-accent font-bold mb-3">
+                  {item.subtitlePrefix}
+                  {item.counterValue ? (
+                    <span
+                      data-counter={item.counterValue}
+                      data-counter-suffix={item.counterSuffix}
+                    >
+                      {item.metric}
+                    </span>
+                  ) : (
+                    item.metric
+                  )}
+                  {item.subtitleSuffix}
                 </span>
-              ) : (
-                item.subtitle
-              )}
-            </span>
-            <p class="text-sm sm:text-base text-gray-800 font-medium leading-relaxed">
-              {item.description}
-            </p>
+
+                <h3 class="font-display text-2xl sm:text-4xl lg:text-5xl font-black uppercase tracking-tight text-black leading-tight mb-4">
+                  {item.title}
+                </h3>
+
+                <p class="text-base sm:text-lg text-zinc-600 leading-relaxed max-w-xl font-normal">
+                  {item.description}
+                </p>
+              </div>
+            </div>
           </div>
-        </div>
-      ))
+        );
+      })
     }
   </div>
 </section>
