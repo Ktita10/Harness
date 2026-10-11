@@ -1,17 +1,28 @@
 import gsap from 'gsap';
 import { ScrollTrigger } from 'gsap/ScrollTrigger';
+import { ProcessContourCanvas } from './process-canvas';
 
 gsap.registerPlugin(ScrollTrigger);
 
-// Single source of truth: every text/stroke in the section reads these CSS
-// variables, so tweening them on the section drives all colors in sync.
 const DARK = { bg: '#0A0A0A', text: '#FFFFFF', muted: '#A1A1AA' };
 const LIGHT = { bg: '#FFFFFF', text: '#0A0A0A', muted: '#52525B' };
 
-function addColorTransition(tl: gsap.core.Timeline, section: HTMLElement, total: number): void {
+let activeContourCanvas: ProcessContourCanvas | null = null;
+
+export function cleanupProcessAnimation(): void {
+  if (activeContourCanvas) {
+    activeContourCanvas.destroy();
+    activeContourCanvas = null;
+  }
+}
+
+function addColorTransition(
+  tl: gsap.core.Timeline,
+  section: HTMLElement,
+  contourCanvas: ProcessContourCanvas | null,
+  total: number
+): void {
   // Background glides across the whole scroll.
-  // fromTo: GSAP cannot read the initial value of custom properties reliably
-  // (it resolves them to transparent), so the start state is explicit.
   tl.fromTo(
     section,
     { '--process-bg': DARK.bg, backgroundColor: DARK.bg },
@@ -27,13 +38,34 @@ function addColorTransition(tl: gsap.core.Timeline, section: HTMLElement, total:
     { '--process-text': LIGHT.text, '--process-muted': LIGHT.muted, ease: 'power2.inOut', duration: total * 0.2 },
     total * 0.4
   );
+
+  // Contour lines scroll progress (color & aerodynamic wave warping)
+  if (contourCanvas) {
+    tl.to(
+      contourCanvas,
+      {
+        scrollProgress: 1,
+        ease: 'none',
+        duration: total,
+      },
+      0
+    );
+  }
 }
 
 export function initProcessAnimation(): gsap.core.Timeline | null {
   const section = document.getElementById('proceso');
   if (!section) return null;
 
+  // Clean up previous canvas if any
+  cleanupProcessAnimation();
+
   const track = section.querySelector<HTMLElement>('[data-process-track]');
+  const canvasEl = section.querySelector<HTMLCanvasElement>('[data-process-canvas]');
+  if (canvasEl) {
+    activeContourCanvas = new ProcessContourCanvas(canvasEl);
+  }
+
   const mm = gsap.matchMedia();
 
   // Desktop: pinned horizontal glide
@@ -54,7 +86,7 @@ export function initProcessAnimation(): gsap.core.Timeline | null {
     });
 
     tl.to(track, { x: () => -scrollDistance(), ease: 'none', duration: 1 }, 0);
-    addColorTransition(tl, section, 1);
+    addColorTransition(tl, section, activeContourCanvas, 1);
 
     return () => {
       gsap.set(section, { clearProps: '--process-bg,--process-text,--process-muted,backgroundColor' });
@@ -72,7 +104,7 @@ export function initProcessAnimation(): gsap.core.Timeline | null {
       },
     });
 
-    addColorTransition(tl, section, 1);
+    addColorTransition(tl, section, activeContourCanvas, 1);
 
     return () => {
       gsap.set(section, { clearProps: '--process-bg,--process-text,--process-muted,backgroundColor' });

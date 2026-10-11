@@ -1,7 +1,7 @@
 import { ScrollTrigger } from 'gsap/ScrollTrigger';
 import { initHeroAnimation } from './hero';
 import { initServicesAnimation } from './services';
-import { initProcessAnimation } from './process';
+import { initProcessAnimation, cleanupProcessAnimation } from './process';
 import { initTrustAnimation } from './trust';
 import { initFAQAnimation } from './faq';
 
@@ -18,5 +18,6 @@ export function initMasterTimeline(): void {
 }
 
 export function cleanupAnimations(): void {
+  cleanupProcessAnimation();
   ScrollTrigger.getAll().forEach((trigger) => trigger.kill());
 }

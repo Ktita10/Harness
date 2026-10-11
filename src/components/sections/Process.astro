@@ -39,10 +39,17 @@ const steps = [
   class="relative w-full max-w-full overflow-hidden transition-colors duration-200"
   style="--process-bg: #0A0A0A; --process-text: #FFFFFF; --process-muted: #A1A1AA; background-color: var(--process-bg);"
 >
+  <!-- Generative topographic / aerodynamic contour lines canvas -->
+  <canvas
+    data-process-canvas
+    class="absolute inset-0 w-full h-full pointer-events-none z-0"
+    aria-hidden="true"
+  ></canvas>
+
   <!-- Desktop (>= 1024px): Pinned Full-Screen Horizontal Flow -->
   <div
     data-process-desktop
-    class="hidden lg:flex flex-col h-screen min-h-[640px] max-h-[1000px] justify-between relative overflow-hidden"
+    class="hidden lg:flex flex-col h-screen min-h-[640px] max-h-[1000px] justify-between relative overflow-hidden z-10"
   >
     <div
       data-process-track
@@ -102,7 +109,7 @@ const steps = [
   </div>
 
   <!-- Mobile (< 1024px): Vertical Flow with Large Typography -->
-  <div class="block lg:hidden px-6 sm:px-10 py-20 relative">
+  <div class="block lg:hidden px-6 sm:px-10 py-20 relative z-10">
     <div class="mb-16">
       <div class="flex items-center gap-3 mb-3 font-mono text-xs uppercase tracking-widest text-accent font-bold">
         <span class="inline-block w-2 h-2 rounded-full bg-accent animate-pulse"></span>
