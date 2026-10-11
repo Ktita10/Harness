@@ -77,10 +77,10 @@ export class ProcessContourCanvas {
     const baseR = Math.round(255 - p * (255 - 10));
     const baseG = Math.round(255 - p * (255 - 10));
     const baseB = Math.round(255 - p * (255 - 10));
-    const baseAlpha = 0.09 - p * 0.02;
+    const baseAlpha = 0.13 - p * 0.03;
 
     // Electric Orange telemetry trace (#FF5A00)
-    const accentAlpha = 0.22 + p * 0.08;
+    const accentAlpha = 0.28 + p * 0.08;
 
     for (let i = 0; i < lineCount; i++) {
       const isAccent = i === 3;
@@ -88,10 +88,10 @@ export class ProcessContourCanvas {
 
       if (isAccent) {
         ctx.strokeStyle = `rgba(255, 90, 0, ${accentAlpha})`;
-        ctx.lineWidth = 1.5;
+        ctx.lineWidth = 2.5;
       } else {
         ctx.strokeStyle = `rgba(${baseR}, ${baseG}, ${baseB}, ${baseAlpha})`;
-        ctx.lineWidth = 1;
+        ctx.lineWidth = 1.75;
       }
 
       // Base elevation
