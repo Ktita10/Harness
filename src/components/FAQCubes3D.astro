@@ -1,0 +1,376 @@
+---
+/**
+ * FAQCubes3D — 5 cubos tridimensionales con el mismo ADN y acabado de CTASection3D / HeroObject3D.
+ *
+ * Características:
+ * - RoundedBoxGeometry con bordes biselados suaves.
+ * - MeshPhysicalMaterial: metal oscuro obsidian con clearcoat y acentos naranja eléctrico.
+ * - Dispersos estratégicamente en los flancos de la sección FAQ para rellenar el espacio negativo.
+ * - Movimiento sutil de flotación continua y respuesta al scroll/mouse.
+ * - Carga diferida con RoomEnvironment y optimización con IntersectionObserver (cero costo GPU cuando está fuera de pantalla).
+ */
+interface Props {
+  sectionSelector?: string;
+  class?: string;
+}
+
+const { sectionSelector = '#faq', class: className = '' } = Astro.props;
+---
+
+<div
+  class:list={['faq-3d-cubes absolute inset-0 pointer-events-none select-none z-0 overflow-hidden', className]}
+  data-faq-3d
+  data-section-selector={sectionSelector}
+  aria-hidden="true"
+>
+  <canvas class="faq-3d__canvas w-full h-full block opacity-0"></canvas>
+</div>
+
+<style>
+  .faq-3d__canvas {
+    transition: opacity 700ms cubic-bezier(0.16, 1, 0.3, 1);
+  }
+</style>
+
+<script>
+  function hasWebGL(): boolean {
+    try {
+      const c = document.createElement('canvas');
+      return !!(c.getContext('webgl2') || c.getContext('webgl'));
+    } catch {
+      return false;
+    }
+  }
+
+  function whenIdle(): Promise<void> {
+    return new Promise((resolve) => {
+      const w = window as any;
+      if (w.requestIdleCallback) w.requestIdleCallback(() => resolve(), { timeout: 600 });
+      else setTimeout(resolve, 150);
+    });
+  }
+
+  const CUBES_DATA = [
+    // 1. Superior Izquierda (Grande, Metalizado Oscuro)
+    {
+      side: 'left',
+      size: 1.35,
+      relX: 0.11,
+      relY: 0.22,
+      z: 0.2,
+      isAccent: false,
+      baseRot: [0.45, 0.65, 0.2],
+      rotSpeed: [0.002, 0.0035, 0.0015],
+      floatAmp: 0.12,
+      floatFreq: 1.1,
+      phase: 0.0,
+      parallax: 0.25,
+    },
+    // 2. Media Izquierda (Mediano-Chico, Naranja Eléctrico)
+    {
+      side: 'left',
+      size: 0.85,
+      relX: 0.15,
+      relY: 0.68,
+      z: -0.2,
+      isAccent: true,
+      baseRot: [-0.35, 0.85, -0.4],
+      rotSpeed: [-0.003, 0.004, 0.002],
+      floatAmp: 0.10,
+      floatFreq: 1.35,
+      phase: 2.1,
+      parallax: 0.18,
+    },
+    // 3. Superior Derecha (Mediano-Grande, Metalizado Oscuro)
+    {
+      side: 'right',
+      size: 1.15,
+      relX: 0.88,
+      relY: 0.25,
+      z: 0.1,
+      isAccent: false,
+      baseRot: [0.35, -0.7, 0.15],
+      rotSpeed: [0.0025, -0.0035, 0.002],
+      floatAmp: 0.13,
+      floatFreq: 0.95,
+      phase: 1.3,
+      parallax: 0.22,
+    },
+    // 4. Media Derecha (Pequeño, Naranja Eléctrico)
+    {
+      side: 'right',
+      size: 0.68,
+      relX: 0.92,
+      relY: 0.54,
+      z: -0.3,
+      isAccent: true,
+      baseRot: [-0.5, -0.45, 0.5],
+      rotSpeed: [-0.004, 0.003, -0.002],
+      floatAmp: 0.09,
+      floatFreq: 1.5,
+      phase: 3.4,
+      parallax: 0.15,
+    },
+    // 5. Inferior Derecha (Mediano, Metalizado Oscuro)
+    {
+      side: 'right',
+      size: 0.98,
+      relX: 0.86,
+      relY: 0.82,
+      z: 0.25,
+      isAccent: false,
+      baseRot: [0.52, -0.8, -0.22],
+      rotSpeed: [0.002, -0.003, 0.003],
+      floatAmp: 0.11,
+      floatFreq: 1.2,
+      phase: 4.6,
+      parallax: 0.20,
+    },
+  ];
+
+  async function initFAQCubes() {
+    const root = document.querySelector<HTMLElement>('[data-faq-3d]');
+    if (!root || !hasWebGL()) return;
+
+    const sectionElement = document.querySelector<HTMLElement>(root.dataset.sectionSelector || '#faq');
+    const canvas = root.querySelector<HTMLCanvasElement>('.faq-3d__canvas');
+    if (!sectionElement || !canvas) return;
+
+    const reduced = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+
+    await whenIdle();
+    const [THREE, { RoundedBoxGeometry }, { RoomEnvironment }] = await Promise.all([
+      import('three'),
+      import('three/examples/jsm/geometries/RoundedBoxGeometry.js'),
+      import('three/examples/jsm/environments/RoomEnvironment.js'),
+    ]);
+
+    if (!sectionElement || !canvas) return;
+    const sec = sectionElement;
+    const can = canvas;
+
+    const lowEnd =
+      (navigator.hardwareConcurrency ?? 8) <= 2 ||
+      ((navigator as any).deviceMemory ?? 8) <= 2;
+    const dpr = Math.min(window.devicePixelRatio || 1, lowEnd ? 1 : 1.75);
+
+    // Renderer
+    const renderer = new THREE.WebGLRenderer({
+      canvas: can,
+      alpha: true,
+      antialias: true,
+      powerPreference: 'high-performance',
+    });
+    renderer.setPixelRatio(dpr);
+    renderer.setClearColor(0x000000, 0);
+    renderer.toneMapping = THREE.ACESFilmicToneMapping;
+    renderer.toneMappingExposure = 1.05;
+    renderer.outputColorSpace = THREE.SRGBColorSpace;
+
+    const scene = new THREE.Scene();
+    const camera = new THREE.PerspectiveCamera(38, 1, 0.1, 100);
+    camera.position.set(0, 0, 11);
+
+    // Entorno de reflejos RoomEnvironment
+    const pmrem = new THREE.PMREMGenerator(renderer);
+    const envRT = pmrem.fromScene(new RoomEnvironment(), 0.04);
+    scene.environment = envRT.texture;
+    (scene as any).environmentIntensity = 0.55;
+
+    // Iluminación
+    const keyLight = new THREE.DirectionalLight(0xffffff, 1.8);
+    keyLight.position.set(-5, 7, 7);
+    scene.add(keyLight);
+
+    const rimLightA = new THREE.DirectionalLight('#FF5A00', 3.2);
+    rimLightA.position.set(7, 3, -4);
+    const rimLightB = new THREE.DirectionalLight('#FF5A00', 2.0);
+    rimLightB.position.set(-7, -2, -4);
+    scene.add(rimLightA, rimLightB);
+
+    const fillLight = new THREE.DirectionalLight(0xF8F9FA, 1.1);
+    fillLight.position.set(0, -5, 5);
+    scene.add(fillLight);
+
+    // Materiales con el acabado exacto de los cubos de Harness
+    const darkMat = new THREE.MeshPhysicalMaterial({
+      color: 0x121212,
+      metalness: 0.92,
+      roughness: 0.22,
+      clearcoat: 0.85,
+      clearcoatRoughness: 0.18,
+    });
+
+    const orangeMat = new THREE.MeshPhysicalMaterial({
+      color: 0xFF5A00,
+      metalness: 0.35,
+      roughness: 0.30,
+      clearcoat: 1.0,
+      clearcoatRoughness: 0.14,
+      emissive: 0xFF5A00,
+      emissiveIntensity: 0.24,
+    });
+
+    type CubeItem = {
+      mesh: InstanceType<typeof THREE.Mesh>;
+      data: (typeof CUBES_DATA)[number];
+      basePos: InstanceType<typeof THREE.Vector3>;
+    };
+
+    const cubes: CubeItem[] = [];
+    const group = new THREE.Group();
+    scene.add(group);
+
+    for (const d of CUBES_DATA) {
+      const geo = new RoundedBoxGeometry(d.size, d.size, d.size, 4, 0.08 * d.size);
+      const mat = d.isAccent ? orangeMat : darkMat;
+      const mesh = new THREE.Mesh(geo, mat);
+
+      mesh.rotation.set(d.baseRot[0], d.baseRot[1], d.baseRot[2]);
+      group.add(mesh);
+
+      cubes.push({
+        mesh,
+        data: d,
+        basePos: new THREE.Vector3(0, 0, d.z),
+      });
+    }
+
+    // Reposicionamiento según dimensiones
+    let width = 0;
+    let height = 0;
+
+    function resize() {
+      const rect = sec.getBoundingClientRect();
+      width = rect.width || window.innerWidth;
+      height = rect.height || window.innerHeight;
+
+      if (width === 0 || height === 0) return;
+
+      renderer.setSize(width, height, false);
+      camera.aspect = width / height;
+      camera.updateProjectionMatrix();
+
+      // Proyección horizontal y vertical a la profundidad z=0
+      const vFOV = (camera.fov * Math.PI) / 180;
+      const visibleHeight = 2 * Math.tan(vFOV / 2) * camera.position.z;
+      const visibleWidth = visibleHeight * camera.aspect;
+
+      const isMobile = width < 768;
+      const scaleMultiplier = isMobile ? 0.62 : 1.0;
+
+      for (const item of cubes) {
+        item.mesh.scale.setScalar(scaleMultiplier);
+
+        // Mapeo proporcional a coordenadas de cámara
+        // x centrado en 0: de -visibleWidth/2 a +visibleWidth/2
+        // y centrado en 0: de +visibleHeight/2 a -visibleHeight/2
+        let targetX = (item.data.relX - 0.5) * visibleWidth;
+        let targetY = (0.5 - item.data.relY) * visibleHeight;
+
+        // En pantallas angostas, aseguramos que queden en el borde exterior
+        if (isMobile) {
+          if (item.data.side === 'left') {
+            targetX = -visibleWidth * 0.42;
+          } else {
+            targetX = visibleWidth * 0.42;
+          }
+        }
+
+        item.basePos.x = targetX;
+        item.basePos.y = targetY;
+        item.mesh.position.copy(item.basePos);
+      }
+    }
+
+    resize();
+    window.addEventListener('resize', resize, { passive: true });
+
+    // Animación y visibilidad
+    let isVisible = false;
+    let animId = 0;
+    let startTime = performance.now();
+    let scrollProgress = 0;
+
+    function updateScrollProgress() {
+      const rect = sec.getBoundingClientRect();
+      const windowH = window.innerHeight;
+      const totalDist = rect.height + windowH;
+      const current = windowH - rect.top;
+      scrollProgress = Math.max(0, Math.min(1, current / totalDist));
+    }
+
+    function animate(now: number) {
+      if (!isVisible) return;
+
+      const elapsed = (now - startTime) * 0.001;
+
+      if (!reduced) {
+        updateScrollProgress();
+
+        for (const item of cubes) {
+          const d = item.data;
+          // Flotación armónica
+          const floatOffset = Math.sin(elapsed * d.floatFreq + d.phase) * d.floatAmp;
+          // Desplazamiento sutil por scroll
+          const scrollOffset = (scrollProgress - 0.5) * d.parallax * 3.5;
+
+          item.mesh.position.y = item.basePos.y + floatOffset + scrollOffset;
+
+          // Rotación continua
+          item.mesh.rotation.x += d.rotSpeed[0];
+          item.mesh.rotation.y += d.rotSpeed[1];
+          item.mesh.rotation.z += d.rotSpeed[2];
+        }
+      }
+
+      renderer.render(scene, camera);
+      animId = requestAnimationFrame(animate);
+    }
+
+    // Observer para pausar render cuando FAQ no está en pantalla
+    const observer = new IntersectionObserver(
+      (entries) => {
+        for (const entry of entries) {
+          if (entry.isIntersecting) {
+            if (!isVisible) {
+              isVisible = true;
+              animId = requestAnimationFrame(animate);
+              can.style.opacity = '1';
+            }
+          } else {
+            if (isVisible) {
+              isVisible = false;
+              cancelAnimationFrame(animId);
+            }
+          }
+        }
+      },
+      { threshold: 0.02 }
+    );
+
+    observer.observe(sec);
+
+    // Teardown para navegaciones y transiciones
+    document.addEventListener(
+      'astro:before-swap',
+      () => {
+        cancelAnimationFrame(animId);
+        observer.disconnect();
+        window.removeEventListener('resize', resize);
+        pmrem.dispose();
+        envRT.dispose();
+        renderer.dispose();
+      },
+      { once: true }
+    );
+  }
+
+  // Inicializar al cargar el DOM o en cambios de página
+  if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', initFAQCubes);
+  } else {
+    initFAQCubes();
+  }
+  document.addEventListener('astro:page-load', initFAQCubes);
+</script>

@@ -1,5 +1,6 @@
 ---
 import { getCollection } from 'astro:content';
+import FAQCubes3D from '../FAQCubes3D.astro';
 
 const allFaqs = await getCollection('faqs');
 const sortedFaqs = allFaqs.sort((a, b) => (a.data.orden ?? 0) - (b.data.orden ?? 0));
@@ -10,8 +11,11 @@ const sortedFaqs = allFaqs.sort((a, b) => (a.data.orden ?? 0) - (b.data.orden ??
   id="faq"
   data-faq-panel
   aria-labelledby="faq-title"
-  class="relative z-20 w-full lg:-mt-[100vh] bg-bg-secondary text-[#0D0D0D] rounded-none shadow-[0_-30px_60px_-15px_rgba(0,0,0,0.25)] border-t border-black/10 pt-14 sm:pt-20 pb-28 sm:pb-36 lg:pb-44 px-6 sm:px-12 lg:px-20"
+  class="relative z-20 w-full lg:-mt-[100vh] bg-bg-secondary text-[#0D0D0D] rounded-none shadow-[0_-30px_60px_-15px_rgba(0,0,0,0.25)] border-t border-black/10 pt-14 sm:pt-20 pb-28 sm:pb-36 lg:pb-44 px-6 sm:px-12 lg:px-20 overflow-hidden"
 >
+  <!-- 5 Cubos 3D de distintos tamaños dispersos en los flancos laterales -->
+  <FAQCubes3D sectionSelector="#faq" />
+
   <div class="relative z-10 max-w-3xl mx-auto flex flex-col items-center">
     <!-- Encabezado centrado -->
     <div data-faq-header class="w-full flex flex-col items-center text-center mb-10 sm:mb-14">

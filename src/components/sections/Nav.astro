@@ -12,9 +12,9 @@ const navLinks = [
   id="site-header"
   role="banner"
   data-nav-tone="dark"
-  class="fixed top-0 left-0 right-0 z-50 bg-transparent transition-colors duration-300"
+  class="fixed top-0 left-0 right-0 z-50 bg-transparent"
 >
-  <div class="w-full px-6 sm:px-10 lg:px-12 xl:px-16 h-20 sm:h-24 flex items-center justify-between">
+  <div class="nav-container w-full px-6 sm:px-10 lg:px-12 xl:px-16 h-20 sm:h-24 flex items-center justify-between">
     <!-- Brand Logo: HARNESS + STUDIO debajo con tipografía serif itálica del mismo tamaño -->
     <a
       href="/"
@@ -117,15 +117,48 @@ const navLinks = [
 </header>
 
 <style>
-  /* Base state: transparent background */
+  /* Base state: transparent background with accordion transform */
   #site-header {
     background-color: transparent;
+    transform: translateY(0) scaleY(1);
+    transform-origin: top center;
+    opacity: 1;
+    transition:
+      transform 440ms cubic-bezier(0.16, 1, 0.3, 1),
+      opacity 320ms cubic-bezier(0.16, 1, 0.3, 1),
+      background-color 300ms ease;
+  }
+
+  /* Inner container accordion compression */
+  #site-header .nav-container {
+    transform: scaleY(1);
+    transform-origin: top center;
+    transition:
+      transform 440ms cubic-bezier(0.16, 1, 0.3, 1),
+      opacity 280ms cubic-bezier(0.16, 1, 0.3, 1);
+  }
+
+  /* Accordion hide towards top */
+  #site-header[data-nav-hidden="true"] {
+    transform: translateY(-100%) scaleY(0.2);
+    opacity: 0;
+    pointer-events: none !important;
+    transition:
+      transform 380ms cubic-bezier(0.7, 0, 0.84, 0),
+      opacity 250ms ease;
+  }
+
+  #site-header[data-nav-hidden="true"] .nav-container {
+    transform: scaleY(0.3);
+    opacity: 0;
   }
 
   /* When mobile drawer is open: solid dark bar */
   #site-header.is-mobile-open {
     background-color: rgba(10, 10, 10, 0.98) !important;
     backdrop-filter: blur(16px);
+    transform: translateY(0) scaleY(1) !important;
+    opacity: 1 !important;
   }
 
   /* Dark mode: white elements */
@@ -175,6 +208,19 @@ const navLinks = [
     color: var(--accent) !important;
     border-color: var(--accent) !important;
   }
+
+  @media (prefers-reduced-motion: reduce) {
+    #site-header,
+    #site-header .nav-container {
+      transition: opacity 200ms ease !important;
+      transform: none !important;
+    }
+    #site-header[data-nav-hidden="true"] {
+      opacity: 0 !important;
+      pointer-events: none !important;
+      transform: none !important;
+    }
+  }
 </style>
 
 <script>
@@ -201,7 +247,7 @@ const navLinks = [
       closeIcon?.classList.toggle('hidden', !nextExpanded);
 
       if (!nextExpanded) {
-        evaluateTone();
+        evaluateState();
       }
     }
 
@@ -228,19 +274,49 @@ const navLinks = [
     ].join(', ');
 
     let ticking = false;
+    let isCtaActive = false;
 
-    function evaluateTone() {
-      if (header?.classList.contains('is-mobile-open')) return;
+    function evaluateState() {
+      if (header?.classList.contains('is-mobile-open')) {
+        header?.removeAttribute('data-nav-hidden');
+        return;
+      }
 
       const headerHeight = header?.offsetHeight || 80;
       const probeY = headerHeight * 0.5;
+      const cta = document.getElementById('contacto');
 
+      // 1. Accordion hide when arriving at the CTA section
+      if (cta) {
+        const ctaRect = cta.getBoundingClientRect();
+        const enterThreshold = headerHeight;
+        const leaveThreshold = headerHeight + 25;
+
+        if (!isCtaActive && ctaRect.top <= enterThreshold && ctaRect.bottom > 0) {
+          isCtaActive = true;
+        } else if (isCtaActive && (ctaRect.top > leaveThreshold || ctaRect.bottom <= 0)) {
+          isCtaActive = false;
+        }
+      } else {
+        isCtaActive = false;
+      }
+
+      if (isCtaActive) {
+        if (!header?.hasAttribute('data-nav-hidden')) {
+          header?.setAttribute('data-nav-hidden', 'true');
+        }
+      } else {
+        if (header?.hasAttribute('data-nav-hidden')) {
+          header?.removeAttribute('data-nav-hidden');
+        }
+      }
+
+      // 2. Dynamic tone inversion over light sections
       const candidates = document.querySelectorAll<HTMLElement>(lightSelectors);
       let isOverLight = false;
 
       for (const el of candidates) {
         const rect = el.getBoundingClientRect();
-        // Element must be visibly rendered and span at least a substantial area
         if (rect.height < 30 || rect.width < 250) continue;
 
         if (rect.top <= probeY && rect.bottom >= probeY) {
@@ -258,7 +334,7 @@ const navLinks = [
     function onScroll() {
       if (!ticking) {
         requestAnimationFrame(() => {
-          evaluateTone();
+          evaluateState();
           ticking = false;
         });
         ticking = true;
@@ -269,10 +345,10 @@ const navLinks = [
     window.addEventListener('resize', onScroll, { passive: true });
 
     // Initial evaluation and after dynamic DOM updates
-    evaluateTone();
-    setTimeout(evaluateTone, 100);
-    setTimeout(evaluateTone, 400);
-    setTimeout(evaluateTone, 1000);
+    evaluateState();
+    setTimeout(evaluateState, 100);
+    setTimeout(evaluateState, 400);
+    setTimeout(evaluateState, 1000);
   }
 
   // Support standard load and Astro page transitions
