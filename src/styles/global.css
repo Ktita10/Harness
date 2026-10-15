@@ -22,6 +22,7 @@
   --color-accent-hover: var(--accent-hover);
   --color-accent-contrast: var(--accent-contrast);
   --color-accent-on-light: var(--accent-on-light);
+  --color-orange: var(--accent);
   --color-border-subtle: var(--border-subtle);
   --color-border-medium: var(--border-medium);
   --color-border-active: var(--border-active);
