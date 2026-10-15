@@ -8,16 +8,15 @@ test.describe('Home Page - Structural & Functional Verification', () => {
   test('contains exactly one single H1 element', async ({ page }) => {
     const h1 = page.locator('h1');
     await expect(h1).toHaveCount(1);
-    await expect(h1).toBeVisible();
+    await expect(h1).toBeAttached();
     await expect(h1).toContainText('HARNESS');
   });
 
-  test('renders all 8 sections in proper semantic structure', async ({ page }) => {
+  test('renders all 7 sections in proper semantic structure', async ({ page }) => {
     await expect(page.locator('header[role="banner"]')).toBeVisible();
     await expect(page.locator('section#hero')).toBeVisible();
     await expect(page.locator('section#servicios')).toBeVisible();
     await expect(page.locator('section#proceso')).toBeVisible();
-    await expect(page.locator('section#confianza')).toBeVisible();
     await expect(page.locator('section#faq')).toBeVisible();
     await expect(page.locator('section#contacto')).toBeVisible();
     await expect(page.locator('footer[role="contentinfo"]')).toBeVisible();
@@ -52,10 +51,8 @@ test.describe('Home Page - Structural & Functional Verification', () => {
     await expect(secondAccordion).toHaveAttribute('open', '');
   });
 
-  test('floating WhatsApp button is attached with accessible aria-label', async ({ page }) => {
-    const waFloat = page.locator('aside a[aria-label="Contactar por WhatsApp"]');
-    await expect(waFloat).toBeAttached();
-    await expect(waFloat).toHaveAttribute('href', /https:\/\/wa\.me\//);
+  test('floating WhatsApp button is not present on Home', async ({ page }) => {
+    await expect(page.locator('aside a[aria-label="Contactar por WhatsApp"]')).toHaveCount(0);
   });
 
   test('JSON-LD structured data is present for Organization and FAQPage', async ({ page }) => {

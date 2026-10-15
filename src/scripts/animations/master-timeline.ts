@@ -2,7 +2,6 @@ import { ScrollTrigger } from 'gsap/ScrollTrigger';
 import { initHeroAnimation } from './hero';
 import { initServicesAnimation } from './services';
 import { initProcessAnimation, cleanupProcessAnimation } from './process';
-import { initTrustAnimation } from './trust';
 import { initFAQAnimation } from './faq';
 
 export function initMasterTimeline(): void {
@@ -13,7 +12,6 @@ export function initMasterTimeline(): void {
   initHeroAnimation();
   initServicesAnimation();
   initProcessAnimation();
-  initTrustAnimation();
   initFAQAnimation();
 }
 

@@ -18,3 +18,7 @@ playwright-report/
 
 # Agent Teams Lite
 .atl/
+
+# Scratch & local debug screenshots
+/*.png
+scripts/_shot.mjs

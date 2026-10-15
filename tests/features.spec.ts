@@ -3,40 +3,11 @@ import fs from 'node:fs';
 import path from 'node:path';
 
 test.describe('Transversal Features & Technical SEO Assets (Phase 3)', () => {
-  test('floating WhatsApp button is attached on Home with default message', async ({ page }) => {
-    await page.goto('/');
-
-    const waBtn = page.locator('aside[aria-label="Contacto directo por WhatsApp"] a');
-    await expect(waBtn).toBeVisible();
-    await expect(waBtn).toHaveAttribute('aria-label', 'Contactar por WhatsApp');
-    await expect(waBtn).toHaveAttribute('target', '_blank');
-    await expect(waBtn).toHaveAttribute('rel', 'noopener noreferrer');
-
-    const href = await waBtn.getAttribute('href');
-    expect(href).toMatch(/^https:\/\/wa\.me\//);
-    expect(href).toContain(encodeURIComponent('Hola Harness Studio, me interesa consultar por un proyecto.'));
-  });
-
-  test('floating WhatsApp button is attached on Service pages with contextual message', async ({ page }) => {
-    await page.goto('/servicios/landing-pages');
-
-    const waBtn = page.locator('aside[aria-label="Contacto directo por WhatsApp"] a');
-    await expect(waBtn).toBeVisible();
-
-    const href = await waBtn.getAttribute('href');
-    expect(href).toMatch(/^https:\/\/wa\.me\//);
-    expect(href).toContain(encodeURIComponent('Hola, me interesa conocer más sobre el servicio de Landing Pages de Harness Studio.'));
-  });
-
-  test('floating WhatsApp button is attached on 404 page with lost-user message', async ({ page }) => {
-    await page.goto('/404');
-
-    const waBtn = page.locator('aside[aria-label="Contacto directo por WhatsApp"] a');
-    await expect(waBtn).toBeVisible();
-
-    const href = await waBtn.getAttribute('href');
-    expect(href).toMatch(/^https:\/\/wa\.me\//);
-    expect(href).toContain(encodeURIComponent('Hola Harness Studio, me perdí en la web y necesito ayuda.'));
+  test('floating WhatsApp button is not rendered on any page', async ({ page }) => {
+    for (const url of ['/', '/servicios/landing-pages', '/404']) {
+      await page.goto(url);
+      await expect(page.locator('aside[aria-label="Contacto directo por WhatsApp"]')).toHaveCount(0);
+    }
   });
 
   test('404 page has single H1 and valid return navigation', async ({ page }) => {

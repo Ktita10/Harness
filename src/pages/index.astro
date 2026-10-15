@@ -3,13 +3,9 @@ import { getCollection } from 'astro:content';
 import Base from '../layouts/Base.astro';
 import Nav from '../components/sections/Nav.astro';
 import Hero from '../components/sections/Hero.astro';
-import ServicesSection from '../components/sections/ServicesSection.astro';
-import Process from '../components/sections/Process.astro';
-import Trust from '../components/sections/Trust.astro';
+import ServicesProcess from '../components/sections/ServicesProcess.astro';
 import FAQSection from '../components/sections/FAQSection.astro';
 import CTASection from '../components/sections/CTASection.astro';
-import Footer from '../components/sections/Footer.astro';
-import Marquee from '../components/ui/Marquee.astro';
 
 const allFaqs = await getCollection('faqs');
 const sortedFaqs = allFaqs.sort((a, b) => (a.data.orden ?? 0) - (b.data.orden ?? 0));
@@ -28,17 +24,10 @@ const faqData = sortedFaqs.map((f) => ({
 
   <Hero />
 
-  <Marquee text="LIGHTHOUSE 95+ ✦ DESARROLLO A MEDIDA ✦ CERO COMISIONES ✦ ASTRO Y TAILWIND ✦ CÓDIGO 100% TUYO" />
-
-  <ServicesSection />
-
-  <Process />
-
-  <Trust />
+  <ServicesProcess />
 
   <FAQSection />
 
   <CTASection />
 
-  <Footer slot="footer" />
 </Base>

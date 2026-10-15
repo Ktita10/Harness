@@ -3,10 +3,16 @@
 @import "@fontsource/bricolage-grotesque/600.css";
 @import "@fontsource/bricolage-grotesque/700.css";
 @import "@fontsource/bricolage-grotesque/800.css";
+@import "@fontsource/instrument-serif/400.css";
+@import "@fontsource/instrument-serif/400-italic.css";
 @import "./tokens.css";
 
 @theme {
+  --font-display: var(--font-display);
+  --font-serif: var(--font-serif);
+  --font-body: var(--font-body);
   --color-bg-primary: var(--bg-primary);
+  --color-bg-secondary: var(--bg-secondary);
   --color-bg-surface: var(--bg-surface);
   --color-bg-surface-hover: var(--bg-surface-hover);
   --color-text-primary: var(--text-primary);
@@ -15,6 +21,7 @@
   --color-accent: var(--accent);
   --color-accent-hover: var(--accent-hover);
   --color-accent-contrast: var(--accent-contrast);
+  --color-accent-on-light: var(--accent-on-light);
   --color-border-subtle: var(--border-subtle);
   --color-border-medium: var(--border-medium);
   --color-border-active: var(--border-active);
@@ -67,6 +74,10 @@ body {
 /* Modern High-Performance Utilities */
 .font-display {
   font-family: var(--font-display);
+}
+
+.font-serif {
+  font-family: var(--font-serif);
 }
 
 .card-surface {

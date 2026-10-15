@@ -1,0 +1,1018 @@
+---
+/**
+ * HeroObject3D — estructura modular de bloques para el hero de HARNESS.
+ *
+ * Uso:
+ *   <section id="hero" class="relative h-screen overflow-hidden">
+ *     <div class="absolute ..."><!-- wordmark HARNESS --></div>
+ *     <HeroObject3D heroSelector="#hero" />
+ *     <div class="relative z-10"><!-- textos --></div>
+ *   </section>
+ *
+ * Capas: wordmark (z-0) < objeto 3D (z-1) < textos (z-10).
+ *
+ * Caja del objeto: se controla con variables CSS heredadas del hero
+ * (--hero-3d-top, --hero-3d-width, --hero-3d-height).
+ *
+ * Comportamiento: el objeto arranca desarmado (bloques flotando dispersos, con
+ * el listón suelto y flojo alrededor). Con el hero fijado, el scroll hace que
+ * los bloques encajen hasta formar el cubo. Después el listón se cierra como
+ * una correa que se tensa: empieza a ceñirse desde la hebilla y la ola de
+ * tensión recorre la cinta hasta abrazar el cubo, pegada a su silueta real
+ * (casco convexo de la fila de bloques), con un destello naranja de "bloqueo".
+ * Idea: todo bajo control.
+ */
+interface Props {
+  /** Selector de la sección hero. Es el elemento que se fija (pin) con el scroll. */
+  heroSelector?: string;
+  /** PNG con transparencia del objeto, para dispositivos sin WebGL. Opcional. */
+  fallbackSrc?: string;
+  class?: string;
+}
+
+const { heroSelector = '#hero', fallbackSrc, class: className = '' } = Astro.props;
+---
+
+<div
+  class:list={['hero-3d', className]}
+  data-hero-3d
+  data-hero-selector={heroSelector}
+  aria-hidden="true"
+>
+  <div class="hero-3d__glow"></div>
+  <canvas class="hero-3d__canvas"></canvas>
+  {
+    fallbackSrc && (
+      <img
+        class="hero-3d__fallback"
+        src={fallbackSrc}
+        alt=""
+        loading="eager"
+        decoding="async"
+      />
+    )
+  }
+</div>
+
+<style>
+  .hero-3d {
+    position: absolute;
+    z-index: 0;
+    left: 50%;
+    top: var(--hero-3d-top, 0px);
+    width: var(--hero-3d-width, 100%);
+    height: var(--hero-3d-height, 100%);
+    transform: translateX(-50%);
+    pointer-events: none;
+  }
+
+  .hero-3d__canvas {
+    display: block;
+    width: 100%;
+    height: 100%;
+    opacity: 0; /* se anima a 1 tras el primer render */
+  }
+
+  /* Resplandor naranja detrás del objeto */
+  .hero-3d__glow {
+    position: absolute;
+    left: 50%;
+    top: 50%;
+    width: min(100%, 880px);
+    aspect-ratio: 1;
+    transform: translate(-50%, -50%);
+    background: radial-gradient(
+      closest-side,
+      rgba(255, 90, 31, 0.2),
+      rgba(255, 90, 31, 0.06) 55%,
+      transparent 100%
+    );
+    filter: blur(20px);
+  }
+
+  .hero-3d__fallback {
+    display: none;
+    position: absolute;
+    left: 50%;
+    top: 50%;
+    width: min(100%, 560px);
+    transform: translate(-50%, -50%);
+  }
+
+  /* Modo fallback: sin WebGL */
+  .hero-3d[data-fallback] .hero-3d__canvas {
+    display: none;
+  }
+  .hero-3d[data-fallback] .hero-3d__fallback {
+    display: block;
+  }
+</style>
+
+<script>
+  import gsap from 'gsap';
+  import { ScrollTrigger } from 'gsap/ScrollTrigger';
+  import type { InstancedMesh, Vector3, Quaternion } from 'three';
+
+  gsap.registerPlugin(ScrollTrigger);
+
+  // ────────────────────────────────────────────────────────────────
+  // CONFIGURACIÓN — todo lo que querrás ajustar está acá
+  // ────────────────────────────────────────────────────────────────
+  const CONFIG = {
+    // Estructura
+    grid: 5, // celdas por lado (5 → 5x5x5)
+    occupancy: 0.6, // fracción de celdas ocupadas
+    irregularity: 0.9, // 0 = blob redondo, 1+ = silueta muy irregular
+    seed: 20261012, // cambia el número para otra silueta
+    blockSize: 1,
+    gap: 0.12,
+    blockRadius: 0.08,
+    orangeEvery: 8, // 1 de cada N bloques es naranja
+
+    // Colores
+    orange: '#FF5A1F',
+    darkBase: '#1a1a1a',
+
+    // Luces
+    envIntensity: 0.35,
+    keyLight: 1.4,
+    rimLight: 3.2,
+
+    // Cámara y tamaño
+    fov: 35,
+    tilt: 0.26, // ~15° de inclinación sobre X
+    baseYaw: 0.55,
+    targetPx: 960, // diámetro del objeto en pantalla
+    maxDpr: 1.75,
+
+    // Estado desarmado (inicio)
+    scatterMin: 0.9, // distancia mínima que se separan los bloques de su lugar
+    scatterRange: 1.5, // distancia extra aleatoria
+    driftAmp: 0.14, // vaivén de los bloques sueltos
+    scaleScattered: 1.0, // escala del grupo desarmado
+    scaleAssembled: 1.4, // escala del grupo armado
+
+    // Encaje de bloques
+    staggerSpread: 0.55, // cuánto se escalonan los bloques (0-0.8)
+    snap: 0.7, // rebote al encajar (0 = sin rebote, 1.7 = muy marcado)
+    spinTurns: 1, // vueltas completas del cubo durante el armado
+
+    // Listón deformable (correa que se pega al cubo)
+    strapSegments: 480, // estaciones a lo largo de la cinta (más = más flexible y suave)
+    strapHeight: 0.36, // alto del listón
+    strapThickness: 0.08, // grosor de la pared del listón
+    strapClearance: 0.025, // holgura final entre el listón y los bloques (0 = pegado)
+    strapLooseScale: 1.65, // cuán holgado arranca respecto al cubo
+    strapLooseTiltX: 0.48, // inclinación inicial (se nivela al cerrarse)
+    strapLooseTiltZ: -0.32,
+    strapCinchSpread: 0.6, // 0 = se cierra todo a la vez, 1 = ola de tensión larga desde la hebilla
+    strapSag: 0.1, // caída/holgura de la cinta mientras baja y se ciñe
+    strapSnap: 0.05, // micro-rebote elástico al tensarse del todo
+    buckle: true, // hebilla metálica al frente
+    lockPulse: 1.2, // destello naranja al quedar ajustado
+
+    // Movimiento ambiente
+    idleSpeed: 0.08, // rad/s de rotación en reposo
+    floatAmp: 0.12,
+    parallax: 0.15, // rad máximos por el mouse
+
+    // Scroll: el hero se fija y el scroll arma el cubo
+    scrollLength: '+=190%',
+  };
+
+  // ────────────────────────────────────────────────────────────────
+  // MATEMÁTICA DEL LISTÓN (funciones puras, sin Three.js)
+  // ────────────────────────────────────────────────────────────────
+  // <strap-math>
+  type P2 = [number, number];
+
+  /** Casco convexo (monotone chain). Devuelve los puntos en sentido antihorario. */
+  function convexHull(points: P2[]): P2[] {
+    const pts = points.slice().sort((a, b) => a[0] - b[0] || a[1] - b[1]);
+    const cross = (o: P2, a: P2, b: P2) =>
+      (a[0] - o[0]) * (b[1] - o[1]) - (a[1] - o[1]) * (b[0] - o[0]);
+    const lower: P2[] = [];
+    for (const p of pts) {
+      while (lower.length >= 2 && cross(lower[lower.length - 2], lower[lower.length - 1], p) <= 0)
+        lower.pop();
+      lower.push(p);
+    }
+    const upper: P2[] = [];
+    for (let i = pts.length - 1; i >= 0; i--) {
+      const p = pts[i];
+      while (upper.length >= 2 && cross(upper[upper.length - 2], upper[upper.length - 1], p) <= 0)
+        upper.pop();
+      upper.push(p);
+    }
+    lower.pop();
+    upper.pop();
+    return lower.concat(upper);
+  }
+
+  /**
+   * Re-muestrea un polígono cerrado en M puntos equiespaciados por longitud de arco.
+   * La estación 0 es el punto donde el polígono cruza el eje +Z (frente del cubo),
+   * ahí va la hebilla.
+   */
+  function resamplePolygon(poly: P2[], M: number) {
+    const n = poly.length;
+    const cum = new Float64Array(n + 1);
+    for (let k = 0; k < n; k++) {
+      const a = poly[k];
+      const b = poly[(k + 1) % n];
+      cum[k + 1] = cum[k] + Math.hypot(b[0] - a[0], b[1] - a[1]);
+    }
+    const total = cum[n];
+
+    let s0 = 0;
+    for (let k = 0; k < n; k++) {
+      const a = poly[k];
+      const b = poly[(k + 1) % n];
+      if ((a[0] <= 0 && b[0] > 0) || (a[0] > 0 && b[0] <= 0)) {
+        const t = (0 - a[0]) / (b[0] - a[0]);
+        const hitZ = a[1] + t * (b[1] - a[1]);
+        if (hitZ > 0) {
+          s0 = cum[k] + t * (cum[k + 1] - cum[k]);
+          break;
+        }
+      }
+    }
+
+    const x = new Float32Array(M);
+    const z = new Float32Array(M);
+    for (let i = 0; i < M; i++) {
+      const s = (s0 + (total * i) / M) % total;
+      let lo = 0;
+      let hi = n - 1;
+      while (lo < hi) {
+        const mid = (lo + hi + 1) >> 1;
+        if (cum[mid] <= s) lo = mid;
+        else hi = mid - 1;
+      }
+      const a = poly[lo];
+      const b = poly[(lo + 1) % n];
+      const len = cum[lo + 1] - cum[lo] || 1;
+      const t = (s - cum[lo]) / len;
+      x[i] = a[0] + (b[0] - a[0]) * t;
+      z[i] = a[1] + (b[1] - a[1]) * t;
+    }
+    return { x, z, total };
+  }
+
+  /** Índices del listón: 4 caras (exterior, interior, arriba, abajo) × M estaciones. */
+  function buildStrapIndex(M: number): Uint32Array {
+    const idx = new Uint32Array(4 * M * 6);
+    // true = el triángulo (A,B,C) apunta al revés de la normal de esa cara
+    const flip = [true, false, false, true];
+    let o = 0;
+    for (let f = 0; f < 4; f++) {
+      for (let i = 0; i < M; i++) {
+        const j = (i + 1) % M;
+        const A = (f * M + i) * 2;
+        const B = (f * M + j) * 2;
+        const C = A + 1;
+        const D = B + 1;
+        if (!flip[f]) idx.set([A, B, C, B, D, C], o);
+        else idx.set([A, C, B, B, C, D], o);
+        o += 6;
+      }
+    }
+    return idx;
+  }
+
+  function putVertex(
+    pos: Float32Array,
+    nor: Float32Array,
+    v: number,
+    px: number,
+    py: number,
+    pz: number,
+    nx: number,
+    ny: number,
+    nz: number,
+  ) {
+    pos[v] = px;
+    pos[v + 1] = py;
+    pos[v + 2] = pz;
+    nor[v] = nx;
+    nor[v + 1] = ny;
+    nor[v + 2] = nz;
+  }
+
+  /**
+   * Convierte la línea central de la cinta (C) y su eje "arriba" (U) por estación
+   * en una malla con sección rectangular: calcula las normales a partir de los
+   * vecinos y escribe posiciones y normales de los 4 lados.
+   * `frame` (9 floats) devuelve normal, arriba y posición base de la estación 0
+   * para colocar la hebilla.
+   */
+  function fillStrapMesh(
+    M: number,
+    C: Float32Array,
+    U: Float32Array,
+    thick: number,
+    H: number,
+    snapOut: number,
+    pos: Float32Array,
+    nor: Float32Array,
+    frame: Float32Array,
+  ) {
+    const hh = H / 2;
+    for (let i = 0; i < M; i++) {
+      const p = ((i - 1 + M) % M) * 3;
+      const q = ((i + 1) % M) * 3;
+      const tx = C[q] - C[p];
+      const ty = C[q + 1] - C[p + 1];
+      const tz = C[q + 2] - C[p + 2];
+      const ux = U[i * 3];
+      const uy = U[i * 3 + 1];
+      const uz = U[i * 3 + 2];
+
+      // normal exterior = arriba × tangente
+      let nx = uy * tz - uz * ty;
+      let ny = uz * tx - ux * tz;
+      let nz = ux * ty - uy * tx;
+      const nl = Math.hypot(nx, ny, nz) || 1;
+      nx /= nl;
+      ny /= nl;
+      nz /= nl;
+
+      // base = línea central desplazada hacia afuera (micro-rebote)
+      const bx = C[i * 3] + nx * snapOut;
+      const by = C[i * 3 + 1] + ny * snapOut;
+      const bz = C[i * 3 + 2] + nz * snapOut;
+
+      const ibx = bx - ux * hh;
+      const iby = by - uy * hh;
+      const ibz = bz - uz * hh;
+      const itx = bx + ux * hh;
+      const ity = by + uy * hh;
+      const itz = bz + uz * hh;
+      const obx = ibx + nx * thick;
+      const oby = iby + ny * thick;
+      const obz = ibz + nz * thick;
+      const otx = itx + nx * thick;
+      const oty = ity + ny * thick;
+      const otz = itz + nz * thick;
+
+      // cara exterior
+      putVertex(pos, nor, ((0 * M + i) * 2 + 0) * 3, obx, oby, obz, nx, ny, nz);
+      putVertex(pos, nor, ((0 * M + i) * 2 + 1) * 3, otx, oty, otz, nx, ny, nz);
+      // cara interior
+      putVertex(pos, nor, ((1 * M + i) * 2 + 0) * 3, ibx, iby, ibz, -nx, -ny, -nz);
+      putVertex(pos, nor, ((1 * M + i) * 2 + 1) * 3, itx, ity, itz, -nx, -ny, -nz);
+      // cara superior
+      putVertex(pos, nor, ((2 * M + i) * 2 + 0) * 3, itx, ity, itz, ux, uy, uz);
+      putVertex(pos, nor, ((2 * M + i) * 2 + 1) * 3, otx, oty, otz, ux, uy, uz);
+      // cara inferior
+      putVertex(pos, nor, ((3 * M + i) * 2 + 0) * 3, ibx, iby, ibz, -ux, -uy, -uz);
+      putVertex(pos, nor, ((3 * M + i) * 2 + 1) * 3, obx, oby, obz, -ux, -uy, -uz);
+
+      if (i === 0) {
+        frame[0] = nx;
+        frame[1] = ny;
+        frame[2] = nz;
+        frame[3] = ux;
+        frame[4] = uy;
+        frame[5] = uz;
+        frame[6] = bx;
+        frame[7] = by;
+        frame[8] = bz;
+      }
+    }
+  }
+  // </strap-math>
+
+  // ────────────────────────────────────────────────────────────────
+
+  const root = document.querySelector<HTMLElement>('[data-hero-3d]');
+  const reduced = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+
+  // Estado animado por GSAP (lo lee el render de Three.js)
+  const state = {
+    assemble: reduced ? 1 : 0, // 0 = bloques sueltos, 1 = cubo armado
+    strap: reduced ? 1 : 0, // 0 = listón flojo, 1 = listón ajustado al cubo
+    lock: 0, // destello de bloqueo (0 → 1 → 0)
+    spin: 0,
+    scale: reduced ? CONFIG.scaleAssembled : CONFIG.scaleScattered,
+    offsetY: 0,
+  };
+
+  let disposeFn: (() => void) | null = null;
+  let scrollTl: gsap.core.Timeline | null = null;
+
+  if (root) {
+    // El pin se crea de forma síncrona (antes de cargar three) para que
+    // ScrollTrigger calcule bien las posiciones de las secciones siguientes.
+    setupScroll(root);
+    boot(root).catch(() => {
+      killScroll();
+      root.setAttribute('data-fallback', '');
+    });
+  }
+
+  document.addEventListener(
+    'astro:before-swap',
+    () => {
+      disposeFn?.();
+      killScroll();
+    },
+    { once: true },
+  );
+
+  function killScroll() {
+    scrollTl?.scrollTrigger?.kill();
+    scrollTl?.kill();
+    scrollTl = null;
+  }
+
+  function setupScroll(root: HTMLElement) {
+    if (reduced || !hasWebGL()) return;
+    const heroEl = document.querySelector<HTMLElement>(root.dataset.heroSelector || '#hero');
+    if (!heroEl) return;
+
+    scrollTl = gsap.timeline({
+      scrollTrigger: {
+        trigger: heroEl,
+        start: 'top top',
+        end: CONFIG.scrollLength,
+        scrub: 1,
+        pin: true,
+        anticipatePin: 1,
+        invalidateOnRefresh: true,
+        refreshPriority: 10, // el pin del hero se calcula primero
+      },
+    });
+
+    scrollTl
+      // 1) Los bloques encajan y el cubo da su vuelta
+      .to(
+        state,
+        {
+          assemble: 1,
+          spin: CONFIG.spinTurns,
+          scale: CONFIG.scaleAssembled,
+          duration: 0.75,
+          ease: 'power1.inOut',
+        },
+        0,
+      )
+      // 2) Con el cubo ya armado, el listón se tensa: la ola de cierre parte de la
+      //    hebilla y recorre la cinta hasta pegarla al cuerpo del cubo.
+      //    (Empieza tarde a propósito: así ningún bloque cruza la cinta al encajar.)
+      .to(state, { strap: 1, duration: 0.65, ease: 'power2.inOut' }, 0.55)
+      // 3) Destello de "bloqueo" cuando el listón queda ceñido
+      .to(state, { lock: 1, duration: 0.06, ease: 'power2.out' }, 1.12)
+      .to(state, { lock: 0, duration: 0.18, ease: 'power2.in' }, 1.18)
+      // 4) Tramo final: el cubo atrapado queda en pantalla
+      .set({}, {}, 1.5);
+
+    ScrollTrigger.sort();
+    ScrollTrigger.refresh();
+  }
+
+  function hasWebGL(): boolean {
+    try {
+      const c = document.createElement('canvas');
+      return !!(c.getContext('webgl2') || c.getContext('webgl'));
+    } catch {
+      return false;
+    }
+  }
+
+  function whenIdle(): Promise<void> {
+    return new Promise((resolve) => {
+      const w = window as any;
+      if (w.requestIdleCallback) w.requestIdleCallback(() => resolve(), { timeout: 600 });
+      else setTimeout(resolve, 150);
+    });
+  }
+
+  // RNG determinista (mulberry32) para que la silueta sea siempre la misma
+  function makeRng(seed: number) {
+    let a = seed >>> 0;
+    return () => {
+      a |= 0;
+      a = (a + 0x6d2b79f5) | 0;
+      let t = Math.imul(a ^ (a >>> 15), 1 | a);
+      t = (t + Math.imul(t ^ (t >>> 7), 61 | t)) ^ t;
+      return ((t ^ (t >>> 14)) >>> 0) / 4294967296;
+    };
+  }
+
+  async function boot(root: HTMLElement) {
+    const canvas = root.querySelector<HTMLCanvasElement>('.hero-3d__canvas')!;
+
+    if (!hasWebGL()) {
+      root.setAttribute('data-fallback', '');
+      return;
+    }
+
+    // Carga diferida de Three.js tras el primer paint
+    await whenIdle();
+    const [THREE, { RoundedBoxGeometry }, { RoomEnvironment }] = await Promise.all([
+      import('three'),
+      import('three/examples/jsm/geometries/RoundedBoxGeometry.js'),
+      import('three/examples/jsm/environments/RoomEnvironment.js'),
+    ]);
+
+    const lowEnd =
+      (navigator.hardwareConcurrency ?? 8) <= 2 ||
+      ((navigator as any).deviceMemory ?? 8) <= 2;
+    const dpr = Math.min(window.devicePixelRatio || 1, lowEnd ? 1 : CONFIG.maxDpr);
+
+    // ── Renderer, escena y cámara ───────────────────────────────
+    const renderer = new THREE.WebGLRenderer({
+      canvas,
+      alpha: true,
+      antialias: true,
+      powerPreference: 'high-performance',
+    });
+    renderer.setPixelRatio(dpr);
+    renderer.setClearColor(0x000000, 0);
+    renderer.toneMapping = THREE.ACESFilmicToneMapping;
+    renderer.toneMappingExposure = 1.0;
+    renderer.outputColorSpace = THREE.SRGBColorSpace;
+
+    const scene = new THREE.Scene();
+    const camera = new THREE.PerspectiveCamera(CONFIG.fov, 1, 0.1, 100);
+
+    const pmrem = new THREE.PMREMGenerator(renderer);
+    const envRT = pmrem.fromScene(new RoomEnvironment(), 0.04);
+    scene.environment = envRT.texture;
+    (scene as any).environmentIntensity = CONFIG.envIntensity;
+
+    // Luces: principal blanca + dos rim lights naranjas desde atrás
+    const key = new THREE.DirectionalLight(0xffffff, CONFIG.keyLight);
+    key.position.set(-4, 6, 5);
+    scene.add(key);
+
+    const rimA = new THREE.DirectionalLight(CONFIG.orange, CONFIG.rimLight);
+    rimA.position.set(6, 2, -6);
+    const rimB = new THREE.DirectionalLight(CONFIG.orange, CONFIG.rimLight * 0.8);
+    rimB.position.set(-6, -1, -6);
+    scene.add(rimA, rimB);
+
+    // ── Estructura modular ─────────────────────────────────────
+    const rng = makeRng(CONFIG.seed);
+    const N = CONFIG.grid;
+    const half = (N - 1) / 2;
+    const step = CONFIG.blockSize + CONFIG.gap;
+
+    type Cell = { x: number; y: number; z: number; d: number; score: number };
+    const cells: Cell[] = [];
+    for (let x = 0; x < N; x++)
+      for (let y = 0; y < N; y++)
+        for (let z = 0; z < N; z++) {
+          const d = Math.hypot(x - half, y - half, z - half) / (half * Math.sqrt(3));
+          const score = 1 - d + (rng() - 0.5) * CONFIG.irregularity;
+          cells.push({ x, y, z, d, score });
+        }
+    cells.sort((a, b) => b.score - a.score);
+    const kept = cells.slice(0, Math.round(cells.length * CONFIG.occupancy));
+
+    // Bloques expuestos (con al menos un vecino vacío): candidatos a naranja
+    const keySet = new Set(kept.map((c) => `${c.x},${c.y},${c.z}`));
+    const isExposed = (c: Cell) =>
+      [
+        [1, 0, 0],
+        [-1, 0, 0],
+        [0, 1, 0],
+        [0, -1, 0],
+        [0, 0, 1],
+        [0, 0, -1],
+      ].some(([dx, dy, dz]) => !keySet.has(`${c.x + dx},${c.y + dy},${c.z + dz}`));
+
+    const exposed = kept.filter(isExposed);
+    for (let i = exposed.length - 1; i > 0; i--) {
+      const j = Math.floor(rng() * (i + 1));
+      [exposed[i], exposed[j]] = [exposed[j], exposed[i]];
+    }
+    const orangeCount = Math.max(1, Math.round(kept.length / CONFIG.orangeEvery));
+    const orangeSet = new Set(exposed.slice(0, orangeCount));
+
+    const geometry = new RoundedBoxGeometry(
+      CONFIG.blockSize,
+      CONFIG.blockSize,
+      CONFIG.blockSize,
+      4,
+      CONFIG.blockRadius,
+    );
+
+    const darkMat = new THREE.MeshPhysicalMaterial({
+      color: 0xffffff, // se tiñe por instancia
+      metalness: 0.9,
+      roughness: 0.25,
+      clearcoat: 0.6,
+      clearcoatRoughness: 0.2,
+    });
+    const orangeMat = new THREE.MeshPhysicalMaterial({
+      color: CONFIG.orange,
+      metalness: 0.35,
+      roughness: 0.3,
+      clearcoat: 1,
+      clearcoatRoughness: 0.15,
+      emissive: CONFIG.orange,
+      emissiveIntensity: 0.35,
+    });
+
+    const darkCount = kept.length - orangeSet.size;
+    const darkMesh = new THREE.InstancedMesh(geometry, darkMat, darkCount);
+    const orangeMesh = new THREE.InstancedMesh(geometry, orangeMat, orangeSet.size);
+    darkMesh.frustumCulled = false;
+    orangeMesh.frustumCulled = false;
+
+    type Block = {
+      mesh: InstancedMesh;
+      index: number;
+      final: Vector3;
+      start: Vector3;
+      startQuat: Quaternion;
+      phase: number;
+      delay: number;
+    };
+    const blocks: Block[] = [];
+    const baseColor = new THREE.Color(CONFIG.darkBase);
+    const tmpColor = new THREE.Color();
+    let di = 0;
+    let oi = 0;
+    let maxScatter = 0; // radio máximo del estado desarmado
+    let maxFinal = 0; // radio máximo del cubo armado
+    const maxDelay = CONFIG.staggerSpread + 0.1;
+
+    for (const c of kept) {
+      const isOrange = orangeSet.has(c);
+      const final = new THREE.Vector3((c.x - half) * step, (c.y - half) * step, (c.z - half) * step);
+      maxFinal = Math.max(maxFinal, final.length());
+
+      // Posición desarmada: el bloque se separa hacia afuera de su lugar
+      const dir = final.clone();
+      if (dir.lengthSq() < 1e-4) dir.set(rng() - 0.5, rng() - 0.5, rng() - 0.5);
+      dir
+        .normalize()
+        .add(new THREE.Vector3(rng() - 0.5, rng() - 0.5, rng() - 0.5).multiplyScalar(0.7))
+        .normalize();
+      const start = final
+        .clone()
+        .addScaledVector(dir, CONFIG.scatterMin + rng() * CONFIG.scatterRange);
+      maxScatter = Math.max(maxScatter, start.length());
+
+      const startQuat = new THREE.Quaternion().setFromEuler(
+        new THREE.Euler(rng() * 6.28, rng() * 6.28, rng() * 6.28),
+      );
+      const phase = rng() * Math.PI * 2;
+
+      // Los bloques de afuera encajan primero; los del centro cierran la estructura
+      const delay = (1 - c.d) * CONFIG.staggerSpread + rng() * 0.1;
+
+      const mesh = isOrange ? orangeMesh : darkMesh;
+      const index = isOrange ? oi++ : di++;
+
+      if (!isOrange) {
+        const v = 0.8 + rng() * 0.4;
+        darkMesh.setColorAt(index, tmpColor.copy(baseColor).multiplyScalar(v));
+      }
+      blocks.push({ mesh, index, final, start, startQuat, phase, delay });
+    }
+    if (darkMesh.instanceColor) darkMesh.instanceColor.needsUpdate = true;
+
+    // ── Listón deformable que se pega al cubo ─────────────────
+    // 1) Se elige la fila con más bloques.
+    const rowCounts = new Map<number, number>();
+    for (const c of kept) rowCounts.set(c.y, (rowCounts.get(c.y) ?? 0) + 1);
+    let strapRow = Math.round(half);
+    let bestCount = -1;
+    for (let y = 1; y <= N - 2; y++) {
+      const n = rowCounts.get(y) ?? 0;
+      if (n > bestCount) {
+        bestCount = n;
+        strapRow = y;
+      }
+    }
+
+    // 2) Silueta objetivo = casco convexo de esa fila de bloques, desplazado hacia
+    //    afuera lo justo para rodear sus esquinas redondeadas (es lo que haría una
+    //    correa real tensada sobre el cubo).
+    const rb = CONFIG.blockRadius;
+    const offsetR = rb + CONFIG.strapClearance;
+    const coreHalf = CONFIG.blockSize / 2 - rb;
+    const hullPts: P2[] = [];
+    for (const c of kept) {
+      if (c.y !== strapRow) continue;
+      const cx = (c.x - half) * step;
+      const cz = (c.z - half) * step;
+      for (const sx of [-1, 1])
+        for (const sz of [-1, 1])
+          for (let k = 0; k < 24; k++) {
+            const a = (k / 24) * Math.PI * 2;
+            hullPts.push([
+              cx + sx * coreHalf + Math.cos(a) * offsetR,
+              cz + sz * coreHalf + Math.sin(a) * offsetR,
+            ]);
+          }
+    }
+    const hull = convexHull(hullPts);
+
+    // 3) Estaciones a lo largo de la cinta (más estaciones = más flexibilidad)
+    const M = CONFIG.strapSegments;
+    const outline = resamplePolygon(hull, M);
+    const theta = new Float32Array(M); // ángulo de cada estación (para la forma holgada)
+    const wavePhase = new Float32Array(M); // 0 junto a la hebilla, 1 en el lado opuesto
+    let maxHullR = 0;
+    for (let i = 0; i < M; i++) {
+      theta[i] = Math.atan2(outline.z[i], outline.x[i]);
+      const u = i / M;
+      wavePhase[i] = Math.min(u, 1 - u) * 2;
+      maxHullR = Math.max(maxHullR, Math.hypot(outline.x[i], outline.z[i]));
+    }
+    const thick = CONFIG.strapThickness;
+    const H = CONFIG.strapHeight;
+    const looseR = (maxHullR + thick) * CONFIG.strapLooseScale;
+
+    // 4) Malla dinámica: 4 caras × M estaciones × 2 vértices
+    const strapPos = new Float32Array(4 * M * 2 * 3);
+    const strapNor = new Float32Array(4 * M * 2 * 3);
+    const strapGeo = new THREE.BufferGeometry();
+    const posAttr = new THREE.BufferAttribute(strapPos, 3);
+    const norAttr = new THREE.BufferAttribute(strapNor, 3);
+    posAttr.setUsage(THREE.DynamicDrawUsage);
+    norAttr.setUsage(THREE.DynamicDrawUsage);
+    strapGeo.setAttribute('position', posAttr);
+    strapGeo.setAttribute('normal', norAttr);
+    strapGeo.setIndex(new THREE.BufferAttribute(buildStrapIndex(M), 1));
+
+    const strapMat = new THREE.MeshStandardMaterial({
+      color: CONFIG.orange,
+      emissive: CONFIG.orange,
+      emissiveIntensity: 0.55,
+      metalness: 0.35,
+      roughness: 0.35,
+      side: THREE.DoubleSide,
+    });
+    const strapMesh = new THREE.Mesh(strapGeo, strapMat);
+    strapMesh.frustumCulled = false;
+
+    const strapPivot = new THREE.Group();
+    strapPivot.position.y = (strapRow - half) * step;
+    strapPivot.add(strapMesh);
+
+    // Hebilla metálica en la estación 0: sigue a la cinta
+    let buckleGeo: InstanceType<typeof RoundedBoxGeometry> | null = null;
+    let buckleMat: InstanceType<typeof THREE.MeshStandardMaterial> | null = null;
+    let buckle: InstanceType<typeof THREE.Mesh> | null = null;
+    if (CONFIG.buckle) {
+      buckleGeo = new RoundedBoxGeometry(0.88, H + 0.14, 0.16, 4, 0.04);
+      buckleMat = new THREE.MeshStandardMaterial({
+        color: 0xd4d4d8,
+        metalness: 0.95,
+        roughness: 0.18,
+      });
+      buckle = new THREE.Mesh(buckleGeo, buckleMat);
+      strapPivot.add(buckle);
+    }
+
+    const group = new THREE.Group();
+    group.add(darkMesh, orangeMesh, strapPivot);
+    scene.add(group);
+
+    const mouse = { x: 0, y: 0 };
+
+    const dummy = new THREE.Object3D();
+    const q = new THREE.Quaternion();
+    const IDENT = new THREE.Quaternion();
+    const pos = new THREE.Vector3();
+    const clamp01 = (v: number) => Math.min(1, Math.max(0, v));
+    // easeOutBack: el bloque encaja con un pequeño rebote
+    const c1 = CONFIG.snap;
+    const c3 = c1 + 1;
+    const easeSnap = (t: number) => 1 + c3 * Math.pow(t - 1, 3) + c1 * Math.pow(t - 1, 2);
+
+    let idle = 0;
+
+    function updateInstances() {
+      for (const b of blocks) {
+        const t = clamp01((state.assemble - b.delay) / (1 - maxDelay));
+        const e = easeSnap(t); // puede pasarse un poco de 1: ese es el rebote
+        const eq = Math.min(e, 1);
+
+        pos.lerpVectors(b.start, b.final, e);
+        // Vaivén suave mientras el bloque está suelto
+        pos.y += Math.sin(idle * 0.8 + b.phase) * CONFIG.driftAmp * (1 - eq);
+        q.slerpQuaternions(b.startQuat, IDENT, eq);
+
+        dummy.position.copy(pos);
+        dummy.quaternion.copy(q);
+        dummy.scale.setScalar(0.8 + 0.2 * eq);
+        dummy.updateMatrix();
+        b.mesh.setMatrixAt(b.index, dummy.matrix);
+      }
+      darkMesh.instanceMatrix.needsUpdate = true;
+      orangeMesh.instanceMatrix.needsUpdate = true;
+    }
+
+    // Buffers de trabajo del listón (se reutilizan en cada frame)
+    const stripC = new Float32Array(M * 3);
+    const stripU = new Float32Array(M * 3);
+    const stripFrame = new Float32Array(9);
+    const eul = new THREE.Euler();
+    const rotM = new THREE.Matrix4();
+    const bx = new THREE.Vector3();
+    const by = new THREE.Vector3();
+    const bz = new THREE.Vector3();
+    const bMat = new THREE.Matrix4();
+
+    function updateStrap() {
+      const s = clamp01(state.strap);
+      const K = CONFIG.strapCinchSpread;
+
+      // Pose holgada global: inclinada y girada, se nivela al tensarse
+      const L = 1 - (clamp01(s * 1.25) * clamp01(s * 1.25) * (3 - 2 * clamp01(s * 1.25)));
+      eul.set(CONFIG.strapLooseTiltX * L, Math.PI * 0.4 * L, CONFIG.strapLooseTiltZ * L);
+      rotM.makeRotationFromEuler(eul);
+      const e = rotM.elements;
+      const upLx = e[4];
+      const upLy = e[5];
+      const upLz = e[6];
+
+      for (let i = 0; i < M; i++) {
+        // Ola de tensión: arranca en la hebilla (fase 0) y viaja hacia ambos lados
+        const a = clamp01(s * (1 + K) - K * wavePhase[i]);
+        const w = a * a * a * (a * (a * 6 - 15) + 10); // smootherstep
+
+        const th = theta[i];
+        // Forma holgada: círculo grande con ondulación orgánica que se apaga al tensarse
+        const wob =
+          1 + 0.05 * Math.sin(3 * th + idle * 0.9) + 0.035 * Math.sin(5 * th - idle * 1.3);
+        const rl = looseR * wob;
+        const lx0 = rl * Math.cos(th);
+        const ly0 = CONFIG.driftAmp * 1.2 * Math.sin(2 * th + idle * 1.1 + 1.2);
+        const lz0 = rl * Math.sin(th);
+        // La inclinación solo afecta a la parte holgada: lo tenso ya está plano
+        const lx = e[0] * lx0 + e[4] * ly0 + e[8] * lz0;
+        const ly = e[1] * lx0 + e[5] * ly0 + e[9] * lz0;
+        const lz = e[2] * lx0 + e[6] * ly0 + e[10] * lz0;
+
+        // Forma tensa: la silueta del cubo
+        const tx = outline.x[i];
+        const tz = outline.z[i];
+
+        // Mezcla holgado → tenso, con una caída (sag) mientras la cinta baja
+        const sag = Math.sin(Math.PI * w) * CONFIG.strapSag;
+        const k3 = i * 3;
+        stripC[k3] = lx + (tx - lx) * w;
+        stripC[k3 + 1] = ly + (0 - ly) * w - sag;
+        stripC[k3 + 2] = lz + (tz - lz) * w;
+
+        // El eje "arriba" de la cinta también se endereza con w
+        let ux = upLx + (0 - upLx) * w;
+        let uy = upLy + (1 - upLy) * w;
+        let uz = upLz + (0 - upLz) * w;
+        const ul = Math.hypot(ux, uy, uz) || 1;
+        ux /= ul;
+        uy /= ul;
+        uz /= ul;
+        stripU[k3] = ux;
+        stripU[k3 + 1] = uy;
+        stripU[k3 + 2] = uz;
+      }
+
+      // Micro-rebote elástico al quedar tensa del todo (solo hacia afuera: no corta bloques)
+      let snapOut = 0;
+      if (s > 0.9) {
+        const t = (s - 0.9) / 0.1;
+        snapOut = Math.sin(t * Math.PI) * (1 - t) * CONFIG.strapSnap;
+      }
+
+      fillStrapMesh(M, stripC, stripU, thick, H, snapOut, strapPos, strapNor, stripFrame);
+      posAttr.needsUpdate = true;
+      norAttr.needsUpdate = true;
+
+      // Hebilla: sigue a la estación 0 y se orienta con su normal y su eje arriba
+      if (buckle) {
+        bz.set(stripFrame[0], stripFrame[1], stripFrame[2]);
+        by.set(stripFrame[3], stripFrame[4], stripFrame[5]);
+        bx.crossVectors(by, bz).normalize();
+        bMat.makeBasis(bx, by, bz);
+        buckle.quaternion.setFromRotationMatrix(bMat);
+        buckle.position.set(
+          stripFrame[6] + bz.x * (thick + 0.06),
+          stripFrame[7] + bz.y * (thick + 0.06),
+          stripFrame[8] + bz.z * (thick + 0.06),
+        );
+      }
+
+      // Destello naranja en el listón al bloquearse
+      strapMat.emissiveIntensity = 0.55 + CONFIG.lockPulse * state.lock;
+    }
+
+    // ── Tamaño y encuadre ─────────────────────────────────────
+    // La cinta holgada (con su ondulación) es el elemento más grande
+    const looseStrapR = looseR * 1.1 + thick;
+    const viewRadius =
+      Math.max(
+        (maxScatter + 0.5) * CONFIG.scaleScattered,
+        looseStrapR * CONFIG.scaleScattered,
+        (maxFinal + 0.5) * CONFIG.scaleAssembled,
+      ) + 0.15;
+    let visible = true;
+
+    function render() {
+      group.rotation.set(
+        CONFIG.tilt + mouse.y * CONFIG.parallax,
+        CONFIG.baseYaw + state.spin * Math.PI * 2 + idle * CONFIG.idleSpeed + mouse.x * CONFIG.parallax,
+        0,
+      );
+      group.scale.setScalar(state.scale);
+      updateInstances();
+      updateStrap();
+      renderer.render(scene, camera);
+    }
+
+    function layout() {
+      const w = Math.max(1, root.clientWidth);
+      const h = Math.max(1, root.clientHeight);
+      renderer.setSize(w, h, false);
+      camera.aspect = w / h;
+
+      const targetPx = Math.min(CONFIG.targetPx, h * 0.96, w * 0.96);
+      const tanHalf = Math.tan(THREE.MathUtils.degToRad(CONFIG.fov) / 2);
+      camera.position.set(0, 0, (viewRadius * h) / (targetPx * tanHalf));
+      camera.updateProjectionMatrix();
+      if (reduced || !visible) render();
+    }
+
+    layout();
+    const ro = new ResizeObserver(layout);
+    ro.observe(root);
+
+    // ── Bucle: usa el ticker de GSAP ──────────────────────────
+    let firstFrame = true;
+    const tick = (time: number, deltaMs: number) => {
+      if (!visible) return;
+      idle += Math.min(deltaMs, 50) / 1000;
+      group.position.y = state.offsetY + Math.sin(time * 0.9) * CONFIG.floatAmp;
+      render();
+      if (firstFrame) {
+        firstFrame = false;
+        gsap.to(canvas, { opacity: 1, duration: 1.2, ease: 'power2.out' });
+      }
+    };
+
+    const io = new IntersectionObserver(
+      (entries) => {
+        visible = entries[0]?.isIntersecting ?? true;
+      },
+      { threshold: 0 },
+    );
+    io.observe(root);
+
+    const onVisibility = () => {
+      visible = !document.hidden;
+    };
+    document.addEventListener('visibilitychange', onVisibility);
+
+    let onPointer: ((e: PointerEvent) => void) | null = null;
+
+    if (reduced) {
+      // Cubo armado y atrapado, estático: un solo frame
+      canvas.style.opacity = '1';
+      render();
+    } else {
+      gsap.ticker.add(tick);
+
+      // Parallax con el mouse (no en táctiles)
+      const qx = gsap.quickTo(mouse, 'x', { duration: 0.9, ease: 'power3.out' });
+      const qy = gsap.quickTo(mouse, 'y', { duration: 0.9, ease: 'power3.out' });
+      onPointer = (e: PointerEvent) => {
+        if (e.pointerType === 'touch') return;
+        qx((e.clientX / window.innerWidth) * 2 - 1);
+        qy(-((e.clientY / window.innerHeight) * 2 - 1));
+      };
+      window.addEventListener('pointermove', onPointer, { passive: true });
+    }
+
+    // ── Limpieza ──────────────────────────────────────────────
+    disposeFn = () => {
+      gsap.ticker.remove(tick);
+      gsap.killTweensOf(mouse);
+      gsap.killTweensOf(canvas);
+      if (onPointer) window.removeEventListener('pointermove', onPointer);
+      document.removeEventListener('visibilitychange', onVisibility);
+      ro.disconnect();
+      io.disconnect();
+      geometry.dispose();
+      strapGeo.dispose();
+      buckleGeo?.dispose();
+      darkMat.dispose();
+      orangeMat.dispose();
+      strapMat.dispose();
+      buckleMat?.dispose();
+      darkMesh.dispose();
+      orangeMesh.dispose();
+      envRT.dispose();
+      pmrem.dispose();
+      renderer.dispose();
+      disposeFn = null;
+    };
+  }
+</script>

@@ -1,0 +1,1093 @@
+---
+/**
+ * CtaObject3D — el cubo de HARNESS como cierre de la historia, para la sección CTA.
+ *
+ * En el hero el cubo empieza desarmado y el listón lo atrapa. Acá aparece como el
+ * producto entregado: armado, sellado y con la paleta invertida para leerse sobre
+ * la tarjeta naranja (metal negro, acentos crema, listón crema, hebilla oscura).
+ *
+ * Uso:
+ *   <section id="cta" class="relative ...">            <!-- tarjeta naranja -->
+ *     <h2 class="relative z-[1]">¿LISTO PARA CONSTRUIR? ...</h2>
+ *     <CtaObject3D sectionSelector="#cta" />            <!-- z-2: solapa el titular -->
+ *     <nav class="relative z-[3]">...enlaces a los lados...</nav>
+ *     <a data-cta-trigger href="#contacto" class="relative z-[3]">INICIAR PROYECTO ↗</a>
+ *   </section>
+ *
+ * Interacción:
+ *   - Entrada: con el scroll el cubo se arma y el listón lo sella (con destello).
+ *   - Cursor: empuja los bloques con un resorte y el cubo se inclina hacia el mouse.
+ *     Sellado, los bloques que sujeta el listón casi no se mueven.
+ *   - Botón [data-cta-trigger]: al pasar el mouse o enfocar, el listón se afloja y los
+ *     bloques se separan; al salir, el listón se cierra de nuevo con el destello.
+ *     Si no hay ningún [data-cta-trigger], se abre al pasar el mouse sobre el cubo.
+ *
+ * Caja del objeto (variables CSS en la sección o en el propio componente):
+ *   --cta-3d-top, --cta-3d-width, --cta-3d-height
+ */
+interface Props {
+  /** Selector de la sección CTA (para el scroll y para limitar el cursor). */
+  sectionSelector?: string;
+  /** Elementos que abren/cierran el listón al hacer hover o foco. */
+  triggerSelector?: string;
+  /** PNG con transparencia del cubo sellado, para dispositivos sin WebGL. Opcional. */
+  fallbackSrc?: string;
+  class?: string;
+}
+
+const {
+  sectionSelector = '#cta',
+  triggerSelector = '[data-cta-trigger]',
+  fallbackSrc,
+  class: className = '',
+} = Astro.props;
+---
+
+<div
+  class:list={['cta-3d', className]}
+  data-cta-3d
+  data-section-selector={sectionSelector}
+  data-trigger-selector={triggerSelector}
+  aria-hidden="true"
+>
+  <div class="cta-3d__shadow"></div>
+  <canvas class="cta-3d__canvas"></canvas>
+  {
+    fallbackSrc && (
+      <img
+        class="cta-3d__fallback"
+        src={fallbackSrc}
+        alt=""
+        loading="lazy"
+        decoding="async"
+      />
+    )
+  }
+</div>
+
+<style>
+  .cta-3d {
+    position: absolute;
+    z-index: 2;
+    left: 50%;
+    top: var(--cta-3d-top, 4%);
+    width: var(--cta-3d-width, min(100%, 760px));
+    height: var(--cta-3d-height, 92%);
+    transform: translateX(-50%);
+    pointer-events: none;
+  }
+
+  .cta-3d__canvas {
+    display: block;
+    width: 100%;
+    height: 100%;
+    opacity: 0; /* se anima a 1 tras el primer render */
+  }
+
+  /* Sombra de contacto: apoya el cubo sobre el naranja */
+  .cta-3d__shadow {
+    position: absolute;
+    left: 50%;
+    bottom: 6%;
+    width: 58%;
+    height: 9%;
+    transform: translateX(-50%);
+    background: radial-gradient(closest-side, rgba(10, 10, 10, 0.32), transparent 100%);
+    filter: blur(14px);
+  }
+
+  .cta-3d__fallback {
+    display: none;
+    position: absolute;
+    left: 50%;
+    top: 50%;
+    width: min(100%, 520px);
+    transform: translate(-50%, -50%);
+  }
+
+  /* Modo fallback: sin WebGL */
+  .cta-3d[data-fallback] .cta-3d__canvas {
+    display: none;
+  }
+  .cta-3d[data-fallback] .cta-3d__fallback {
+    display: block;
+  }
+</style>
+
+<script>
+  import gsap from 'gsap';
+  import type { InstancedMesh, Vector3, Quaternion } from 'three';
+
+  // ────────────────────────────────────────────────────────────────
+  // CONFIGURACIÓN — todo lo que querrás ajustar está acá
+  // ────────────────────────────────────────────────────────────────
+  const CONFIG = {
+    // Estructura (cubo 100% completo, sin bloques faltantes)
+    grid: 5,
+    occupancy: 1.0,
+    irregularity: 0,
+    seed: 20261012,
+    blockSize: 1,
+    gap: 0.12,
+    blockRadius: 0.08,
+    accentEvery: 8, // 1 de cada N bloques usa el color de acento
+
+    // Paleta invertida para fondo naranja
+    colors: {
+      block: '#121212', // metal negro
+      accent: '#F2EEE6', // bloques de acento (crema)
+      strap: '#F2EEE6', // listón
+      buckle: '#161616', // hebilla oscura sobre el listón claro
+      bounce: '#FF5A00', // luz de rebote del fondo naranja
+      rim: '#FFD7BD', // luz de borde cálida
+    },
+
+    // Luces
+    envIntensity: 0.45,
+    keyLight: 1.5,
+    rimLight: 2.4,
+    bounceLight: 1.3,
+
+    // Cámara y tamaño
+    fov: 35,
+    tilt: 0.22,
+    baseYaw: -0.5, // distinto al hero, para mostrar otra cara del cubo
+    targetPx: 600, // diámetro del objeto en pantalla (se limita a la caja)
+    maxDpr: 1.75,
+
+    // Entrada (con el scroll)
+    scatterMin: 0.9,
+    scatterRange: 1.5,
+    driftAmp: 0.14,
+    staggerSpread: 0.55,
+    snap: 0.7,
+    scaleStart: 1.0, // escala del grupo desarmado
+    scaleSealed: 1.3, // escala del cubo sellado
+    scaleOpen: 1.05, // escala cuando el listón se abre (deja lugar a los bloques)
+    entryStart: 'top 85%', // cuándo empieza a armarse
+    entryEnd: 'top 35%', // cuándo queda sellado
+
+    // Listón deformable (misma construcción que el hero)
+    strapSegments: 480,
+    strapHeight: 0.36,
+    strapThickness: 0.08,
+    strapClearance: 0.025,
+    strapLooseScale: 1.65,
+    strapLooseTiltX: 0.48,
+    strapLooseTiltZ: -0.32,
+    strapCinchSpread: 0.6,
+    strapSag: 0.1,
+    strapSnap: 0.05,
+    strapGlow: 0.18, // brillo base del listón
+    buckle: true,
+    lockPulse: 1.0, // intensidad del destello al sellarse
+
+    // Apertura (hover del botón)
+    openLoosen: 0.85, // cuánto se afloja el listón al abrir (0-1)
+    openDistance: 0.6, // cuánto se separan los bloques
+    openSpin: 0.5, // giro máximo de cada bloque al separarse (rad)
+
+    // Cursor: empuja los bloques
+    repelRadius: 2.8, // radio de influencia (unidades del mundo)
+    repelAmount: 0.9, // desplazamiento máximo
+    springK: 38, // rigidez del resorte
+    springDamp: 9, // amortiguación (más bajo = más rebote)
+    cursorTilt: 0.28, // rad máximos que el cubo se inclina hacia el cursor
+
+    // Movimiento ambiente
+    idleSpeed: 0.07,
+    floatAmp: 0.1,
+  };
+
+  // ────────────────────────────────────────────────────────────────
+  // MATEMÁTICA DEL LISTÓN (misma que el hero; si prefieres, muévela a un módulo común)
+  // ────────────────────────────────────────────────────────────────
+  // <strap-math>
+  type P2 = [number, number];
+
+  /** Casco convexo (monotone chain). Devuelve los puntos en sentido antihorario. */
+  function convexHull(points: P2[]): P2[] {
+    const pts = points.slice().sort((a, b) => a[0] - b[0] || a[1] - b[1]);
+    const cross = (o: P2, a: P2, b: P2) =>
+      (a[0] - o[0]) * (b[1] - o[1]) - (a[1] - o[1]) * (b[0] - o[0]);
+    const lower: P2[] = [];
+    for (const p of pts) {
+      while (lower.length >= 2 && cross(lower[lower.length - 2], lower[lower.length - 1], p) <= 0)
+        lower.pop();
+      lower.push(p);
+    }
+    const upper: P2[] = [];
+    for (let i = pts.length - 1; i >= 0; i--) {
+      const p = pts[i];
+      while (upper.length >= 2 && cross(upper[upper.length - 2], upper[upper.length - 1], p) <= 0)
+        upper.pop();
+      upper.push(p);
+    }
+    lower.pop();
+    upper.pop();
+    return lower.concat(upper);
+  }
+
+  /**
+   * Re-muestrea un polígono cerrado en M puntos equiespaciados por longitud de arco.
+   * La estación 0 es el punto donde el polígono cruza el eje +Z (frente del cubo),
+   * ahí va la hebilla.
+   */
+  function resamplePolygon(poly: P2[], M: number) {
+    const n = poly.length;
+    const cum = new Float64Array(n + 1);
+    for (let k = 0; k < n; k++) {
+      const a = poly[k];
+      const b = poly[(k + 1) % n];
+      cum[k + 1] = cum[k] + Math.hypot(b[0] - a[0], b[1] - a[1]);
+    }
+    const total = cum[n];
+
+    let s0 = 0;
+    for (let k = 0; k < n; k++) {
+      const a = poly[k];
+      const b = poly[(k + 1) % n];
+      if ((a[0] <= 0 && b[0] > 0) || (a[0] > 0 && b[0] <= 0)) {
+        const t = (0 - a[0]) / (b[0] - a[0]);
+        const hitZ = a[1] + t * (b[1] - a[1]);
+        if (hitZ > 0) {
+          s0 = cum[k] + t * (cum[k + 1] - cum[k]);
+          break;
+        }
+      }
+    }
+
+    const x = new Float32Array(M);
+    const z = new Float32Array(M);
+    for (let i = 0; i < M; i++) {
+      const s = (s0 + (total * i) / M) % total;
+      let lo = 0;
+      let hi = n - 1;
+      while (lo < hi) {
+        const mid = (lo + hi + 1) >> 1;
+        if (cum[mid] <= s) lo = mid;
+        else hi = mid - 1;
+      }
+      const a = poly[lo];
+      const b = poly[(lo + 1) % n];
+      const len = cum[lo + 1] - cum[lo] || 1;
+      const t = (s - cum[lo]) / len;
+      x[i] = a[0] + (b[0] - a[0]) * t;
+      z[i] = a[1] + (b[1] - a[1]) * t;
+    }
+    return { x, z, total };
+  }
+
+  /** Índices del listón: 4 caras (exterior, interior, arriba, abajo) × M estaciones. */
+  function buildStrapIndex(M: number): Uint32Array {
+    const idx = new Uint32Array(4 * M * 6);
+    // true = el triángulo (A,B,C) apunta al revés de la normal de esa cara
+    const flip = [true, false, false, true];
+    let o = 0;
+    for (let f = 0; f < 4; f++) {
+      for (let i = 0; i < M; i++) {
+        const j = (i + 1) % M;
+        const A = (f * M + i) * 2;
+        const B = (f * M + j) * 2;
+        const C = A + 1;
+        const D = B + 1;
+        if (!flip[f]) idx.set([A, B, C, B, D, C], o);
+        else idx.set([A, C, B, B, C, D], o);
+        o += 6;
+      }
+    }
+    return idx;
+  }
+
+  function putVertex(
+    pos: Float32Array,
+    nor: Float32Array,
+    v: number,
+    px: number,
+    py: number,
+    pz: number,
+    nx: number,
+    ny: number,
+    nz: number,
+  ) {
+    pos[v] = px;
+    pos[v + 1] = py;
+    pos[v + 2] = pz;
+    nor[v] = nx;
+    nor[v + 1] = ny;
+    nor[v + 2] = nz;
+  }
+
+  /**
+   * Convierte la línea central de la cinta (C) y su eje "arriba" (U) por estación
+   * en una malla con sección rectangular: calcula las normales a partir de los
+   * vecinos y escribe posiciones y normales de los 4 lados.
+   * `frame` (9 floats) devuelve normal, arriba y posición base de la estación 0
+   * para colocar la hebilla.
+   */
+  function fillStrapMesh(
+    M: number,
+    C: Float32Array,
+    U: Float32Array,
+    thick: number,
+    H: number,
+    snapOut: number,
+    pos: Float32Array,
+    nor: Float32Array,
+    frame: Float32Array,
+  ) {
+    const hh = H / 2;
+    for (let i = 0; i < M; i++) {
+      const p = ((i - 1 + M) % M) * 3;
+      const q = ((i + 1) % M) * 3;
+      const tx = C[q] - C[p];
+      const ty = C[q + 1] - C[p + 1];
+      const tz = C[q + 2] - C[p + 2];
+      const ux = U[i * 3];
+      const uy = U[i * 3 + 1];
+      const uz = U[i * 3 + 2];
+
+      // normal exterior = arriba × tangente
+      let nx = uy * tz - uz * ty;
+      let ny = uz * tx - ux * tz;
+      let nz = ux * ty - uy * tx;
+      const nl = Math.hypot(nx, ny, nz) || 1;
+      nx /= nl;
+      ny /= nl;
+      nz /= nl;
+
+      // base = línea central desplazada hacia afuera (micro-rebote)
+      const bx = C[i * 3] + nx * snapOut;
+      const by = C[i * 3 + 1] + ny * snapOut;
+      const bz = C[i * 3 + 2] + nz * snapOut;
+
+      const ibx = bx - ux * hh;
+      const iby = by - uy * hh;
+      const ibz = bz - uz * hh;
+      const itx = bx + ux * hh;
+      const ity = by + uy * hh;
+      const itz = bz + uz * hh;
+      const obx = ibx + nx * thick;
+      const oby = iby + ny * thick;
+      const obz = ibz + nz * thick;
+      const otx = itx + nx * thick;
+      const oty = ity + ny * thick;
+      const otz = itz + nz * thick;
+
+      // cara exterior
+      putVertex(pos, nor, ((0 * M + i) * 2 + 0) * 3, obx, oby, obz, nx, ny, nz);
+      putVertex(pos, nor, ((0 * M + i) * 2 + 1) * 3, otx, oty, otz, nx, ny, nz);
+      // cara interior
+      putVertex(pos, nor, ((1 * M + i) * 2 + 0) * 3, ibx, iby, ibz, -nx, -ny, -nz);
+      putVertex(pos, nor, ((1 * M + i) * 2 + 1) * 3, itx, ity, itz, -nx, -ny, -nz);
+      // cara superior
+      putVertex(pos, nor, ((2 * M + i) * 2 + 0) * 3, itx, ity, itz, ux, uy, uz);
+      putVertex(pos, nor, ((2 * M + i) * 2 + 1) * 3, otx, oty, otz, ux, uy, uz);
+      // cara inferior
+      putVertex(pos, nor, ((3 * M + i) * 2 + 0) * 3, ibx, iby, ibz, -ux, -uy, -uz);
+      putVertex(pos, nor, ((3 * M + i) * 2 + 1) * 3, obx, oby, obz, -ux, -uy, -uz);
+
+      if (i === 0) {
+        frame[0] = nx;
+        frame[1] = ny;
+        frame[2] = nz;
+        frame[3] = ux;
+        frame[4] = uy;
+        frame[5] = uz;
+        frame[6] = bx;
+        frame[7] = by;
+        frame[8] = bz;
+      }
+    }
+  }
+  // </strap-math>
+
+  // ────────────────────────────────────────────────────────────────
+
+  const root = document.querySelector<HTMLElement>('[data-cta-3d]');
+  const sectionEl = root
+    ? (document.querySelector<HTMLElement>(root.dataset.sectionSelector || '#cta') ??
+      root.closest('section') ??
+      root.parentElement)
+    : null;
+  const reduced = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+  const canHover = window.matchMedia('(hover: hover) and (pointer: fine)').matches;
+
+  // Estado ya sellado al inicio (sin animaciones previas)
+  const state = {
+    assemble: 1,
+    strap: 1,
+    lock: 0,
+    flash: 0,
+    open: 0,
+    scale: CONFIG.scaleSealed,
+  };
+
+  let disposeFn: (() => void) | null = null;
+
+  if (root && sectionEl) {
+    boot(root, sectionEl).catch(() => {
+      root.setAttribute('data-fallback', '');
+    });
+  }
+
+  document.addEventListener(
+    'astro:before-swap',
+    () => {
+      disposeFn?.();
+    },
+    { once: true },
+  );
+
+  function hasWebGL(): boolean {
+    try {
+      const c = document.createElement('canvas');
+      return !!(c.getContext('webgl2') || c.getContext('webgl'));
+    } catch {
+      return false;
+    }
+  }
+
+  function whenIdle(): Promise<void> {
+    return new Promise((resolve) => {
+      const w = window as any;
+      if (w.requestIdleCallback) w.requestIdleCallback(() => resolve(), { timeout: 600 });
+      else setTimeout(resolve, 150);
+    });
+  }
+
+  // RNG determinista (mulberry32): la silueta es siempre la misma que en el hero
+  function makeRng(seed: number) {
+    let a = seed >>> 0;
+    return () => {
+      a |= 0;
+      a = (a + 0x6d2b79f5) | 0;
+      let t = Math.imul(a ^ (a >>> 15), 1 | a);
+      t = (t + Math.imul(t ^ (t >>> 7), 61 | t)) ^ t;
+      return ((t ^ (t >>> 14)) >>> 0) / 4294967296;
+    };
+  }
+
+  async function boot(root: HTMLElement, sectionEl: HTMLElement) {
+    const canvas = root.querySelector<HTMLCanvasElement>('.cta-3d__canvas')!;
+
+    if (!hasWebGL()) {
+      root.setAttribute('data-fallback', '');
+      return;
+    }
+
+    // Carga diferida de Three.js tras el primer paint
+    await whenIdle();
+    const [THREE, { RoundedBoxGeometry }, { RoomEnvironment }] = await Promise.all([
+      import('three'),
+      import('three/examples/jsm/geometries/RoundedBoxGeometry.js'),
+      import('three/examples/jsm/environments/RoomEnvironment.js'),
+    ]);
+
+    const lowEnd =
+      (navigator.hardwareConcurrency ?? 8) <= 2 ||
+      ((navigator as any).deviceMemory ?? 8) <= 2;
+    const dpr = Math.min(window.devicePixelRatio || 1, lowEnd ? 1 : CONFIG.maxDpr);
+
+    // ── Renderer, escena y cámara ───────────────────────────────
+    const renderer = new THREE.WebGLRenderer({
+      canvas,
+      alpha: true,
+      antialias: true,
+      powerPreference: 'high-performance',
+    });
+    renderer.setPixelRatio(dpr);
+    renderer.setClearColor(0x000000, 0);
+    renderer.toneMapping = THREE.ACESFilmicToneMapping;
+    renderer.toneMappingExposure = 1.0;
+    renderer.outputColorSpace = THREE.SRGBColorSpace;
+
+    const scene = new THREE.Scene();
+    const camera = new THREE.PerspectiveCamera(CONFIG.fov, 1, 0.1, 100);
+
+    const pmrem = new THREE.PMREMGenerator(renderer);
+    const envRT = pmrem.fromScene(new RoomEnvironment(), 0.04);
+    scene.environment = envRT.texture;
+    (scene as any).environmentIntensity = CONFIG.envIntensity;
+
+    // Luces: principal blanca, rebote naranja desde abajo (la tarjeta) y bordes cálidos
+    const key = new THREE.DirectionalLight(0xffffff, CONFIG.keyLight);
+    key.position.set(-4, 6, 5);
+    const bounce = new THREE.DirectionalLight(CONFIG.colors.bounce, CONFIG.bounceLight);
+    bounce.position.set(0, -6, 4);
+    const rimA = new THREE.DirectionalLight(CONFIG.colors.rim, CONFIG.rimLight);
+    rimA.position.set(6, 2, -6);
+    const rimB = new THREE.DirectionalLight(CONFIG.colors.rim, CONFIG.rimLight * 0.8);
+    rimB.position.set(-6, -1, -6);
+    scene.add(key, bounce, rimA, rimB);
+
+    // ── Estructura modular ─────────────────────────────────────
+    const rng = makeRng(CONFIG.seed);
+    const N = CONFIG.grid;
+    const half = (N - 1) / 2;
+    const step = CONFIG.blockSize + CONFIG.gap;
+
+    type Cell = { x: number; y: number; z: number; d: number; score: number };
+    const cells: Cell[] = [];
+    for (let x = 0; x < N; x++)
+      for (let y = 0; y < N; y++)
+        for (let z = 0; z < N; z++) {
+          const d = Math.hypot(x - half, y - half, z - half) / (half * Math.sqrt(3));
+          const score = 1 - d + (rng() - 0.5) * CONFIG.irregularity;
+          cells.push({ x, y, z, d, score });
+        }
+    cells.sort((a, b) => b.score - a.score);
+    const kept = cells.slice(0, Math.round(cells.length * CONFIG.occupancy));
+
+    const keySet = new Set(kept.map((c) => `${c.x},${c.y},${c.z}`));
+    const isExposed = (c: Cell) =>
+      [
+        [1, 0, 0],
+        [-1, 0, 0],
+        [0, 1, 0],
+        [0, -1, 0],
+        [0, 0, 1],
+        [0, 0, -1],
+      ].some(([dx, dy, dz]) => !keySet.has(`${c.x + dx},${c.y + dy},${c.z + dz}`));
+
+    const exposed = kept.filter(isExposed);
+    for (let i = exposed.length - 1; i > 0; i--) {
+      const j = Math.floor(rng() * (i + 1));
+      [exposed[i], exposed[j]] = [exposed[j], exposed[i]];
+    }
+    const accentCount = Math.max(1, Math.round(kept.length / CONFIG.accentEvery));
+    const accentSet = new Set(exposed.slice(0, accentCount));
+
+    const geometry = new RoundedBoxGeometry(
+      CONFIG.blockSize,
+      CONFIG.blockSize,
+      CONFIG.blockSize,
+      4,
+      CONFIG.blockRadius,
+    );
+
+    const darkMat = new THREE.MeshPhysicalMaterial({
+      color: 0xffffff, // se tiñe por instancia
+      metalness: 0.9,
+      roughness: 0.25,
+      clearcoat: 0.6,
+      clearcoatRoughness: 0.2,
+    });
+    const accentMat = new THREE.MeshPhysicalMaterial({
+      color: CONFIG.colors.accent,
+      metalness: 0.2,
+      roughness: 0.35,
+      clearcoat: 1,
+      clearcoatRoughness: 0.15,
+      emissive: CONFIG.colors.accent,
+      emissiveIntensity: 0.08,
+    });
+
+    const darkCount = kept.length - accentSet.size;
+    const darkMesh = new THREE.InstancedMesh(geometry, darkMat, darkCount);
+    const accentMesh = new THREE.InstancedMesh(geometry, accentMat, accentSet.size);
+    darkMesh.frustumCulled = false;
+    accentMesh.frustumCulled = false;
+
+    // Fila del listón (la de más bloques, o la fila central si hay empate)
+    const rowCounts = new Map<number, number>();
+    for (const c of kept) rowCounts.set(c.y, (rowCounts.get(c.y) ?? 0) + 1);
+    let strapRow = Math.round(half);
+    let bestCount = rowCounts.get(strapRow) ?? -1;
+    for (let y = 1; y <= N - 2; y++) {
+      const n = rowCounts.get(y) ?? 0;
+      if (n > bestCount) {
+        bestCount = n;
+        strapRow = y;
+      }
+    }
+
+    type Block = {
+      mesh: InstancedMesh;
+      index: number;
+      final: Vector3;
+      start: Vector3;
+      startQuat: Quaternion;
+      explode: Vector3;
+      axis: Vector3;
+      phase: number;
+      delay: number;
+      rowLock: boolean; // sujeto por el listón: casi no se mueve con el cursor al estar sellado
+    };
+    const blocks: Block[] = [];
+    const baseColor = new THREE.Color(CONFIG.colors.block);
+    const tmpColor = new THREE.Color();
+    let di = 0;
+    let ai = 0;
+    let maxScatter = 0;
+    let maxFinal = 0;
+    let maxExplode = 0;
+    const maxDelay = CONFIG.staggerSpread + 0.1;
+
+    for (const c of kept) {
+      const isAccent = accentSet.has(c);
+      const final = new THREE.Vector3((c.x - half) * step, (c.y - half) * step, (c.z - half) * step);
+      maxFinal = Math.max(maxFinal, final.length());
+
+      // Posición desarmada (entrada)
+      const dir = final.clone();
+      if (dir.lengthSq() < 1e-4) dir.set(rng() - 0.5, rng() - 0.5, rng() - 0.5);
+      dir
+        .normalize()
+        .add(new THREE.Vector3(rng() - 0.5, rng() - 0.5, rng() - 0.5).multiplyScalar(0.7))
+        .normalize();
+      const start = final
+        .clone()
+        .addScaledVector(dir, CONFIG.scatterMin + rng() * CONFIG.scatterRange);
+      maxScatter = Math.max(maxScatter, start.length());
+
+      const startQuat = new THREE.Quaternion().setFromEuler(
+        new THREE.Euler(rng() * 6.28, rng() * 6.28, rng() * 6.28),
+      );
+      const phase = rng() * Math.PI * 2;
+      const delay = (1 - c.d) * CONFIG.staggerSpread + rng() * 0.1;
+
+      // Separación al abrir el listón: hacia afuera + un poco de ruido
+      const explode = final.clone();
+      if (explode.lengthSq() < 1e-4) explode.set(rng() - 0.5, rng() - 0.5, rng() - 0.5);
+      explode
+        .normalize()
+        .add(new THREE.Vector3(rng() - 0.5, rng() - 0.5, rng() - 0.5).multiplyScalar(0.5))
+        .multiplyScalar(CONFIG.openDistance * (0.6 + rng() * 0.8));
+      maxExplode = Math.max(maxExplode, final.clone().add(explode).length());
+      const axis = new THREE.Vector3(rng() - 0.5, rng() - 0.5, rng() - 0.5).normalize();
+
+      const mesh = isAccent ? accentMesh : darkMesh;
+      const index = isAccent ? ai++ : di++;
+
+      if (!isAccent) {
+        const v = 0.8 + rng() * 0.4;
+        darkMesh.setColorAt(index, tmpColor.copy(baseColor).multiplyScalar(v));
+      }
+      blocks.push({
+        mesh,
+        index,
+        final,
+        start,
+        startQuat,
+        explode,
+        axis,
+        phase,
+        delay,
+        rowLock: c.y === strapRow,
+      });
+    }
+    if (darkMesh.instanceColor) darkMesh.instanceColor.needsUpdate = true;
+
+    // ── Listón deformable (igual que el hero) ─────────────────
+    const rb = CONFIG.blockRadius;
+    const offsetR = rb + CONFIG.strapClearance;
+    const coreHalf = CONFIG.blockSize / 2 - rb;
+    const hullPts: P2[] = [];
+    for (const c of kept) {
+      if (c.y !== strapRow) continue;
+      const cx = (c.x - half) * step;
+      const cz = (c.z - half) * step;
+      for (const sx of [-1, 1])
+        for (const sz of [-1, 1])
+          for (let k = 0; k < 24; k++) {
+            const a = (k / 24) * Math.PI * 2;
+            hullPts.push([
+              cx + sx * coreHalf + Math.cos(a) * offsetR,
+              cz + sz * coreHalf + Math.sin(a) * offsetR,
+            ]);
+          }
+    }
+    const hull = convexHull(hullPts);
+
+    const M = CONFIG.strapSegments;
+    const outline = resamplePolygon(hull, M);
+    const theta = new Float32Array(M);
+    const wavePhase = new Float32Array(M);
+    let maxHullR = 0;
+    for (let i = 0; i < M; i++) {
+      theta[i] = Math.atan2(outline.z[i], outline.x[i]);
+      const u = i / M;
+      wavePhase[i] = Math.min(u, 1 - u) * 2;
+      maxHullR = Math.max(maxHullR, Math.hypot(outline.x[i], outline.z[i]));
+    }
+    const thick = CONFIG.strapThickness;
+    const H = CONFIG.strapHeight;
+    const looseR = (maxHullR + thick) * CONFIG.strapLooseScale;
+
+    const strapPos = new Float32Array(4 * M * 2 * 3);
+    const strapNor = new Float32Array(4 * M * 2 * 3);
+    const strapGeo = new THREE.BufferGeometry();
+    const posAttr = new THREE.BufferAttribute(strapPos, 3);
+    const norAttr = new THREE.BufferAttribute(strapNor, 3);
+    posAttr.setUsage(THREE.DynamicDrawUsage);
+    norAttr.setUsage(THREE.DynamicDrawUsage);
+    strapGeo.setAttribute('position', posAttr);
+    strapGeo.setAttribute('normal', norAttr);
+    strapGeo.setIndex(new THREE.BufferAttribute(buildStrapIndex(M), 1));
+
+    const strapMat = new THREE.MeshStandardMaterial({
+      color: CONFIG.colors.strap,
+      emissive: CONFIG.colors.strap,
+      emissiveIntensity: CONFIG.strapGlow,
+      metalness: 0.25,
+      roughness: 0.38,
+      side: THREE.DoubleSide,
+    });
+    const strapMesh = new THREE.Mesh(strapGeo, strapMat);
+    strapMesh.frustumCulled = false;
+
+    const strapPivot = new THREE.Group();
+    strapPivot.position.y = (strapRow - half) * step;
+    strapPivot.add(strapMesh);
+
+    let buckleGeo: InstanceType<typeof RoundedBoxGeometry> | null = null;
+    let buckleMat: InstanceType<typeof THREE.MeshStandardMaterial> | null = null;
+    let buckle: InstanceType<typeof THREE.Mesh> | null = null;
+    if (CONFIG.buckle) {
+      buckleGeo = new RoundedBoxGeometry(0.88, H + 0.14, 0.16, 4, 0.04);
+      buckleMat = new THREE.MeshStandardMaterial({
+        color: CONFIG.colors.buckle,
+        metalness: 0.95,
+        roughness: 0.2,
+      });
+      buckle = new THREE.Mesh(buckleGeo, buckleMat);
+      strapPivot.add(buckle);
+    }
+
+    const group = new THREE.Group();
+    group.add(darkMesh, accentMesh, strapPivot);
+    scene.add(group);
+
+    // ── Estado de interacción ─────────────────────────────────
+    const mouse = { x: 0, y: 0 }; // inclinación hacia el cursor (-1..1)
+    const pointer = { x: 0, y: 0, inside: false };
+    let curActive = 0; // 0..1: cuánto influye el cursor ahora
+    const curL = new THREE.Vector3(); // cursor en el espacio local del cubo
+    const ndc = new THREE.Vector3();
+    const rayDir = new THREE.Vector3();
+    const hit = new THREE.Vector3();
+
+    // Desplazamiento y velocidad de resorte por bloque
+    const offs = new Float32Array(blocks.length * 3);
+    const vels = new Float32Array(blocks.length * 3);
+
+    const dummy = new THREE.Object3D();
+    const q = new THREE.Quaternion();
+    const tmpQ = new THREE.Quaternion();
+    const IDENT = new THREE.Quaternion();
+    const pos = new THREE.Vector3();
+    const clamp01 = (v: number) => Math.min(1, Math.max(0, v));
+    const c1 = CONFIG.snap;
+    const c3 = c1 + 1;
+    const easeSnap = (t: number) => 1 + c3 * Math.pow(t - 1, 3) + c1 * Math.pow(t - 1, 2);
+
+    let idle = 0;
+    let visible = true;
+
+    function computeCursor(dt: number) {
+      const wantActive = pointer.inside && canHover && !reduced;
+      if (wantActive) {
+        const r = root.getBoundingClientRect();
+        ndc.set(
+          ((pointer.x - r.left) / r.width) * 2 - 1,
+          -((pointer.y - r.top) / r.height) * 2 + 1,
+          0.5,
+        );
+        ndc.unproject(camera);
+        rayDir.copy(ndc).sub(camera.position).normalize();
+        const t = (group.position.z - camera.position.z) / rayDir.z;
+        hit.copy(camera.position).addScaledVector(rayDir, t);
+        curL.copy(hit);
+        group.worldToLocal(curL);
+      }
+      curActive += ((wantActive ? 1 : 0) - curActive) * Math.min(1, dt * 6);
+    }
+
+    function updateInstances(dt: number) {
+      const act = curActive * clamp01((state.assemble - 0.85) / 0.15);
+      const R = CONFIG.repelRadius;
+      const K = CONFIG.springK;
+      const D = CONFIG.springDamp;
+      const sdt = Math.min(dt, 1 / 30);
+
+      for (let bi = 0; bi < blocks.length; bi++) {
+        const b = blocks[bi];
+        const t = clamp01((state.assemble - b.delay) / (1 - maxDelay));
+        const e = easeSnap(t);
+        const eq = Math.min(e, 1);
+
+        pos.lerpVectors(b.start, b.final, e);
+        pos.y += Math.sin(idle * 0.8 + b.phase) * CONFIG.driftAmp * (1 - eq);
+        pos.addScaledVector(b.explode, state.open);
+
+        // Resorte hacia el desplazamiento que pide el cursor (0 si no hay cursor cerca)
+        if (sdt > 0) {
+          const k3 = bi * 3;
+          let tx = 0;
+          let ty = 0;
+          let tz = 0;
+          if (act > 0.001) {
+            const dx = pos.x - curL.x;
+            const dy = pos.y - curL.y;
+            const dz = pos.z - curL.z;
+            const dist = Math.hypot(dx, dy, dz);
+            const f = 1 - dist / R;
+            if (f > 0) {
+              const infl = f * f * (3 - 2 * f);
+              // Sellado, los bloques que sujeta el listón no se mueven; el resto, apenas
+              const mult = b.rowLock ? state.open : 0.08 + 0.92 * state.open;
+              const amt = (CONFIG.repelAmount * infl * mult * act) / (dist || 1);
+              tx = dx * amt;
+              ty = dy * amt;
+              tz = dz * amt;
+            }
+          }
+          vels[k3] += ((tx - offs[k3]) * K - vels[k3] * D) * sdt;
+          vels[k3 + 1] += ((ty - offs[k3 + 1]) * K - vels[k3 + 1] * D) * sdt;
+          vels[k3 + 2] += ((tz - offs[k3 + 2]) * K - vels[k3 + 2] * D) * sdt;
+          offs[k3] += vels[k3] * sdt;
+          offs[k3 + 1] += vels[k3 + 1] * sdt;
+          offs[k3 + 2] += vels[k3 + 2] * sdt;
+        }
+        pos.x += offs[bi * 3];
+        pos.y += offs[bi * 3 + 1];
+        pos.z += offs[bi * 3 + 2];
+
+        q.slerpQuaternions(b.startQuat, IDENT, eq);
+        tmpQ.setFromAxisAngle(b.axis, state.open * CONFIG.openSpin);
+        q.premultiply(tmpQ);
+
+        dummy.position.copy(pos);
+        dummy.quaternion.copy(q);
+        dummy.scale.setScalar(0.8 + 0.2 * eq);
+        dummy.updateMatrix();
+        b.mesh.setMatrixAt(b.index, dummy.matrix);
+      }
+      darkMesh.instanceMatrix.needsUpdate = true;
+      accentMesh.instanceMatrix.needsUpdate = true;
+    }
+
+    // Buffers de trabajo del listón (se reutilizan en cada frame)
+    const stripC = new Float32Array(M * 3);
+    const stripU = new Float32Array(M * 3);
+    const stripFrame = new Float32Array(9);
+    const eul = new THREE.Euler();
+    const rotM = new THREE.Matrix4();
+    const bx = new THREE.Vector3();
+    const by = new THREE.Vector3();
+    const bz = new THREE.Vector3();
+    const bMat = new THREE.Matrix4();
+
+    function updateStrap() {
+      // Al abrir, el listón se afloja: baja el "grado de tensión" efectivo
+      const s = clamp01(state.strap * (1 - CONFIG.openLoosen * state.open));
+      const K = CONFIG.strapCinchSpread;
+
+      const sm = clamp01(s * 1.25);
+      const L = 1 - sm * sm * (3 - 2 * sm);
+      eul.set(CONFIG.strapLooseTiltX * L, Math.PI * 0.4 * L, CONFIG.strapLooseTiltZ * L);
+      rotM.makeRotationFromEuler(eul);
+      const e = rotM.elements;
+      const upLx = e[4];
+      const upLy = e[5];
+      const upLz = e[6];
+
+      for (let i = 0; i < M; i++) {
+        const a = clamp01(s * (1 + K) - K * wavePhase[i]);
+        const w = a * a * a * (a * (a * 6 - 15) + 10);
+
+        const th = theta[i];
+        const wob =
+          1 + 0.05 * Math.sin(3 * th + idle * 0.9) + 0.035 * Math.sin(5 * th - idle * 1.3);
+        const rl = looseR * wob;
+        const lx0 = rl * Math.cos(th);
+        const ly0 = CONFIG.driftAmp * 1.2 * Math.sin(2 * th + idle * 1.1 + 1.2);
+        const lz0 = rl * Math.sin(th);
+        const lx = e[0] * lx0 + e[4] * ly0 + e[8] * lz0;
+        const ly = e[1] * lx0 + e[5] * ly0 + e[9] * lz0;
+        const lz = e[2] * lx0 + e[6] * ly0 + e[10] * lz0;
+
+        const tx = outline.x[i];
+        const tz = outline.z[i];
+
+        const sag = Math.sin(Math.PI * w) * CONFIG.strapSag;
+        const k3 = i * 3;
+        stripC[k3] = lx + (tx - lx) * w;
+        stripC[k3 + 1] = ly + (0 - ly) * w - sag;
+        stripC[k3 + 2] = lz + (tz - lz) * w;
+
+        let ux = upLx + (0 - upLx) * w;
+        let uy = upLy + (1 - upLy) * w;
+        let uz = upLz + (0 - upLz) * w;
+        const ul = Math.hypot(ux, uy, uz) || 1;
+        ux /= ul;
+        uy /= ul;
+        uz /= ul;
+        stripU[k3] = ux;
+        stripU[k3 + 1] = uy;
+        stripU[k3 + 2] = uz;
+      }
+
+      // Micro-rebote elástico al tensarse del todo (solo hacia afuera: no corta bloques)
+      let snapOut = 0;
+      if (s > 0.9) {
+        const t = (s - 0.9) / 0.1;
+        snapOut = Math.sin(t * Math.PI) * (1 - t) * CONFIG.strapSnap;
+      }
+
+      fillStrapMesh(M, stripC, stripU, thick, H, snapOut, strapPos, strapNor, stripFrame);
+      posAttr.needsUpdate = true;
+      norAttr.needsUpdate = true;
+
+      if (buckle) {
+        bz.set(stripFrame[0], stripFrame[1], stripFrame[2]);
+        by.set(stripFrame[3], stripFrame[4], stripFrame[5]);
+        bx.crossVectors(by, bz).normalize();
+        bMat.makeBasis(bx, by, bz);
+        buckle.quaternion.setFromRotationMatrix(bMat);
+        buckle.position.set(
+          stripFrame[6] + bz.x * (thick + 0.06),
+          stripFrame[7] + bz.y * (thick + 0.06),
+          stripFrame[8] + bz.z * (thick + 0.06),
+        );
+      }
+
+      // Destello del listón al sellarse (entrada) o al cerrarse/click
+      strapMat.emissiveIntensity =
+        CONFIG.strapGlow + CONFIG.lockPulse * Math.max(state.lock, state.flash);
+    }
+
+    // ── Tamaño y encuadre ─────────────────────────────────────
+    // El encuadre contiene el peor caso de cada estado: desarmado, abierto y sellado
+    const looseStrapR = looseR * 1.1 + thick;
+    const viewRadius =
+      Math.max(
+        (maxScatter + 0.5) * CONFIG.scaleStart,
+        (maxExplode + 0.5) * CONFIG.scaleOpen,
+        looseStrapR * CONFIG.scaleOpen,
+        (maxFinal + 0.5) * CONFIG.scaleSealed,
+      ) + 0.15;
+
+    function render(dt: number) {
+      group.rotation.set(
+        CONFIG.tilt + mouse.y * CONFIG.cursorTilt,
+        CONFIG.baseYaw + idle * CONFIG.idleSpeed + mouse.x * CONFIG.cursorTilt,
+        0,
+      );
+      // Al abrir, el cubo se achica un poco para dejar lugar a los bloques
+      const sc = state.scale * (1 - state.open * (1 - CONFIG.scaleOpen / CONFIG.scaleSealed));
+      group.scale.setScalar(sc);
+      group.updateMatrixWorld();
+
+      computeCursor(dt);
+      updateInstances(dt);
+      renderer.render(scene, camera);
+    }
+
+    function layout() {
+      const w = Math.max(1, root.clientWidth);
+      const h = Math.max(1, root.clientHeight);
+      renderer.setSize(w, h, false);
+      camera.aspect = w / h;
+
+      const targetPx = Math.min(CONFIG.targetPx, h * 0.96, w * 0.96);
+      const tanHalf = Math.tan(THREE.MathUtils.degToRad(CONFIG.fov) / 2);
+      camera.position.set(0, 0, (viewRadius * h) / (targetPx * tanHalf));
+      camera.updateProjectionMatrix();
+      camera.updateMatrixWorld();
+      if (reduced || !visible) render(0);
+    }
+
+    layout();
+    updateStrap();
+    const ro = new ResizeObserver(layout);
+    ro.observe(root);
+
+    // ── Bucle: usa el ticker de GSAP ──────────────────────────
+    let firstFrame = true;
+    const tick = (time: number, deltaMs: number) => {
+      if (!visible) return;
+      const dt = Math.min(deltaMs, 50) / 1000;
+      idle += dt;
+      group.position.y = Math.sin(time * 0.9) * CONFIG.floatAmp;
+      render(dt);
+      if (firstFrame) {
+        firstFrame = false;
+        gsap.to(canvas, { opacity: 1, duration: 1.2, ease: 'power2.out' });
+      }
+    };
+
+    // Solo renderiza cuando la CTA está en pantalla
+    const io = new IntersectionObserver(
+      (entries) => {
+        visible = entries[0]?.isIntersecting ?? true;
+      },
+      { threshold: 0 },
+    );
+    io.observe(root);
+
+    const onVisibility = () => {
+      visible = !document.hidden;
+    };
+    document.addEventListener('visibilitychange', onVisibility);
+
+    // ── Interacción: cursor ────────────────────────────────────
+    let onPointer: ((e: PointerEvent) => void) | null = null;
+
+    if (reduced) {
+      // Cubo sellado y estático: un solo frame
+      canvas.style.opacity = '1';
+      render(0);
+    } else {
+      gsap.ticker.add(tick);
+
+      const qx = gsap.quickTo(mouse, 'x', { duration: 0.9, ease: 'power3.out' });
+      const qy = gsap.quickTo(mouse, 'y', { duration: 0.9, ease: 'power3.out' });
+
+      onPointer = (e: PointerEvent) => {
+        if (e.pointerType === 'touch') return;
+        const r = sectionEl.getBoundingClientRect();
+        pointer.x = e.clientX;
+        pointer.y = e.clientY;
+        pointer.inside =
+          e.clientX >= r.left && e.clientX <= r.right && e.clientY >= r.top && e.clientY <= r.bottom;
+
+        // El cubo se inclina hacia el cursor (relativo al centro de la sección)
+        if (pointer.inside) {
+          qx(Math.max(-1, Math.min(1, (e.clientX - (r.left + r.width / 2)) / (r.width / 2))));
+          qy(-Math.max(-1, Math.min(1, (e.clientY - (r.top + r.height / 2)) / (r.height / 2))));
+        } else {
+          qx(0);
+          qy(0);
+        }
+      };
+      window.addEventListener('pointermove', onPointer, { passive: true });
+    }
+
+    // ── Limpieza ──────────────────────────────────────────────
+    disposeFn = () => {
+      gsap.ticker.remove(tick);
+      gsap.killTweensOf(state);
+      gsap.killTweensOf(mouse);
+      gsap.killTweensOf(canvas);
+      if (onPointer) window.removeEventListener('pointermove', onPointer);
+      document.removeEventListener('visibilitychange', onVisibility);
+      ro.disconnect();
+      io.disconnect();
+      geometry.dispose();
+      strapGeo.dispose();
+      buckleGeo?.dispose();
+      darkMat.dispose();
+      accentMat.dispose();
+      strapMat.dispose();
+      buckleMat?.dispose();
+      darkMesh.dispose();
+      accentMesh.dispose();
+      envRT.dispose();
+      pmrem.dispose();
+      renderer.dispose();
+      disposeFn = null;
+    };
+  }
+</script>

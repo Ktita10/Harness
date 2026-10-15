@@ -1,6 +1,7 @@
 :root {
-  /* Lienzo y superficies (Dark High-Performance) */
+  /* Lienzo y superficies (Dark High-Performance & Soft Light) */
   --bg-primary: #0A0A0A;
+  --bg-secondary: #F8F9FA;
   --bg-surface: #121214;
   --bg-surface-hover: #18181B;
 
@@ -13,6 +14,7 @@
   --accent: #FF5A00;
   --accent-hover: #FF701A;
   --accent-contrast: #0A0A0A;
+  --accent-on-light: #C2410C;
   --accent-glow: rgba(255, 90, 0, 0.25);
 
   /* Estructura y elevación */
@@ -44,5 +46,7 @@
 
   /* Tipografía */
   --font-display: 'Bricolage Grotesque', system-ui, sans-serif;
+  --font-serif: 'Instrument Serif', Georgia, Cambria, 'Times New Roman', serif;
   --font-body: system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
 }
+

@@ -1,0 +1,533 @@
+---
+/**
+ * TopoBackground.astro
+ * Fondo animado procedural continuo para HARNESS STUDIO
+ */
+
+interface Props {
+  class?: string;
+  id?: string;
+  density?: number;
+  initialTheme?: number;
+  /** Si es true, se comporta como una capa sticky de 100vh que recorre varias secciones sin cortes */
+  sticky?: boolean;
+}
+
+const {
+  class: className = '',
+  id = 'topo-bg-' + Math.random().toString(36).substring(2, 9),
+  density = 4.8,
+  initialTheme = 0.0,
+  sticky = false,
+} = Astro.props;
+---
+
+<div
+  data-topo-container={id}
+  data-topo-density={density}
+  data-topo-theme={initialTheme}
+  data-topo-sticky={sticky ? 'true' : 'false'}
+  class:list={[
+    'topo-container pointer-events-none overflow-hidden select-none z-0',
+    sticky ? 'sticky top-0 left-0 w-full h-screen -mb-[100vh]' : 'absolute inset-0 w-full h-full -z-10',
+    className,
+  ]}
+  aria-hidden="true"
+>
+  <!-- Canvas principal WebGL -->
+  <canvas
+    data-topo-canvas
+    class="absolute inset-0 w-full h-full block"
+  ></canvas>
+
+  <!-- Fallback estático SVG si WebGL no está disponible -->
+  <div
+    data-topo-fallback
+    class="topo-fallback absolute inset-0 w-full h-full hidden bg-[#0A0A0A]"
+  >
+    <svg
+      class="w-full h-full opacity-25"
+      xmlns="http://www.w3.org/2000/svg"
+      viewBox="0 0 1440 900"
+      preserveAspectRatio="xMidYMid slice"
+    >
+      <path d="M-100,220 C380,120 620,480 1020,320 C1320,200 1520,380 1650,280" fill="none" stroke="#52525B" stroke-width="1.1" />
+      <path d="M-100,460 C400,340 540,700 940,600 C1240,480 1440,640 1650,560" fill="none" stroke="#52525B" stroke-width="1.1" />
+      <path d="M-100,700 C460,580 440,860 860,820 C1160,700 1360,860 1650,780" fill="none" stroke="#52525B" stroke-width="1.1" />
+    </svg>
+  </div>
+</div>
+
+<script>
+  const CONFIG = {
+    LINE_DENSITY: 4.8,
+    LINE_WIDTH: 1.15,
+    FLOW_SPEED: 0.018,
+    NOISE_SCALE: 0.95,
+    WARP_STRENGTH: 0.28,
+    ACCENT_EVERY: 0.0,
+    MORPH_SPEED: 0.010,
+    COLOR_BG_LIGHT: [0.961, 0.961, 0.949],   // #F5F5F2
+    COLOR_BG_DARK: [0.039, 0.039, 0.039],    // #0A0A0A
+    COLOR_LINE_LIGHT: [0.851, 0.851, 0.839], // #D9D9D6
+    COLOR_LINE_DARK: [0.550, 0.570, 0.600],  // Grafito refinado
+    COLOR_ACCENT: [1.000, 0.353, 0.122],     // #FF5A1F
+  };
+
+  const VS_SOURCE = `
+    attribute vec2 a_position;
+    varying vec2 v_uv;
+    void main() {
+      v_uv = a_position * 0.5 + 0.5;
+      gl_Position = vec4(a_position, 0.0, 1.0);
+    }
+  `;
+
+  const FS_SOURCE = `
+    #extension GL_OES_standard_derivatives : enable
+    #ifdef GL_FRAGMENT_PRECISION_HIGH
+      precision highp float;
+    #else
+      precision mediump float;
+    #endif
+
+    varying vec2 v_uv;
+
+    uniform vec2 u_resolution;
+    uniform float u_time;
+    uniform vec2 u_mouse;
+    uniform float u_scroll_offset;
+    uniform float u_fade;
+    uniform float u_dpr;
+    uniform float u_density;
+    uniform float u_theme;
+
+    const float LINE_WIDTH     = ${CONFIG.LINE_WIDTH.toFixed(2)};
+    const float FLOW_SPEED     = ${CONFIG.FLOW_SPEED.toFixed(4)};
+    const float NOISE_SCALE    = ${CONFIG.NOISE_SCALE.toFixed(2)};
+    const float WARP_STRENGTH  = ${CONFIG.WARP_STRENGTH.toFixed(2)};
+    const float ACCENT_EVERY   = ${CONFIG.ACCENT_EVERY.toFixed(1)};
+    const float MORPH_SPEED    = ${CONFIG.MORPH_SPEED.toFixed(4)};
+
+    const vec3 COLOR_BG_LIGHT   = vec3(${CONFIG.COLOR_BG_LIGHT[0].toFixed(3)}, ${CONFIG.COLOR_BG_LIGHT[1].toFixed(3)}, ${CONFIG.COLOR_BG_LIGHT[2].toFixed(3)});
+    const vec3 COLOR_BG_DARK    = vec3(${CONFIG.COLOR_BG_DARK[0].toFixed(3)}, ${CONFIG.COLOR_BG_DARK[1].toFixed(3)}, ${CONFIG.COLOR_BG_DARK[2].toFixed(3)});
+    const vec3 COLOR_LINE_LIGHT = vec3(${CONFIG.COLOR_LINE_LIGHT[0].toFixed(3)}, ${CONFIG.COLOR_LINE_LIGHT[1].toFixed(3)}, ${CONFIG.COLOR_LINE_LIGHT[2].toFixed(3)});
+    const vec3 COLOR_LINE_DARK  = vec3(${CONFIG.COLOR_LINE_DARK[0].toFixed(3)}, ${CONFIG.COLOR_LINE_DARK[1].toFixed(3)}, ${CONFIG.COLOR_LINE_DARK[2].toFixed(3)});
+    const vec3 COLOR_ACCENT     = vec3(${CONFIG.COLOR_ACCENT[0].toFixed(3)}, ${CONFIG.COLOR_ACCENT[1].toFixed(3)}, ${CONFIG.COLOR_ACCENT[2].toFixed(3)});
+
+    vec4 permute(vec4 x){return mod(((x*34.0)+1.0)*x, 289.0);}
+    vec4 taylorInvSqrt(vec4 r){return 1.79284291400159 - 0.85373472095314 * r;}
+
+    float snoise(vec3 v){
+      const vec2 C = vec2(1.0/6.0, 1.0/3.0);
+      const vec4 D = vec4(0.0, 0.5, 1.0, 2.0);
+
+      vec3 i  = floor(v + dot(v, C.yyy));
+      vec3 x0 = v - i + dot(i, C.xxx);
+
+      vec3 g = step(x0.yzx, x0.xyz);
+      vec3 l = 1.0 - g;
+      vec3 i1 = min(g.xyz, l.zxy);
+      vec3 i2 = max(g.xyz, l.zxy);
+
+      vec3 x1 = x0 - i1 + 1.0 * C.xxx;
+      vec3 x2 = x0 - i2 + 2.0 * C.xxx;
+      vec3 x3 = x0 - 1.0 + 3.0 * C.xxx;
+
+      i = mod(i, 289.0);
+      vec4 p = permute(permute(permute(
+                 i.z + vec4(0.0, i1.z, i2.z, 1.0))
+               + i.y + vec4(0.0, i1.y, i2.y, 1.0))
+               + i.x + vec4(0.0, i1.x, i2.x, 1.0));
+
+      float n_ = 0.142857142857;
+      vec3  ns = n_ * D.wyz - D.xzx;
+
+      vec4 j = p - 49.0 * floor(p * ns.z * ns.z);
+
+      vec4 x_ = floor(j * ns.z);
+      vec4 y_ = floor(j - 7.0 * x_);
+
+      vec4 x = x_ * ns.x + ns.yyyy;
+      vec4 y = y_ * ns.x + ns.yyyy;
+      vec4 h = 1.0 - abs(x) - abs(y);
+
+      vec4 b0 = vec4(x.xy, y.xy);
+      vec4 b1 = vec4(x.zw, y.zw);
+
+      vec4 s0 = floor(b0) * 2.0 + 1.0;
+      vec4 s1 = floor(b1) * 2.0 + 1.0;
+      vec4 sh = -step(h, vec4(0.0));
+
+      vec4 a0 = b0.xzyw + s0.xzyw * sh.xxyy;
+      vec4 a1 = b1.xzyw + s1.xzyw * sh.zzww;
+
+      vec3 p0 = vec3(a0.xy, h.x);
+      vec3 p1 = vec3(a0.zw, h.y);
+      vec3 p2 = vec3(a1.xy, h.z);
+      vec3 p3 = vec3(a1.zw, h.w);
+
+      vec4 norm = taylorInvSqrt(vec4(dot(p0, p0), dot(p1, p1), dot(p2, p2), dot(p3, p3)));
+      p0 *= norm.x;
+      p1 *= norm.y;
+      p2 *= norm.z;
+      p3 *= norm.w;
+
+      vec4 m = max(0.6 - vec4(dot(x0, x0), dot(x1, x1), dot(x2, x2), dot(x3, x3)), 0.0);
+      m = m * m;
+      return 42.0 * dot(m * m, vec4(dot(p0, x0), dot(p1, x1), dot(p2, x2), dot(p3, x3)));
+    }
+
+    float elevation(vec2 p, float z) {
+      vec2 w = vec2(
+        snoise(vec3(p * 0.75, z * 0.5)),
+        snoise(vec3(p * 0.75 + vec2(4.3, 2.7), z * 0.5))
+      ) * WARP_STRENGTH;
+
+      vec2 coord = p + w;
+      float n1 = snoise(vec3(coord, z));
+      float n2 = snoise(vec3(coord * 1.85 + vec2(3.1, 8.4), z * 1.1)) * 0.16;
+
+      return (n1 + n2) * 0.5 + 0.5;
+    }
+
+    void main() {
+      vec2 aspect = vec2(u_resolution.x / min(u_resolution.x, u_resolution.y),
+                         u_resolution.y / min(u_resolution.x, u_resolution.y));
+      vec2 uv = (v_uv - 0.5) * aspect;
+
+      // Desplazamiento continuo con el scroll + parallax de mouse
+      uv.y -= u_scroll_offset * 0.35;
+      uv += u_mouse * 0.025;
+
+      float z = u_time * MORPH_SPEED;
+      vec2 p = uv * NOISE_SCALE;
+      float v = elevation(p, z);
+
+      float f = v * u_density - u_time * FLOW_SPEED;
+      float d = abs(fract(f) - 0.5) / max(fwidth(f), 0.0001);
+      float line = 1.0 - smoothstep(0.0, LINE_WIDTH, d);
+
+      float isAccent = (ACCENT_EVERY > 0.5) ? step(mod(abs(floor(f + 0.5)), max(ACCENT_EVERY, 1.0)), 0.5) : 0.0;
+
+      vec3 currentBg = mix(COLOR_BG_DARK, COLOR_BG_LIGHT, u_theme);
+      vec3 currentNormalLine = mix(COLOR_LINE_DARK, COLOR_LINE_LIGHT, u_theme);
+      vec3 lineColor = mix(currentNormalLine, COLOR_ACCENT, isAccent);
+
+      float lineAlpha = mix(0.42, 0.55, u_theme);
+      lineAlpha = mix(lineAlpha, 0.42, isAccent);
+
+      float depthAlpha = mix(0.75, 1.0, v);
+
+      // Solo viñeta lateral suave (sin cortar arriba ni abajo para continuidad vertical total)
+      float edgeMaskX = smoothstep(0.0, 0.05, min(v_uv.x, 1.0 - v_uv.x));
+      float centerDist = length((v_uv - 0.5) * vec2(1.2, 1.0));
+      float centerMask = smoothstep(0.04, 0.52, centerDist) * 0.20 + 0.80;
+
+      float visibility = edgeMaskX * centerMask;
+
+      float finalStrength = line * lineAlpha * depthAlpha * visibility * u_fade;
+      vec3 finalColor = mix(currentBg, lineColor, clamp(finalStrength, 0.0, 1.0));
+
+      gl_FragColor = vec4(finalColor, 1.0);
+    }
+  `;
+
+  class TopoBackgroundRenderer {
+    private container: HTMLElement;
+    private canvas: HTMLCanvasElement;
+    private fallback: HTMLElement | null;
+    private gl: WebGLRenderingContext | null = null;
+    private program: WebGLProgram | null = null;
+    private positionBuffer: WebGLBuffer | null = null;
+
+    private density: number = CONFIG.LINE_DENSITY;
+    private theme: number = 0.0;
+    private uniformLocs: Record<string, WebGLUniformLocation | null> = {};
+    private animFrameId: number | null = null;
+
+    private lastTime: number = 0;
+    private virtualTime: number = 0;
+    private fade: number = 0.0;
+
+    private mouseCurrent = { x: 0, y: 0 };
+    private mouseTarget = { x: 0, y: 0 };
+    private scrollVelocity = 0;
+    private lastScrollY = 0;
+    private scrollOffsetCurrent = 0;
+    private scrollOffsetTarget = 0;
+
+    private isVisible = true;
+    private isReducedMotion = false;
+    private resizeObserver: ResizeObserver | null = null;
+    private intersectionObserver: IntersectionObserver | null = null;
+
+    constructor(container: HTMLElement) {
+      this.container = container;
+      this.canvas = container.querySelector('[data-topo-canvas]') as HTMLCanvasElement;
+      this.fallback = container.querySelector('[data-topo-fallback]');
+
+      if (!this.canvas) return;
+
+      this.density = parseFloat(container.dataset.topoDensity || '') || CONFIG.LINE_DENSITY;
+      this.theme = parseFloat(container.dataset.topoTheme ?? '0');
+
+      (container as any).__setTopoTheme = (v: number) => {
+        this.theme = Math.max(0, Math.min(1, v));
+      };
+
+      this.isReducedMotion =
+        typeof window !== 'undefined' &&
+        window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+
+      this.init();
+    }
+
+    private init(): void {
+      const options: WebGLContextAttributes = {
+        alpha: false,
+        antialias: false,
+        depth: false,
+        stencil: false,
+        powerPreference: 'low-power',
+      };
+
+      this.gl =
+        (this.canvas.getContext('webgl', options) as WebGLRenderingContext) ||
+        (this.canvas.getContext('experimental-webgl', options) as WebGLRenderingContext);
+
+      if (!this.gl || !this.gl.getExtension('OES_standard_derivatives')) {
+        this.showFallback();
+        return;
+      }
+
+      const gl = this.gl;
+      const vs = this.createShader(gl.VERTEX_SHADER, VS_SOURCE);
+      const fs = this.createShader(gl.FRAGMENT_SHADER, FS_SOURCE);
+      if (!vs || !fs) {
+        this.showFallback();
+        return;
+      }
+
+      const program = gl.createProgram();
+      if (!program) {
+        this.showFallback();
+        return;
+      }
+
+      gl.attachShader(program, vs);
+      gl.attachShader(program, fs);
+      gl.linkProgram(program);
+
+      if (!gl.getProgramParameter(program, gl.LINK_STATUS)) {
+        this.showFallback();
+        return;
+      }
+
+      this.program = program;
+      gl.useProgram(program);
+
+      const vertices = new Float32Array([-1.0, -1.0, 3.0, -1.0, -1.0, 3.0]);
+      this.positionBuffer = gl.createBuffer();
+      gl.bindBuffer(gl.ARRAY_BUFFER, this.positionBuffer);
+      gl.bufferData(gl.ARRAY_BUFFER, vertices, gl.STATIC_DRAW);
+
+      const aPosition = gl.getAttribLocation(program, 'a_position');
+      gl.enableVertexAttribArray(aPosition);
+      gl.vertexAttribPointer(aPosition, 2, gl.FLOAT, false, 0, 0);
+
+      this.uniformLocs = {
+        u_resolution: gl.getUniformLocation(program, 'u_resolution'),
+        u_time: gl.getUniformLocation(program, 'u_time'),
+        u_mouse: gl.getUniformLocation(program, 'u_mouse'),
+        u_scroll_offset: gl.getUniformLocation(program, 'u_scroll_offset'),
+        u_fade: gl.getUniformLocation(program, 'u_fade'),
+        u_dpr: gl.getUniformLocation(program, 'u_dpr'),
+        u_density: gl.getUniformLocation(program, 'u_density'),
+        u_theme: gl.getUniformLocation(program, 'u_theme'),
+      };
+
+      this.handleResize();
+      this.setupObservers();
+      this.setupEventListeners();
+
+      this.lastTime = performance.now();
+      this.lastScrollY = typeof window !== 'undefined' ? window.scrollY : 0;
+
+      if (this.isReducedMotion) {
+        this.fade = 1.0;
+        this.renderFrame(10.0);
+      } else {
+        this.startLoop();
+      }
+    }
+
+    private createShader(type: number, source: string): WebGLShader | null {
+      if (!this.gl) return null;
+      const gl = this.gl;
+      const shader = gl.createShader(type);
+      if (!shader) return null;
+      gl.shaderSource(shader, source);
+      gl.compileShader(shader);
+      if (!gl.getShaderParameter(shader, gl.COMPILE_STATUS)) {
+        gl.deleteShader(shader);
+        return null;
+      }
+      return shader;
+    }
+
+    private showFallback(): void {
+      if (this.canvas) this.canvas.style.display = 'none';
+      if (this.fallback) this.fallback.classList.remove('hidden');
+    }
+
+    private handleResize(): void {
+      if (!this.canvas || !this.gl) return;
+      const rect = this.container.getBoundingClientRect();
+      const width = rect.width || window.innerWidth;
+      const height = rect.height || window.innerHeight;
+
+      const isMobile = width < 768;
+      const maxDpr = isMobile ? 1.0 : 1.5;
+      const dpr = Math.min(window.devicePixelRatio || 1, maxDpr);
+
+      const targetWidth = Math.floor(width * dpr);
+      const targetHeight = Math.floor(height * dpr);
+
+      if (this.canvas.width !== targetWidth || this.canvas.height !== targetHeight) {
+        this.canvas.width = targetWidth;
+        this.canvas.height = targetHeight;
+        this.gl.viewport(0, 0, targetWidth, targetHeight);
+      }
+
+      if (this.uniformLocs.u_resolution) {
+        this.gl.uniform2f(this.uniformLocs.u_resolution, targetWidth, targetHeight);
+      }
+      if (this.uniformLocs.u_dpr) {
+        this.gl.uniform1f(this.uniformLocs.u_dpr, dpr);
+      }
+    }
+
+    private setupObservers(): void {
+      this.resizeObserver = new ResizeObserver(() => {
+        this.handleResize();
+        if (this.isReducedMotion) this.renderFrame(10.0);
+      });
+      this.resizeObserver.observe(this.container);
+
+      const observeTarget = this.container.parentElement || this.container;
+      this.intersectionObserver = new IntersectionObserver(
+        (entries) => {
+          entries.forEach((entry) => {
+            this.isVisible = entry.isIntersecting;
+            if (this.isVisible && !this.animFrameId && !this.isReducedMotion) {
+              this.lastTime = performance.now();
+              this.startLoop();
+            } else if (!this.isVisible && this.animFrameId) {
+              cancelAnimationFrame(this.animFrameId);
+              this.animFrameId = null;
+            }
+          });
+        },
+        { threshold: 0.01 }
+      );
+      this.intersectionObserver.observe(observeTarget);
+    }
+
+    private setupEventListeners(): void {
+      const onPointerMove = (e: PointerEvent) => {
+        this.mouseTarget.x = (e.clientX / window.innerWidth) * 2 - 1;
+        this.mouseTarget.y = -((e.clientY / window.innerHeight) * 2 - 1);
+      };
+
+      const onScroll = () => {
+        const currentY = window.scrollY;
+        const delta = Math.abs(currentY - this.lastScrollY);
+        this.scrollVelocity = Math.min(this.scrollVelocity + delta * 0.0012, 0.35);
+        this.scrollOffsetTarget = currentY / Math.max(window.innerHeight, 1);
+        this.lastScrollY = currentY;
+      };
+
+      const onVisibilityChange = () => {
+        if (document.hidden && this.animFrameId) {
+          cancelAnimationFrame(this.animFrameId);
+          this.animFrameId = null;
+        } else if (!document.hidden && this.isVisible && !this.animFrameId && !this.isReducedMotion) {
+          this.lastTime = performance.now();
+          this.startLoop();
+        }
+      };
+
+      window.addEventListener('pointermove', onPointerMove, { passive: true });
+      window.addEventListener('scroll', onScroll, { passive: true });
+      document.addEventListener('visibilitychange', onVisibilityChange);
+    }
+
+    private startLoop(): void {
+      const loop = (now: number) => {
+        const dt = Math.min((now - this.lastTime) * 0.001, 0.1);
+        this.lastTime = now;
+
+        if (this.fade < 1.0) {
+          this.fade = Math.min(1.0, this.fade + dt / 1.2);
+        }
+
+        this.mouseCurrent.x += (this.mouseTarget.x - this.mouseCurrent.x) * 0.05;
+        this.mouseCurrent.y += (this.mouseTarget.y - this.mouseCurrent.y) * 0.05;
+        this.scrollOffsetCurrent += (this.scrollOffsetTarget - this.scrollOffsetCurrent) * 0.08;
+
+        this.scrollVelocity *= 0.93;
+        this.virtualTime += dt * (1.0 + this.scrollVelocity * 1.8);
+
+        this.renderFrame(this.virtualTime);
+
+        if (this.isVisible) {
+          this.animFrameId = requestAnimationFrame(loop);
+        } else {
+          this.animFrameId = null;
+        }
+      };
+
+      this.animFrameId = requestAnimationFrame(loop);
+    }
+
+    private renderFrame(timeVal: number): void {
+      if (!this.gl || !this.program) return;
+      const gl = this.gl;
+
+      const wrapperEl = this.container.parentElement;
+      const sectionTheme = wrapperEl?.style.getPropertyValue('--topo-theme');
+      const containerTheme = this.container.style.getPropertyValue('--topo-theme');
+      const themeStr = sectionTheme || containerTheme || this.container.dataset.topoTheme;
+      if (themeStr !== undefined && themeStr !== '') {
+        const parsed = parseFloat(themeStr);
+        if (!isNaN(parsed)) this.theme = parsed;
+      }
+
+      if (this.uniformLocs.u_time) gl.uniform1f(this.uniformLocs.u_time, timeVal);
+      if (this.uniformLocs.u_fade) gl.uniform1f(this.uniformLocs.u_fade, this.fade);
+      if (this.uniformLocs.u_mouse) gl.uniform2f(this.uniformLocs.u_mouse, this.mouseCurrent.x, this.mouseCurrent.y);
+      if (this.uniformLocs.u_scroll_offset) gl.uniform1f(this.uniformLocs.u_scroll_offset, this.scrollOffsetCurrent);
+      if (this.uniformLocs.u_density) gl.uniform1f(this.uniformLocs.u_density, this.density);
+      if (this.uniformLocs.u_theme) gl.uniform1f(this.uniformLocs.u_theme, this.theme);
+
+      gl.drawArrays(gl.TRIANGLES, 0, 3);
+    }
+  }
+
+  function initTopoBackgrounds(): void {
+    const containers = document.querySelectorAll<HTMLElement>('[data-topo-container]');
+    containers.forEach((container) => {
+      if (!(container as any).__topoInitialized) {
+        (container as any).__topoInitialized = true;
+        new TopoBackgroundRenderer(container);
+      }
+    });
+  }
+
+  if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', initTopoBackgrounds);
+  } else {
+    initTopoBackgrounds();
+  }
+</script>

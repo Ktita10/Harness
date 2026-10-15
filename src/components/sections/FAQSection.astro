@@ -1,58 +1,56 @@
 ---
 import { getCollection } from 'astro:content';
-import Badge from '../ui/Badge.astro';
-import Accordion from '../ui/Accordion.astro';
 
 const allFaqs = await getCollection('faqs');
 const sortedFaqs = allFaqs.sort((a, b) => (a.data.orden ?? 0) - (b.data.orden ?? 0));
 ---
 
+<!-- Cortina: Cómo trabajamos queda fijo (pin) y este panel claro sube por encima -->
 <section
   id="faq"
+  data-faq-panel
   aria-labelledby="faq-title"
-  class="py-20 sm:py-28 px-4 sm:px-6 lg:px-8 max-w-5xl mx-auto border-t-3 border-black bg-white"
+  class="relative z-20 w-full lg:-mt-[100vh] bg-bg-secondary text-[#0D0D0D] rounded-none shadow-[0_-30px_60px_-15px_rgba(0,0,0,0.25)] border-t border-black/10 pt-14 sm:pt-20 pb-28 sm:pb-36 lg:pb-44 px-6 sm:px-12 lg:px-20"
 >
-  <div class="text-center mb-12 sm:mb-16">
-    <Badge variant="black" class="mb-3">Respuestas directas</Badge>
-    <h2
-      id="faq-title"
-      class="font-display text-3xl sm:text-5xl lg:text-6xl font-black uppercase text-black leading-tight tracking-tight mb-4"
-    >
-      Preguntas frecuentes
-    </h2>
-    <p class="text-base sm:text-lg text-gray-800 font-medium max-w-xl mx-auto">
-      Todo lo que necesitás saber sobre plazos, pagos, tecnología y formas de trabajo antes de arrancar.
-    </p>
-  </div>
-
-  <div class="space-y-4">
-    {
-      sortedFaqs.map((faq, index) => (
-        <Accordion
-          question={faq.data.pregunta}
-          answer={faq.data.respuesta}
-          open={index === 0}
-        />
-      ))
-    }
-  </div>
-
-  <div class="mt-12 text-center p-8 border-brutal bg-gray-100 flex flex-col sm:flex-row items-center justify-between gap-4">
-    <div class="text-left">
-      <h3 class="font-display font-extrabold text-xl uppercase text-black">
-        ¿Tenés otra consulta puntual?
-      </h3>
-      <p class="text-sm text-gray-800 font-medium">
-        Escribinos directamente y te respondemos en minutos.
+  <div class="relative z-10 max-w-3xl mx-auto flex flex-col items-center">
+    <!-- Encabezado centrado -->
+    <div data-faq-header class="w-full flex flex-col items-center text-center mb-10 sm:mb-14">
+      <h2
+        id="faq-title"
+        class="font-display text-4xl sm:text-6xl lg:text-7xl font-black uppercase text-[#0D0D0D] leading-[0.95] tracking-tight mb-5 sm:mb-6"
+      >
+        PREGUNTAS <span class="font-serif italic font-normal text-accent-on-light tracking-normal">FRECUENTES</span>
+      </h2>
+      <p class="text-base sm:text-lg text-neutral-600 leading-relaxed max-w-xl font-medium">
+        Todo lo que necesitás saber sobre plazos, pagos, tecnología y formas de trabajo antes de arrancar.
       </p>
     </div>
-    <a
-      href="https://wa.me/?text=Hola%20Harness%20Studio%2C%20tengo%20una%20consulta%20adicional"
-      target="_blank"
-      rel="noopener noreferrer"
-      class="btn-brutal px-6 py-3 bg-orange text-black font-bold uppercase text-sm tracking-wider shrink-0"
-    >
-      Consultar por WhatsApp
-    </a>
+
+    <!-- Acordeón centrado en una sola columna -->
+    <div data-faq-list class="w-full border-t border-black/10">
+      {
+        sortedFaqs.map((faq, index) => (
+          <details
+            data-faq-item
+            name="faq"
+            open={index === 0}
+            class="group border-b border-black/10"
+          >
+            <summary class="flex justify-between items-center gap-6 py-5 sm:py-7 cursor-pointer list-none select-none font-display font-bold text-lg sm:text-xl text-[#0D0D0D] hover:text-accent-on-light transition-colors">
+              <span>{faq.data.pregunta}</span>
+              <span
+                aria-hidden="true"
+                class="inline-flex items-center justify-center w-9 h-9 rounded-full border border-black/15 bg-white text-black font-bold text-xl shrink-0 shadow-sm group-hover:border-accent group-hover:text-accent group-open:rotate-45 group-open:bg-accent group-open:text-black group-open:border-accent transition-all duration-200"
+              >
+                +
+              </span>
+            </summary>
+            <div class="pb-7 pr-12 text-neutral-600 text-base sm:text-lg leading-relaxed font-medium">
+              <p>{faq.data.respuesta}</p>
+            </div>
+          </details>
+        ))
+      }
+    </div>
   </div>
 </section>

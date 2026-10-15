@@ -1,6 +1,5 @@
 ---
 import JsonLd from '../components/seo/JsonLd.astro';
-import WhatsAppFloat from '../components/ui/WhatsAppFloat.astro';
 import '../styles/global.css';
 
 interface Props {
@@ -16,8 +15,6 @@ interface Props {
     offers?: { name: string; price: string }[];
   };
   breadcrumbs?: { name: string; item: string }[];
-  whatsappMessage?: string;
-  whatsappPhone?: string;
 }
 
 const {
@@ -28,8 +25,6 @@ const {
   faqs = [],
   service,
   breadcrumbs = [],
-  whatsappMessage,
-  whatsappPhone,
 } = Astro.props;
 
 const siteUrl = Astro.site ? Astro.site.href : 'https://harness.studio';
@@ -88,8 +83,6 @@ const fullOgImageUrl = new URL(ogImage, siteUrl).href;
     </main>
 
     <slot name="footer" />
-
-    <WhatsAppFloat message={whatsappMessage} phone={whatsappPhone} />
 
     <script src="../scripts/index.ts"></script>
   </body>

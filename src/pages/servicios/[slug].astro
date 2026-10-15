@@ -2,9 +2,6 @@
 import { getCollection } from 'astro:content';
 import Base from '../../layouts/Base.astro';
 import Nav from '../../components/sections/Nav.astro';
-import Footer from '../../components/sections/Footer.astro';
-import Process from '../../components/sections/Process.astro';
-import Trust from '../../components/sections/Trust.astro';
 import CTASection from '../../components/sections/CTASection.astro';
 import Button from '../../components/ui/Button.astro';
 import Badge from '../../components/ui/Badge.astro';
@@ -43,13 +40,37 @@ const faqItems = (data.faqs || []).map((f) => ({
   pregunta: f.pregunta,
   respuesta: f.respuesta,
 }));
+
+const defaultSteps = [
+  {
+    titulo: 'Brief inicial',
+    descripcion: 'Conversamos por WhatsApp o videollamada para entender tu negocio, propuesta de valor y requerimientos puntuales.',
+  },
+  {
+    titulo: 'Propuesta clara',
+    descripcion: 'Te enviamos un alcance cerrado con plazos exactos, precio fijo y los entregables detallados, sin sorpresas.',
+  },
+  {
+    titulo: 'Diseño enfocado',
+    descripcion: 'Creamos una interfaz audaz adaptada a tu público objetivo, optimizada para convertir visitas en consultas.',
+  },
+  {
+    titulo: 'Desarrollo veloz',
+    descripcion: 'Construimos el sitio con Astro y código limpio, alcanzando 95+ en Lighthouse y tiempos de carga instantáneos.',
+  },
+  {
+    titulo: 'Lanzamiento & Soporte',
+    descripcion: 'Conectamos tu dominio, publicamos en producción y te damos 30 días de garantía con soporte técnico directo.',
+  },
+];
+
+const displayProceso = (data as any).proceso && (data as any).proceso.length > 0 ? (data as any).proceso : defaultSteps;
 ---
 
 <Base
   title={data.metaTitle}
   description={data.metaDescription}
   canonical={`https://harness.studio/servicios/${slug}`}
-  whatsappMessage={data.whatsappMensaje}
   service={serviceSchemaData}
   breadcrumbs={breadcrumbs}
   faqs={faqItems}
@@ -123,7 +144,7 @@ const faqItems = (data.faqs || []).map((f) => ({
           id="incluye-heading"
           class="font-display text-3xl sm:text-5xl lg:text-6xl font-black uppercase text-black leading-tight tracking-tight"
         >
-          Qué incluye el servicio
+          QUÉ INCLUYE <span class="font-serif italic font-normal text-accent tracking-normal">EL SERVICIO</span>
         </h2>
       </div>
 
@@ -162,7 +183,7 @@ const faqItems = (data.faqs || []).map((f) => ({
           id="precios-heading"
           class="font-display text-3xl sm:text-5xl lg:text-6xl font-black uppercase text-black leading-tight tracking-tight"
         >
-          Planes y estimaciones
+          PLANES <span class="font-serif italic font-normal text-accent tracking-normal">Y ESTIMACIONES</span>
         </h2>
         <p class="mt-4 text-lg sm:text-xl text-gray-500 font-medium max-w-2xl">
           Precios transparentes y plazos concretos. Sin sorpresas ni costos ocultos.
@@ -232,53 +253,45 @@ const faqItems = (data.faqs || []).map((f) => ({
   </section>
 
   <!-- 4. Cómo trabajamos (Proceso) -->
-  {
-    data.proceso && data.proceso.length > 0 ? (
-      <section
-        aria-labelledby="proceso-servicio-heading"
-        class="py-20 sm:py-28 px-4 sm:px-6 lg:px-8 border-t-3 border-black bg-gray-100"
-      >
-        <div class="max-w-7xl mx-auto">
-          <div class="mb-12 sm:mb-16">
-            <span class="text-xs sm:text-sm font-black uppercase tracking-widest text-orange mb-3 block">
-              Paso a paso
-            </span>
-            <h2
-              id="proceso-servicio-heading"
-              class="font-display text-3xl sm:text-5xl lg:text-6xl font-black uppercase text-black leading-tight tracking-tight"
-            >
-              Cómo trabajamos este servicio
-            </h2>
+  <section
+    id="proceso"
+    aria-labelledby="proceso-servicio-heading"
+    class="py-20 sm:py-28 px-4 sm:px-6 lg:px-8 border-t-3 border-black bg-gray-100"
+  >
+    <div class="max-w-7xl mx-auto">
+      <div class="mb-12 sm:mb-16">
+        <span class="text-xs sm:text-sm font-black uppercase tracking-widest text-orange mb-3 block">
+          Paso a paso
+        </span>
+        <h2
+          id="proceso-servicio-heading"
+          class="font-display text-3xl sm:text-5xl lg:text-6xl font-black uppercase text-black leading-tight tracking-tight"
+        >
+          CÓMO <span class="font-serif italic font-normal text-accent tracking-normal">TRABAJAMOS</span>
+        </h2>
+      </div>
+
+      <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+        {displayProceso.map((paso: { titulo: string; descripcion: string }, idx: number) => (
+          <div class="border-brutal shadow-brutal p-6 sm:p-8 bg-white flex flex-col justify-between">
+            <div>
+              <span class="font-display text-4xl font-black text-orange block mb-3">
+                0{idx + 1}
+              </span>
+              <h3 class="font-display text-xl sm:text-2xl font-black uppercase text-black mb-3">
+                {paso.titulo}
+              </h3>
+              <p class="text-gray-800 text-sm sm:text-base font-medium leading-relaxed">
+                {paso.descripcion}
+              </p>
+            </div>
           </div>
+        ))}
+      </div>
+    </div>
+  </section>
 
-          <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-            {data.proceso.map((paso, idx) => (
-              <div class="border-brutal shadow-brutal p-6 sm:p-8 bg-white flex flex-col justify-between">
-                <div>
-                  <span class="font-display text-4xl font-black text-orange block mb-3">
-                    0{idx + 1}
-                  </span>
-                  <h3 class="font-display text-xl sm:text-2xl font-black uppercase text-black mb-3">
-                    {paso.titulo}
-                  </h3>
-                  <p class="text-gray-800 text-sm sm:text-base font-medium leading-relaxed">
-                    {paso.descripcion}
-                  </p>
-                </div>
-              </div>
-            ))}
-          </div>
-        </div>
-      </section>
-    ) : (
-      <Process />
-    )
-  }
-
-  <!-- 5. Confianza -->
-  <Trust />
-
-  <!-- 6. FAQs específicas del servicio -->
+  <!-- 5. FAQs específicas del servicio -->
   {
     faqItems.length > 0 && (
       <section
@@ -294,7 +307,7 @@ const faqItems = (data.faqs || []).map((f) => ({
               id="faqs-servicio-heading"
               class="font-display text-3xl sm:text-5xl font-black uppercase text-black leading-tight tracking-tight"
             >
-              Preguntas sobre este servicio
+              PREGUNTAS <span class="font-serif italic font-normal text-accent tracking-normal">DEL SERVICIO</span>
             </h2>
           </div>
 
@@ -315,6 +328,4 @@ const faqItems = (data.faqs || []).map((f) => ({
     subtitle="Escribinos por WhatsApp para coordinar los detalles y empezar esta misma semana."
     message={data.whatsappMensaje}
   />
-
-  <Footer slot="footer" />
 </Base>

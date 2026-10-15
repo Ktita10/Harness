@@ -1,6 +1,5 @@
 ---
-import Button from '../ui/Button.astro';
-import Badge from '../ui/Badge.astro';
+import CTASection3D from '../CTASection3D.astro';
 
 interface Props {
   badge?: string;
@@ -10,51 +9,181 @@ interface Props {
 }
 
 const {
-  badge = 'Lanzá tu proyecto',
-  title = '¿Listo para construir una web que realmente venda?',
-  subtitle = 'Dejanos tu mensaje por WhatsApp y contanos qué necesitás. Te respondemos con un presupuesto exacto en el día.',
+  title,
   message = 'Hola Harness Studio, quiero cotizar un proyecto',
 } = Astro.props;
 
 const waUrl = `https://wa.me/?text=${encodeURIComponent(message)}`;
+
+const pages = [
+  { label: 'HOME', href: '/' },
+  { label: 'SERVICIOS', href: '/#servicios' },
+  { label: 'PROCESO', href: '/#proceso' },
+  { label: 'PREGUNTAS', href: '/#faq' },
+];
+
+const socials = [
+  { label: 'WHATSAPP', href: waUrl, external: true },
+  { label: 'INSTAGRAM', href: 'https://instagram.com/', external: true },
+  { label: 'LINKEDIN', href: 'https://linkedin.com/', external: true },
+  { label: 'GITHUB', href: 'https://github.com/', external: true },
+];
 ---
 
 <section
   id="contacto"
   aria-labelledby="cta-title"
-  class="py-20 sm:py-28 px-4 sm:px-6 lg:px-8 border-t-3 border-black bg-orange text-black"
+  class="cta-atmosphere relative w-full max-w-full overflow-hidden select-none pt-16 sm:pt-24 lg:pt-28 pb-12 sm:pb-16 lg:pb-20"
 >
-  <div class="max-w-5xl mx-auto border-3 border-black bg-white p-8 sm:p-14 shadow-brutal flex flex-col items-center text-center gap-6">
-    <Badge variant="black" rotate={-2}>
-      {badge}
-    </Badge>
+  <!-- Halo radial de alta intensidad que envuelve con fuerza los bordes de la tarjeta -->
+  <div
+    class="pointer-events-none absolute inset-x-0 bottom-0 top-0 z-0 bg-[radial-gradient(65%_55%_at_50%_60%,rgba(255,90,0,0.45)_0%,rgba(255,110,25,0.22)_55%,transparent_100%)] [mask-image:linear-gradient(to_bottom,transparent_0%,black_45%)] [-webkit-mask-image:linear-gradient(to_bottom,transparent_0%,black_45%)]"
+    aria-hidden="true"
+  ></div>
 
-    <h2
-      id="cta-title"
-      class="font-display text-4xl sm:text-6xl md:text-7xl font-black uppercase text-black leading-tight tracking-tight max-w-3xl"
-    >
-      {title}
-    </h2>
+  <!-- Contenedor principal al 90% de ancho de la sección -->
+  <div
+    style="--cta-3d-top: 24%; --cta-3d-height: 64%; --cta-3d-width: min(100%, 640px);"
+    class="relative z-10 w-[90%] mx-auto bg-accent text-[#0D0D0D] rounded-3xl sm:rounded-[2.5rem] lg:rounded-[3rem] p-6 sm:p-10 lg:p-14 shadow-[0_30px_80px_-15px_rgba(255,90,0,0.38)] border border-black/10 overflow-hidden min-h-[660px] sm:min-h-[740px] lg:min-h-[800px] flex flex-col justify-between"
+  >
+    <!-- Luz radial de fondo para despegar el cubo negro del naranja -->
+    <div
+      class="absolute inset-0 pointer-events-none z-0 bg-[radial-gradient(circle_at_50%_52%,rgba(242,238,230,0.22)_0%,transparent_60%)]"
+      aria-hidden="true"
+    ></div>
 
-    <p class="text-lg sm:text-2xl text-gray-800 font-medium max-w-2xl leading-relaxed">
-      {subtitle}
-    </p>
-
-    <div class="pt-4 flex flex-col sm:flex-row gap-4 items-center">
-      <Button
-        href={waUrl}
-        target="_blank"
-        rel="noopener noreferrer"
-        variant="primary"
-        size="lg"
-        class="text-lg sm:text-xl px-10 py-5"
-      >
-        Escribir por WhatsApp ahora ➔
-      </Button>
+    <!-- Curvas de nivel topográficas sutiles -->
+    <div class="absolute inset-0 pointer-events-none select-none opacity-15 z-0" aria-hidden="true">
+      <svg class="w-full h-full" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1200 800" preserveAspectRatio="none">
+        <path d="M-100,200 C300,100 500,450 900,300 C1200,180 1400,350 1600,250" fill="none" stroke="#000000" stroke-width="1.2" />
+        <path d="M-100,360 C340,260 460,560 860,460 C1160,340 1360,500 1600,420" fill="none" stroke="#000000" stroke-width="1.2" />
+        <path d="M-100,520 C380,420 420,680 820,620 C1120,500 1320,660 1600,580" fill="none" stroke="#000000" stroke-width="1.2" />
+        <path d="M-100,680 C420,580 380,800 780,780 C1080,660 1280,820 1600,740" fill="none" stroke="#000000" stroke-width="1.2" />
+      </svg>
     </div>
 
-    <span class="text-xs uppercase font-extrabold tracking-widest text-gray-500 pt-2">
-      Respuesta garantizada en menos de 2 horas en horario laboral
-    </span>
+    <!-- Objeto 3D interactivo -->
+    <CTASection3D sectionSelector="#contacto" triggerSelector="[data-cta-trigger]" />
+
+    <!-- Parte Superior: Frase célebre de software -->
+    <div class="relative z-[1] w-full flex flex-col items-center pt-2 sm:pt-4">
+      {
+        title ? (
+          <h2
+            id="cta-title"
+            class="font-display text-4xl sm:text-6xl md:text-7xl lg:text-8xl font-black uppercase text-[#0D0D0D] text-center tracking-tight leading-[0.9]"
+          >
+            {title}
+          </h2>
+        ) : (
+          <h2
+            id="cta-title"
+            class="font-display text-[2.2rem] sm:text-6xl md:text-7xl lg:text-[5.25rem] xl:text-[6rem] font-black uppercase text-[#0D0D0D] text-center tracking-[-0.03em] leading-[0.88] max-w-6xl mx-auto"
+          >
+            <span class="block">
+              “LA OBSESION <span class="font-serif italic font-normal text-[#F2EEE6] tracking-normal drop-shadow-[0_2px_12px_rgba(0,0,0,0.12)]">ES NUESTRO</span>
+            </span>
+            <span class="block mt-1 sm:mt-0">
+              MEJOR CODIGO”
+            </span>
+          </h2>
+        )
+      }
+    </div>
+
+    <!-- Parte Inferior: Navegación secundaria, Botón WhatsApp y Redes -->
+    <footer role="contentinfo" class="relative z-[10] w-full pt-12 sm:pt-16 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-[1fr_auto_1fr] gap-8 lg:gap-6 items-end">
+      
+      <!-- Columna Izquierda: NAVEGACIÓN -->
+      <div class="flex flex-col items-center sm:items-start text-center sm:text-left order-2 sm:order-1 lg:order-1">
+        <span class="text-[11px] sm:text-xs font-mono uppercase tracking-[0.22em] text-black/60 font-bold mb-3 sm:mb-4 block">
+          // NAVEGACIÓN
+        </span>
+        <nav aria-label="Navegación secundaria CTA" class="flex flex-col gap-2 sm:gap-2.5 lg:gap-3">
+          {
+            pages.map((item) => (
+              <a
+                href={item.href}
+                class="group inline-flex items-center justify-center sm:justify-start gap-2 font-display text-2xl sm:text-3xl md:text-4xl lg:text-5xl font-black uppercase tracking-tight leading-none text-[#0D0D0D] hover:text-[#F2EEE6] hover:translate-x-1 transition-all duration-200"
+              >
+                <span>{item.label}</span>
+              </a>
+            ))
+          }
+        </nav>
+      </div>
+
+      <!-- Columna Central: Botón CTA WhatsApp Trigger -->
+      <div class="sm:col-span-2 lg:col-span-1 flex flex-col items-center text-center order-1 sm:order-3 lg:order-2">
+        <a
+          data-cta-trigger
+          href={waUrl}
+          target="_blank"
+          rel="noopener noreferrer"
+          class="group relative inline-flex items-center gap-4 bg-[#0D0D0D] text-[#F2EEE6] pl-7 sm:pl-9 pr-3 sm:pr-4 py-3 sm:py-3.5 rounded-full border border-[#F2EEE6]/15 hover:bg-[#F2EEE6] hover:text-[#0D0D0D] hover:scale-[1.03] active:scale-95 transition-all duration-300 shadow-[0_20px_50px_rgba(0,0,0,0.45)] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-black cursor-pointer select-none whitespace-nowrap"
+        >
+          <span class="font-display font-black text-xs sm:text-sm md:text-base tracking-[0.08em] uppercase">
+            INICIAR PROYECTO
+          </span>
+          <span
+            class="w-9 h-9 sm:w-11 sm:h-11 rounded-full bg-accent text-[#0D0D0D] group-hover:bg-[#0D0D0D] group-hover:text-[#F2EEE6] font-black flex items-center justify-center text-base sm:text-lg transition-all duration-300 group-hover:rotate-[-45deg]"
+            aria-hidden="true"
+          >
+            ➔
+          </span>
+        </a>
+      </div>
+
+      <!-- Columna Derecha: REDES -->
+      <div class="flex flex-col items-center sm:items-end text-center sm:text-right order-3 sm:order-2 lg:order-3">
+        <span class="text-[11px] sm:text-xs font-mono uppercase tracking-[0.22em] text-black/60 font-bold mb-3 sm:mb-4 block">
+          // REDES
+        </span>
+        <div class="flex flex-col gap-2 sm:gap-2.5 lg:gap-3">
+          {
+            socials.map((item) => (
+              <a
+                href={item.href}
+                target={item.external ? '_blank' : undefined}
+                rel={item.external ? 'noopener noreferrer' : undefined}
+                class="group inline-flex items-center justify-center sm:justify-end gap-2 font-display text-2xl sm:text-3xl md:text-4xl lg:text-5xl font-black uppercase tracking-tight leading-none text-[#0D0D0D] hover:text-[#F2EEE6] hover:-translate-x-1 transition-all duration-200"
+              >
+                <span>{item.label}</span>
+                <span class="text-[0.65em] opacity-60 group-hover:opacity-100 transition-transform duration-200 group-hover:translate-x-0.5 group-hover:-translate-y-0.5">↗</span>
+              </a>
+            ))
+          }
+        </div>
+      </div>
+
+    </footer>
   </div>
 </section>
+
+<style>
+  /* Gradiente atmosférico de alta intensidad:
+     Nace limpio con el color de FAQ arriba y profundiza en tonos ámbar/naranja rico hacia abajo */
+  .cta-atmosphere {
+    background-color: var(--bg-secondary);
+    background-image:
+      /* Velo superior: los primeros píxeles son idénticos al fondo de FAQ */
+      linear-gradient(180deg, var(--bg-secondary) 0%, rgba(248, 249, 250, 0) 28%),
+      radial-gradient(45% 45% at 8% 55%, rgba(255, 107, 30, 0.38) 0%, rgba(255, 107, 30, 0) 100%),
+      radial-gradient(45% 45% at 92% 55%, rgba(255, 107, 30, 0.38) 0%, rgba(255, 107, 30, 0) 100%),
+      linear-gradient(
+        180deg,
+        var(--bg-secondary) 0%,
+        #fbeee3 10%,
+        #f9ddc7 22%,
+        #fccaa6 36%,
+        #fdb685 52%,
+        #ff9f61 70%,
+        #ff8d45 85%,
+        #ff8236 100%
+      );
+  }
+
+  :global(#faq) {
+    border-bottom: none !important;
+  }
+</style>

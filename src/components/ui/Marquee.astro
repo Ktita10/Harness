@@ -9,7 +9,7 @@ const { text, repeat = 6, class: className = '' } = Astro.props;
 const items = Array.from({ length: repeat });
 ---
 
-<div class={`overflow-hidden whitespace-nowrap border-y border-white/10 bg-[#0E0E10] py-3.5 select-none ${className}`} aria-hidden="true">
+<div class={`relative z-20 overflow-hidden whitespace-nowrap border-y border-white/10 bg-[#0E0E10] py-3.5 select-none shadow-md ${className}`} aria-hidden="true">
   <div class="inline-flex animate-marquee gap-8 font-mono text-xs sm:text-sm font-bold uppercase tracking-widest text-zinc-400">
     {
       items.map(() => (

@@ -1,72 +1,85 @@
 ---
+import HeroObject3D from '../HeroObject3D.astro';
 ---
 
 <section
   id="hero"
   aria-labelledby="hero-title"
-  class="relative pt-28 sm:pt-36 lg:pt-40 min-h-screen flex flex-col justify-between overflow-hidden bg-bg-primary select-none"
+  class="relative min-h-[calc(100svh+4vw)] sm:min-h-[calc(100svh+4.5vw)] lg:min-h-[calc(100svh+5.2vw)] flex flex-col overflow-hidden bg-bg-primary select-none [--hero-3d-top:4rem] [--hero-3d-width:min(96vw,600px)] [--hero-3d-height:calc(100svh_-_4rem_-_24vw)] sm:[--hero-3d-height:calc(100svh_-_4rem_-_18vw)] lg:[--hero-3d-top:2.5rem] lg:[--hero-3d-width:min(80vw,1100px)] lg:[--hero-3d-height:calc(100svh_-_2.5rem_-_6vw)]"
 >
-  <!-- Ambient Atmospheric Glow & Tech Grid -->
+  <!-- Ambient Atmospheric Glow -->
   <div
-    class="absolute inset-0 pointer-events-none -z-10 bg-[radial-gradient(ellipse_75%_55%_at_50%_40%,rgba(255,90,0,0.12),transparent_70%)]"
-    aria-hidden="true"
-  ></div>
-  <div
-    class="absolute inset-0 pointer-events-none -z-10 opacity-[0.03] bg-[linear-gradient(to_right,#ffffff_1px,transparent_1px),linear-gradient(to_bottom,#ffffff_1px,transparent_1px)] bg-[size:4rem_4rem]"
+    class="absolute inset-0 pointer-events-none -z-10 bg-[radial-gradient(ellipse_80%_60%_at_50%_45%,rgba(255,90,0,0.15),transparent_70%)]"
     aria-hidden="true"
   ></div>
 
-  <!-- Top Asymmetrical Narrative Grid -->
-  <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 w-full z-10 flex-1 flex flex-col justify-center py-6 sm:py-10">
-    <div class="grid grid-cols-1 md:grid-cols-12 gap-8 lg:gap-12 items-start relative">
-      <!-- Bloque Izquierdo (Elevado) -->
-      <div class="md:col-span-5 lg:col-span-4 flex flex-col gap-3 md:pt-4">
-        <div class="inline-flex items-center gap-2 text-[11px] font-mono tracking-widest uppercase text-accent font-semibold">
-          <span class="w-1.5 h-1.5 rounded-full bg-accent animate-pulse"></span>
-          <span>01 / VELOCIDAD & PRECISIÓN</span>
-        </div>
-        <h2 class="font-display font-black text-xl sm:text-2xl lg:text-3xl uppercase tracking-tight text-text-primary leading-[1.1]">
-          Donde la velocidad bruta se encuentra con el diseño de culto.
-        </h2>
-        <p class="text-sm sm:text-base text-text-secondary leading-relaxed font-normal">
-          Diseñamos y programamos plataformas pensadas para dominar la pantalla y transformar tráfico en tracción real.
-        </p>
-      </div>
+  <!-- Capa z-0: objeto 3D modular en el centro -->
+  <HeroObject3D heroSelector="#hero" />
 
-      <!-- Centro (Espacio reservado para el futuro elemento 3D del nodo de cables) -->
-      <div
-        id="hero-3d-slot"
-        class="hidden md:flex md:col-span-2 lg:col-span-4 min-h-[140px] lg:min-h-[200px] items-center justify-center relative pointer-events-none"
-        aria-hidden="true"
-      >
-        <div class="w-28 h-28 rounded-full border border-white/5 flex items-center justify-center">
-          <div class="w-14 h-14 rounded-full border border-accent/20 animate-pulse"></div>
-        </div>
-      </div>
-
-      <!-- Bloque Derecho (Más bajo, ritmo asimétrico) -->
-      <div class="md:col-span-5 lg:col-span-4 flex flex-col gap-3 md:mt-16 lg:mt-24">
-        <div class="inline-flex items-center gap-2 text-[11px] font-mono tracking-widest uppercase text-accent font-semibold">
-          <span class="w-1.5 h-1.5 rounded-full bg-accent/60"></span>
-          <span>02 / INFRAESTRUCTURA</span>
-        </div>
-        <h2 class="font-display font-black text-xl sm:text-2xl lg:text-3xl uppercase tracking-tight text-text-primary leading-[1.1]">
-          Sin deuda técnica. Sin atajos.
-        </h2>
-        <p class="text-sm sm:text-base text-text-secondary leading-relaxed font-normal">
-          Rendimiento quirúrgico, cero código inflado y tecnología construida a la medida de tu ambición.
-        </p>
-      </div>
-    </div>
-  </div>
-
-  <!-- Bottom Centered H1 — HARNESS (Completamente visible, sin recorte forzado ni espacios residuales) -->
-  <div class="w-full flex justify-center items-end mt-auto pointer-events-none pb-0">
-    <h1
-      id="hero-title"
-      class="font-display font-black text-[18vw] sm:text-[19vw] lg:text-[20.5vw] leading-[0.82] tracking-tighter uppercase text-center select-none text-transparent bg-clip-text bg-gradient-to-b from-white via-white/90 to-white/40 drop-shadow-[0_20px_60px_rgba(255,90,0,0.15)] m-0 p-0"
+  <!-- Frase partida: mitad izquierda (debajo del logo) y mitad derecha (más abajo). Aparece con el scroll. -->
+  <div class="pointer-events-none absolute inset-0 z-10" data-hero-phrase>
+    <p
+      data-hero-phrase-left
+      class="absolute left-6 sm:left-10 lg:left-12 xl:left-16 top-32 sm:top-44 lg:top-52 max-w-[48%] font-display font-black uppercase leading-[0.95] tracking-tight text-white text-2xl sm:text-4xl lg:text-6xl xl:text-7xl"
     >
-      HARNESS
-    </h1>
+      <span data-hero-word class="inline-block">Sitios</span>
+      <span data-hero-word class="inline-block">web</span><br />
+      <span data-hero-word class="inline-block font-serif italic font-normal normal-case tracking-normal text-accent">y</span>
+      <span data-hero-word class="inline-block font-serif italic font-normal normal-case tracking-normal text-accent">tiendas</span>
+    </p>
+    <p
+      data-hero-phrase-right
+      class="absolute right-6 sm:right-10 lg:right-12 xl:right-16 top-[17rem] sm:top-[24rem] lg:top-[28rem] xl:top-[31rem] max-w-[48%] text-right font-display font-black uppercase leading-[0.95] tracking-tight text-white text-2xl sm:text-4xl lg:text-6xl xl:text-7xl"
+    >
+      <span data-hero-word class="inline-block">Software</span><br />
+      <span data-hero-word class="inline-block font-serif italic font-normal normal-case tracking-normal text-accent">a</span>
+      <span data-hero-word class="inline-block font-serif italic font-normal normal-case tracking-normal text-accent">medida</span>
+    </p>
   </div>
+
+  <!-- Indicador de scroll minimalista: solo una línea fina que se desliza -->
+  <div
+    data-hero-scroll
+    class="pointer-events-none absolute left-1/2 -translate-x-1/2 z-10 bottom-[calc(4.5vw+1.75rem)] flex flex-col items-center gap-3"
+    aria-hidden="true"
+  >
+    <span class="font-mono text-[10px] uppercase tracking-[0.35em] text-white/50">Scroll</span>
+    <span class="hero-scroll-line relative block h-12 w-px overflow-hidden bg-white/15"></span>
+  </div>
+
+  <!-- Heading accesible para SEO y lectores de pantalla (h1 único según SPEC/AGENTS.md) -->
+  <h1 id="hero-title" class="sr-only">
+    HARNESS STUDIO — Desarrollo Web, Tiendas y Software a Medida
+  </h1>
 </section>
+
+<style>
+  .hero-scroll-line::after {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background: rgba(255, 255, 255, 0.85);
+    transform: translateY(-100%);
+    animation: hero-scroll-slide 2.2s cubic-bezier(0.65, 0, 0.35, 1) infinite;
+  }
+
+  @keyframes hero-scroll-slide {
+    0% {
+      transform: translateY(-100%);
+    }
+    55% {
+      transform: translateY(0);
+    }
+    100% {
+      transform: translateY(100%);
+    }
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    .hero-scroll-line::after {
+      animation: none;
+      transform: translateY(0);
+      opacity: 0.5;
+    }
+  }
+</style>

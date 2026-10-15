@@ -1,99 +1,106 @@
 import gsap from 'gsap';
 import { ScrollTrigger } from 'gsap/ScrollTrigger';
-import { ProcessContourCanvas } from './process-canvas';
 
 gsap.registerPlugin(ScrollTrigger);
 
-const DARK = { bg: '#0A0A0A', text: '#FFFFFF', muted: '#A1A1AA' };
-const LIGHT = { bg: '#FFFFFF', text: '#0A0A0A', muted: '#52525B' };
-
-let activeContourCanvas: ProcessContourCanvas | null = null;
+const DARK = { bg: '#0A0A0A', text: '#FFFFFF', muted: '#A1A1AA', accent: '#FF5A00' };
+const LIGHT = { bg: '#F5F5F2', text: '#0A0A0A', muted: '#52525B', accent: '#C2410C' };
 
 export function cleanupProcessAnimation(): void {
-  if (activeContourCanvas) {
-    activeContourCanvas.destroy();
-    activeContourCanvas = null;
-  }
+  // Cleanup hook
 }
 
-function addColorTransition(
-  tl: gsap.core.Timeline,
-  section: HTMLElement,
-  contourCanvas: ProcessContourCanvas | null,
-  total: number
-): void {
-  // Background glides across the whole scroll.
+function addColorTransition(tl: gsap.core.Timeline, section: HTMLElement, total: number): void {
+  const topoContainer = section.querySelector<HTMLElement>('[data-topo-container]');
+
+  // Transición suave del fondo y del shader WebGL topográfico procedural
   tl.fromTo(
     section,
-    { '--process-bg': DARK.bg, backgroundColor: DARK.bg },
-    { '--process-bg': LIGHT.bg, backgroundColor: LIGHT.bg, ease: 'none', duration: total },
+    {
+      '--process-bg': DARK.bg,
+      '--topo-theme': 0,
+      backgroundColor: DARK.bg,
+    },
+    {
+      '--process-bg': LIGHT.bg,
+      '--topo-theme': 1,
+      backgroundColor: LIGHT.bg,
+      ease: 'none',
+      duration: total,
+      onUpdate: () => {
+        const val = parseFloat(section.style.getPropertyValue('--topo-theme') || '0');
+        if (topoContainer && (topoContainer as any).__setTopoTheme) {
+          (topoContainer as any).__setTopoTheme(val);
+        }
+      },
+    },
     0
   );
 
-  // Text flips in a short window around the midpoint, while the background is
-  // mid-gray, so contrast never collapses for a long stretch.
+  // El texto y acento transicionan con una curva fluida cerca del punto medio
   tl.fromTo(
     section,
-    { '--process-text': DARK.text, '--process-muted': DARK.muted },
-    { '--process-text': LIGHT.text, '--process-muted': LIGHT.muted, ease: 'power2.inOut', duration: total * 0.2 },
-    total * 0.4
+    {
+      '--process-text': DARK.text,
+      '--process-muted': DARK.muted,
+      '--process-accent': DARK.accent,
+    },
+    {
+      '--process-text': LIGHT.text,
+      '--process-muted': LIGHT.muted,
+      '--process-accent': LIGHT.accent,
+      ease: 'power2.inOut',
+      duration: total * 0.3,
+    },
+    total * 0.35
   );
-
-  // Contour lines scroll progress (color & aerodynamic wave warping)
-  if (contourCanvas) {
-    tl.to(
-      contourCanvas,
-      {
-        scrollProgress: 1,
-        ease: 'none',
-        duration: total,
-      },
-      0
-    );
-  }
 }
 
 export function initProcessAnimation(): gsap.core.Timeline | null {
   const section = document.getElementById('proceso');
   if (!section) return null;
 
-  // Clean up previous canvas if any
-  cleanupProcessAnimation();
-
   const track = section.querySelector<HTMLElement>('[data-process-track]');
-  const canvasEl = section.querySelector<HTMLCanvasElement>('[data-process-canvas]');
-  if (canvasEl) {
-    activeContourCanvas = new ProcessContourCanvas(canvasEl);
-  }
-
   const mm = gsap.matchMedia();
 
-  // Desktop: pinned horizontal glide
+  // Desktop (>= 1024px): un único pin. Se extiende un viewport extra (ventana de
+  // cortina) durante el cual #faq sube por encima de la sección fija.
   mm.add('(min-width: 1024px)', () => {
     if (!track) return;
 
     const scrollDistance = () => track.scrollWidth - window.innerWidth;
 
+    ScrollTrigger.create({
+      trigger: section,
+      pin: true,
+      start: 'top top',
+      end: () => `+=${scrollDistance() + window.innerHeight}`,
+      invalidateOnRefresh: true,
+    });
+
+    // Avance horizontal + color: solo durante el tramo horizontal del pin
     const tl = gsap.timeline({
       scrollTrigger: {
         trigger: section,
-        pin: true,
         scrub: 1,
         start: 'top top',
-        end: () => `+=${scrollDistance() + 400}`,
+        end: () => `+=${scrollDistance()}`,
         invalidateOnRefresh: true,
       },
     });
 
     tl.to(track, { x: () => -scrollDistance(), ease: 'none', duration: 1 }, 0);
-    addColorTransition(tl, section, activeContourCanvas, 1);
+    addColorTransition(tl, section, 1);
 
     return () => {
-      gsap.set(section, { clearProps: '--process-bg,--process-text,--process-muted,backgroundColor' });
+      gsap.set(section, {
+        clearProps:
+          '--process-bg,--process-text,--process-muted,--process-accent,--topo-theme,backgroundColor',
+      });
     };
   });
 
-  // Mobile / tablet: vertical flow
+  // Mobile / tablet (< 1024px): flujo vertical con transición de color
   mm.add('(max-width: 1023px)', () => {
     const tl = gsap.timeline({
       scrollTrigger: {
@@ -104,10 +111,13 @@ export function initProcessAnimation(): gsap.core.Timeline | null {
       },
     });
 
-    addColorTransition(tl, section, activeContourCanvas, 1);
+    addColorTransition(tl, section, 1);
 
     return () => {
-      gsap.set(section, { clearProps: '--process-bg,--process-text,--process-muted,backgroundColor' });
+      gsap.set(section, {
+        clearProps:
+          '--process-bg,--process-text,--process-muted,--process-accent,--topo-theme,backgroundColor',
+      });
     };
   });
 
