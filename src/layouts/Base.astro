@@ -72,6 +72,55 @@ const fullOgImageUrl = new URL(ogImage, siteUrl).href;
     <JsonLd type="All" faqs={faqs} service={service} breadcrumbs={breadcrumbs} />
   </head>
   <body class="min-h-screen flex flex-col bg-bg-primary text-text-primary selection:bg-accent selection:text-black overflow-x-clip">
+    <div id="page-reveal" aria-hidden="true"></div>
+    <script is:inline>
+      (function () {
+        var KEY = 'transition-color';
+        var BRAND_KEY = 'transition-brand';
+        var DURATION = 450;
+        var overlay = document.getElementById('page-reveal');
+        if (!overlay) return;
+
+        var color = null;
+        try {
+          color = sessionStorage.getItem(KEY);
+          sessionStorage.removeItem(KEY);
+          sessionStorage.removeItem(BRAND_KEY);
+        } catch (e) {}
+
+        var reduced = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+        if (!color || reduced || typeof overlay.animate !== 'function') {
+          overlay.remove();
+          return;
+        }
+
+        overlay.style.background = color;
+        overlay.setAttribute('data-active', '');
+
+        function reveal() {
+          var animation = overlay.animate([{ opacity: 1 }, { opacity: 0 }], {
+            duration: DURATION,
+            easing: 'cubic-bezier(0.22, 1, 0.36, 1)',
+            fill: 'forwards',
+          });
+          animation.finished.then(
+            function () { overlay.remove(); },
+            function () { overlay.remove(); }
+          );
+        }
+
+        if (document.readyState === 'loading') {
+          document.addEventListener('DOMContentLoaded', function () { requestAnimationFrame(reveal); }, { once: true });
+        } else {
+          requestAnimationFrame(reveal);
+        }
+
+        window.addEventListener('pageshow', function (event) {
+          if (event.persisted && overlay.isConnected) overlay.remove();
+        });
+      })();
+    </script>
+
     <a href="#main-content" class="skip-link">
       Saltar al contenido principal
     </a>

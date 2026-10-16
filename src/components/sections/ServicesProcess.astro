@@ -26,6 +26,7 @@ const deckConfigs = [
     descColor: 'text-zinc-400',
     btnClass: 'bg-[#FF5A00] text-[#0A0A0A] group-hover:bg-[#F2EEE6]',
     patternStroke: '#FFFFFF',
+    transitionAccent: 'var(--accent)',
   },
   {
     tag: 'ECOMMERCE NUBE',
@@ -37,6 +38,7 @@ const deckConfigs = [
     descColor: 'text-black/80 font-medium',
     btnClass: 'bg-[#0A0A0A] text-[#F2EEE6] group-hover:bg-[#F2EEE6] group-hover:text-[#0A0A0A]',
     patternStroke: '#000000',
+    transitionAccent: 'var(--accent-contrast)',
   },
   {
     tag: 'TIENDA INDEPENDIENTE',
@@ -48,6 +50,7 @@ const deckConfigs = [
     descColor: 'text-zinc-700 font-medium',
     btnClass: 'bg-[#0A0A0A] text-[#F2EEE6] group-hover:bg-[#FF5A00] group-hover:text-[#0A0A0A]',
     patternStroke: '#000000',
+    transitionAccent: 'var(--accent-on-light)',
   },
   {
     tag: 'ARQUITECTURA A MEDIDA',
@@ -59,6 +62,7 @@ const deckConfigs = [
     descColor: 'text-zinc-300',
     btnClass: 'bg-[#F2EEE6] text-[#0A0A0A] group-hover:bg-[#FF5A00] group-hover:text-[#0A0A0A]',
     patternStroke: '#FF5A00',
+    transitionAccent: 'var(--accent)',
   },
 ];
 
@@ -164,6 +168,8 @@ const steps = [
             >
               <!-- Carta interactiva: conserva su rotación de abanico y su efecto hover intacto -->
               <a
+                data-card
+                data-card-accent={cfg.transitionAccent}
                 href={`/servicios/${slug}`}
                 aria-label={`Ver servicio: ${service.data.nombre}`}
                 class:list={[
@@ -560,6 +566,12 @@ const steps = [
     initServicesAndProcessAnimations();
   }
   document.addEventListener('astro:page-load', initServicesAndProcessAnimations);
+</script>
+
+<script>
+  import { initCardTransitions } from '../../scripts/card-transition';
+
+  initCardTransitions();
 </script>
 
 <style is:global>
