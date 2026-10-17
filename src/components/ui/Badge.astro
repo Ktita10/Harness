@@ -1,6 +1,6 @@
 ---
 interface Props {
-  variant?: 'orange' | 'black' | 'gray' | 'white';
+  variant?: 'orange' | 'black' | 'gray' | 'white' | 'glass';
   rotate?: -3 | -2 | -1 | 0 | 1 | 2 | 3;
   class?: string;
 }
@@ -11,11 +11,14 @@ const {
   class: className = '',
 } = Astro.props;
 
+const isGlass = variant === 'glass';
+
 const variantClasses = {
-  orange: 'bg-orange text-black border-black',
+  orange: 'bg-accent text-accent-contrast border-accent',
   black: 'bg-black text-white border-black',
   gray: 'bg-gray-100 text-black border-black',
   white: 'bg-white text-black border-black',
+  glass: '',
 };
 
 const rotateClasses = {
@@ -27,10 +30,14 @@ const rotateClasses = {
   [2]: 'rotate-2',
   [3]: 'rotate-3',
 };
+
+// La variante glass no usa `border-brutal` (CSS sin capa que pisaría el color del borde).
+const baseClasses = isGlass
+  ? 'inline-flex items-center gap-2 rounded-full border border-accent/30 bg-accent/10 px-3 py-1 text-xs sm:text-sm font-bold uppercase tracking-widest text-accent backdrop-blur-sm'
+  : `inline-block px-3 py-1 text-xs sm:text-sm font-extrabold uppercase tracking-widest border-2 border-brutal shadow-sm ${variantClasses[variant]}`;
 ---
 
-<span
-  class={`inline-block px-3 py-1 text-xs sm:text-sm font-extrabold uppercase tracking-widest border-2 border-brutal shadow-sm ${variantClasses[variant]} ${rotateClasses[rotate]} ${className}`}
->
+<span class={`${baseClasses} ${rotateClasses[rotate]} ${className}`}>
+  {isGlass && <span class="h-1.5 w-1.5 shrink-0 rounded-full bg-accent" aria-hidden="true" />}
   <slot />
 </span>

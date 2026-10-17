@@ -1,23 +1,26 @@
 ---
 import { getCollection } from 'astro:content';
 import TopoBackground from '../ui/TopoBackground.astro';
+import { sortServices, getServiceSlug } from '../../utils/services';
+import { getLangFromUrl, useTranslations } from '../../i18n/utils';
+import type { Lang } from '../../i18n/ui';
+
+interface Props {
+  lang?: Lang;
+}
+
+const currentLang = Astro.props.lang || getLangFromUrl(Astro.url);
+const t = useTranslations(currentLang);
+const isEn = currentLang === 'en';
 
 // ── 1. Datos de Servicios ──────────────────────────────────────────
-const services = await getCollection('services');
-
-const order = ['landing-pages', 'tiendanube', 'tienda-online', 'software-a-medida'];
-const sortedServices = services.sort((a, b) => {
-  const slugA = (a.data.slug || a.id).replace(/\.md$/, '');
-  const slugB = (b.data.slug || b.id).replace(/\.md$/, '');
-  const indexA = order.indexOf(slugA);
-  const indexB = order.indexOf(slugB);
-  return (indexA === -1 ? 99 : indexA) - (indexB === -1 ? indexB : 99);
-});
+const servicesData = isEn ? await getCollection('services_en') : await getCollection('services');
+const sortedServices = sortServices(servicesData);
 
 // Configuración visual del abanico (Fanned Cards) + Paleta de colores por carta
 const deckConfigs = [
   {
-    tag: 'CONVERSIÓN DIRECTA',
+    tag: isEn ? 'DIRECT CONVERSION' : 'CONVERSIÓN DIRECTA',
     wrapperPos: 'lg:z-[10]',
     fanClass: 'lg:-rotate-[11deg] lg:translate-y-10 lg:translate-x-6',
     cardBg: 'bg-[#121214] text-[#F2EEE6] border-white/15 hover:border-[#FF5A00]',
@@ -26,9 +29,10 @@ const deckConfigs = [
     descColor: 'text-zinc-400',
     btnClass: 'bg-[#FF5A00] text-[#0A0A0A] group-hover:bg-[#F2EEE6]',
     patternStroke: '#FFFFFF',
+    transitionAccent: 'var(--accent)',
   },
   {
-    tag: 'ECOMMERCE NUBE',
+    tag: isEn ? 'CLOUD ECOMMERCE' : 'ECOMMERCE NUBE',
     wrapperPos: 'lg:-ml-10 xl:-ml-12 lg:z-[20]',
     fanClass: 'lg:-rotate-[3.5deg] lg:translate-y-1',
     cardBg: 'bg-[#FF5A00] text-[#0A0A0A] border-black/15 hover:border-[#F2EEE6]',
@@ -37,9 +41,10 @@ const deckConfigs = [
     descColor: 'text-black/80 font-medium',
     btnClass: 'bg-[#0A0A0A] text-[#F2EEE6] group-hover:bg-[#F2EEE6] group-hover:text-[#0A0A0A]',
     patternStroke: '#000000',
+    transitionAccent: 'var(--accent-contrast)',
   },
   {
-    tag: 'TIENDA INDEPENDIENTE',
+    tag: isEn ? 'ONLINE STORE' : 'TIENDA INDEPENDIENTE',
     wrapperPos: 'lg:-ml-10 xl:-ml-12 lg:z-[30]',
     fanClass: 'lg:rotate-[3.5deg] lg:translate-y-0',
     cardBg: 'bg-[#F2EEE6] text-[#0A0A0A] border-black/10 hover:border-[#FF5A00]',
@@ -48,9 +53,10 @@ const deckConfigs = [
     descColor: 'text-zinc-700 font-medium',
     btnClass: 'bg-[#0A0A0A] text-[#F2EEE6] group-hover:bg-[#FF5A00] group-hover:text-[#0A0A0A]',
     patternStroke: '#000000',
+    transitionAccent: 'var(--accent-on-light)',
   },
   {
-    tag: 'ARQUITECTURA A MEDIDA',
+    tag: isEn ? 'CUSTOM SOFTWARE' : 'ARQUITECTURA A MEDIDA',
     wrapperPos: 'lg:-ml-10 xl:-ml-12 lg:z-[25]',
     fanClass: 'lg:rotate-[11deg] lg:translate-y-10 lg:-translate-x-6',
     cardBg: 'bg-[#1B1B1F] text-[#F2EEE6] border-[#FF5A00]/35 hover:border-[#FF5A00]',
@@ -59,42 +65,76 @@ const deckConfigs = [
     descColor: 'text-zinc-300',
     btnClass: 'bg-[#F2EEE6] text-[#0A0A0A] group-hover:bg-[#FF5A00] group-hover:text-[#0A0A0A]',
     patternStroke: '#FF5A00',
+    transitionAccent: 'var(--accent)',
   },
 ];
 
 // ── 2. Datos de Proceso ────────────────────────────────────────────
-const steps = [
-  {
-    number: '01',
-    phase: 'FASE 01',
-    title: 'Brief inicial',
-    description: 'Conversamos por WhatsApp o videollamada para entender tu negocio, propuesta de valor y requerimientos puntuales.',
-  },
-  {
-    number: '02',
-    phase: 'FASE 02',
-    title: 'Propuesta clara',
-    description: 'Te enviamos un alcance cerrado con plazos exactos, precio fijo y los entregables detallados, sin sorpresas.',
-  },
-  {
-    number: '03',
-    phase: 'FASE 03',
-    title: 'Diseño enfocado',
-    description: 'Creamos una interfaz audaz adaptada a tu público objetivo, optimizada para convertir visitas en consultas.',
-  },
-  {
-    number: '04',
-    phase: 'FASE 04',
-    title: 'Desarrollo veloz',
-    description: 'Construimos el sitio con Astro y código limpio, alcanzando 95+ en Lighthouse y tiempos de carga instantáneos.',
-  },
-  {
-    number: '05',
-    phase: 'FASE 05',
-    title: 'Lanzamiento & Soporte',
-    description: 'Conectamos tu dominio, publicamos en producción y te damos 30 días de garantía con soporte técnico directo.',
-  },
-];
+const steps = isEn
+  ? [
+      {
+        number: '01',
+        phase: 'PHASE 01',
+        title: 'Initial brief',
+        description: 'We meet over WhatsApp or video call to understand your business model, value proposition, and exact requirements.',
+      },
+      {
+        number: '02',
+        phase: 'PHASE 02',
+        title: 'Clear proposal',
+        description: 'We send a scoped proposal with exact delivery deadlines, fixed pricing, and detailed deliverables—zero surprises.',
+      },
+      {
+        number: '03',
+        phase: 'PHASE 03',
+        title: 'Focused design',
+        description: 'We create a bold, high-converting interface tailored to your audience and optimized to generate business inquiries.',
+      },
+      {
+        number: '04',
+        phase: 'PHASE 04',
+        title: 'Rapid engineering',
+        description: 'We build your site with Astro and ultra-clean code, scoring 95+ in Google Lighthouse with instant load times.',
+      },
+      {
+        number: '05',
+        phase: 'PHASE 05',
+        title: 'Launch & Support',
+        description: 'We connect your domain, deploy to production, and back it with a 30-day warranty and direct engineer support.',
+      },
+    ]
+  : [
+      {
+        number: '01',
+        phase: 'FASE 01',
+        title: 'Brief inicial',
+        description: 'Conversamos por WhatsApp o videollamada para entender tu negocio, propuesta de valor y requerimientos puntuales.',
+      },
+      {
+        number: '02',
+        phase: 'FASE 02',
+        title: 'Propuesta clara',
+        description: 'Te enviamos un alcance cerrado con plazos exactos, precio fijo y los entregables detallados, sin sorpresas.',
+      },
+      {
+        number: '03',
+        phase: 'FASE 03',
+        title: 'Diseño enfocado',
+        description: 'Creamos una interfaz audaz adaptada a tu público objetivo, optimizada para convertir visitas en consultas.',
+      },
+      {
+        number: '04',
+        phase: 'FASE 04',
+        title: 'Desarrollo veloz',
+        description: 'Construimos el sitio con Astro y código limpio, alcanzando 95+ en Lighthouse y tiempos de carga instantáneos.',
+      },
+      {
+        number: '05',
+        phase: 'FASE 05',
+        title: 'Lanzamiento & Soporte',
+        description: 'Conectamos tu dominio, publicamos en producción y te damos 30 días de garantía con soporte técnico directo.',
+      },
+    ];
 ---
 
 <!-- Contenedor Maestro Unificado: Fondo #0A0A0A fijo sin transiciones de color -->
@@ -126,20 +166,22 @@ const steps = [
         data-services-text
         class="text-[11px] sm:text-xs font-mono uppercase tracking-[0.25em] text-[#FF5A00] font-bold will-change-transform"
       >
-        // SOLUCIONES DIGITALES
+        {t('services.tag')}
       </span>
       <h2
         id="services-title"
         data-services-text
         class="font-display text-4xl sm:text-6xl lg:text-7xl font-black uppercase text-white tracking-tight leading-[0.95] will-change-transform"
       >
-        SERVICIOS <span class="font-serif italic font-normal text-[#FF5A00] tracking-normal">QUE OFRECEMOS</span>
+        {t('services.title')} <span class="font-serif italic font-normal text-[#FF5A00] tracking-normal">{t('services.titleAccent')}</span>
       </h2>
       <p
         data-services-text
         class="text-base sm:text-lg lg:text-xl text-zinc-400 font-normal leading-relaxed max-w-2xl mx-auto will-change-transform"
       >
-        Elegí la solución exacta para la etapa de tu negocio. Cuatro formatos técnicos concebidos para traccionar y escalar sin deuda de código.
+        {isEn
+          ? 'Choose the exact solution for your stage of growth. Four specialized formats engineered to gain traction and scale without technical debt.'
+          : 'Elegí la solución exacta para la etapa de tu negocio. Cuatro formatos técnicos concebidos para traccionar y escalar sin deuda de código.'}
       </p>
     </div>
 
@@ -150,7 +192,8 @@ const steps = [
     >
       {
         sortedServices.map((service, index) => {
-          const slug = (service.data.slug || service.id).replace(/\.md$/, '');
+          const slug = getServiceSlug(service);
+          const serviceUrl = isEn ? `/en/servicios/${slug}` : `/servicios/${slug}`;
           const cfg = deckConfigs[index % deckConfigs.length];
 
           return (
@@ -164,8 +207,10 @@ const steps = [
             >
               <!-- Carta interactiva: conserva su rotación de abanico y su efecto hover intacto -->
               <a
-                href={`/servicios/${slug}`}
-                aria-label={`Ver servicio: ${service.data.nombre}`}
+                data-card
+                data-card-accent={cfg.transitionAccent}
+                href={serviceUrl}
+                aria-label={`${t('services.viewService')}: ${service.data.nombre}`}
                 class:list={[
                   'deck-card group relative w-full aspect-[3/4.2] rounded-[2rem] sm:rounded-[2.25rem] p-7 sm:p-8 flex flex-col justify-between border overflow-hidden cursor-pointer',
                   'shadow-[0_30px_70px_-15px_rgba(0,0,0,0.85)] transition-all duration-500 ease-[cubic-bezier(0.22,1,0.36,1)]',
@@ -211,7 +256,7 @@ const steps = [
                 <!-- Pie de la Carta: Call to Action Clickeable -->
                 <div class="relative z-10 pt-4 border-t border-current/10 flex items-center justify-between">
                   <span class="font-mono text-[11px] sm:text-xs uppercase tracking-[0.18em] font-bold">
-                    EXPLORAR SERVICIO
+                    {t('services.viewService')}
                   </span>
                   <span
                     class:list={[
@@ -265,19 +310,21 @@ const steps = [
             data-process-intro-text
             class="font-display text-6xl xl:text-8xl 2xl:text-9xl font-black uppercase tracking-tight text-white leading-[0.9] mb-8 will-change-transform"
           >
-            CÓMO <span class="font-serif italic font-normal text-[#FF5A00] tracking-normal">TRABAJAMOS</span>
+            {t('process.title')} <span class="font-serif italic font-normal text-[#FF5A00] tracking-normal">{t('process.titleAccent')}</span>
           </h2>
           <p
             data-process-intro-text
             class="text-xl xl:text-2xl 2xl:text-3xl font-light text-zinc-400 leading-relaxed max-w-2xl will-change-transform"
           >
-            Un proceso transparente de 5 pasos diseñado para entregarte una herramienta comercial funcional sin demoras burocráticas.
+            {isEn
+              ? 'A transparent 5-step engineering process designed to deliver high-converting web products without bureaucracy.'
+              : 'Un proceso transparente de 5 pasos diseñado para entregarte una herramienta comercial funcional sin demoras burocráticas.'}
           </p>
           <div
             data-process-intro-text
             class="mt-12 flex items-center gap-4 text-xs font-mono uppercase tracking-widest text-zinc-400 will-change-transform"
           >
-            <span>SCROLL PARA NAVEGAR</span>
+            <span>{isEn ? 'SCROLL TO EXPLORE' : 'SCROLL PARA NAVEGAR'}</span>
             <span class="text-[#FF5A00] text-lg">→</span>
           </div>
         </div>
@@ -318,13 +365,15 @@ const steps = [
           data-process-mobile-text
           class="font-display text-4xl sm:text-6xl font-black uppercase tracking-tight text-white leading-none mb-4"
         >
-          CÓMO <span class="font-serif italic font-normal text-[#FF5A00] tracking-normal">TRABAJAMOS</span>
+          {t('process.title')} <span class="font-serif italic font-normal text-[#FF5A00] tracking-normal">{t('process.titleAccent')}</span>
         </h2>
         <p
           data-process-mobile-text
           class="text-base sm:text-lg text-zinc-400 leading-relaxed max-w-md"
         >
-          Un proceso transparente de 5 pasos diseñado para entregarte una herramienta comercial funcional sin demoras burocráticas.
+          {isEn
+            ? 'A transparent 5-step engineering process designed to deliver high-converting web products without bureaucracy.'
+            : 'Un proceso transparente de 5 pasos diseñado para entregarte una herramienta comercial funcional sin demoras burocráticas.'}
         </p>
       </div>
 
@@ -422,10 +471,24 @@ const steps = [
         // Desactivamos temporalmente la transition de CSS durante la entrada para que GSAP tenga control total
         innerCards.forEach((c) => (c.style.transition = 'none'));
 
+        // Estado inicial inmediato (apenas corre el JS): las cartas quedan ocultas y preparadas en el fondo
+        gsap.set(cardEntries, {
+          x: (i) => getStackOffsetX(i),
+          y: 260,
+          opacity: 0,
+          scale: 0.88,
+        });
+
+        gsap.set(innerCards, {
+          rotate: 0,
+          y: 0,
+          x: 0,
+        });
+
         const deckTl = gsap.timeline({
           scrollTrigger: {
             trigger: fanContainer,
-            start: 'top 82%',
+            start: 'top 85%',
             toggleActions: 'play none none none',
           },
           onComplete: () => {
@@ -436,20 +499,6 @@ const steps = [
             });
             cardEntries.forEach((w) => gsap.set(w, { clearProps: 'transform,opacity' }));
           },
-        });
-
-        // Estado inicial: las 4 cartas juntas en el centro (como un solo mazo vertical) y abajo
-        deckTl.set(cardEntries, {
-          x: (i) => getStackOffsetX(i),
-          y: 260,
-          opacity: 0,
-          scale: 0.88,
-        });
-
-        deckTl.set(innerCards, {
-           rotate: 0,
-          y: 0,
-          x: 0,
         });
 
         // FASE 1: Salen todas juntas desde abajo hacia el centro
@@ -488,23 +537,25 @@ const steps = [
 
       // Mobile / Tablet (< 1024px): Suben desde abajo con ligero despliegue
       mm.add('(max-width: 1023px)', () => {
-        gsap.fromTo(
-          cardEntries,
-          { y: 120, opacity: 0, scale: 0.92 },
-          {
-            y: 0,
-            opacity: 1,
-            scale: 1,
-            duration: 0.8,
-            stagger: 0.12,
-            ease: 'power3.out',
-            scrollTrigger: {
-              trigger: fanContainer,
-              start: 'top 85%',
-              toggleActions: 'play none none none',
-            },
-          }
-        );
+        // Estado inicial inmediato para mobile/tablet
+        gsap.set(cardEntries, { y: 120, opacity: 0, scale: 0.92 });
+
+        gsap.to(cardEntries, {
+          y: 0,
+          opacity: 1,
+          scale: 1,
+          duration: 0.8,
+          stagger: 0.12,
+          ease: 'power3.out',
+          scrollTrigger: {
+            trigger: fanContainer,
+            start: 'top 88%',
+            toggleActions: 'play none none none',
+          },
+          onComplete: () => {
+            cardEntries.forEach((w) => gsap.set(w, { clearProps: 'transform,opacity' }));
+          },
+        });
       });
     }
 
@@ -560,6 +611,12 @@ const steps = [
     initServicesAndProcessAnimations();
   }
   document.addEventListener('astro:page-load', initServicesAndProcessAnimations);
+</script>
+
+<script>
+  import { initCardTransitions } from '../../scripts/card-transition';
+
+  initCardTransitions();
 </script>
 
 <style is:global>

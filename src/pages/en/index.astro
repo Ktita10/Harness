@@ -1,0 +1,37 @@
+---
+import { getCollection } from 'astro:content';
+import Base from '../../layouts/Base.astro';
+import Nav from '../../components/sections/Nav.astro';
+import Hero from '../../components/sections/Hero.astro';
+import ServicesProcess from '../../components/sections/ServicesProcess.astro';
+import FAQSection from '../../components/sections/FAQSection.astro';
+import CTASection from '../../components/sections/CTASection.astro';
+import { useTranslations } from '../../i18n/utils';
+
+const t = useTranslations('en');
+
+const allFaqs = await getCollection('faqs_en');
+const sortedFaqs = allFaqs.sort((a, b) => (a.data.orden ?? 0) - (b.data.orden ?? 0));
+const faqData = sortedFaqs.map((f) => ({
+  pregunta: f.data.pregunta,
+  respuesta: f.data.respuesta,
+}));
+---
+
+<Base
+  lang="en"
+  title={t('meta.home.title')}
+  description={t('meta.home.description')}
+  faqs={faqData}
+>
+  <Nav slot="header" lang="en" />
+
+  <Hero lang="en" />
+
+  <ServicesProcess lang="en" />
+
+  <FAQSection lang="en" />
+
+  <CTASection lang="en" />
+
+</Base>
