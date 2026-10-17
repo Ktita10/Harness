@@ -3,6 +3,7 @@ import JsonLd from '../components/seo/JsonLd.astro';
 import '../styles/global.css';
 
 interface Props {
+  lang?: 'es' | 'en';
   title?: string;
   description?: string;
   canonical?: string;
@@ -18,6 +19,7 @@ interface Props {
 }
 
 const {
+  lang = 'es',
   title = 'HARNESS STUDIO | Desarrollo Web y Software a Medida',
   description = 'Startup de desarrollo web y software a medida para pymes y emprendedores. Landing pages, Tienda Nube, tiendas online y sistemas.',
   canonical,
@@ -30,10 +32,12 @@ const {
 const siteUrl = Astro.site ? Astro.site.href : 'https://harness.studio';
 const canonicalURL = canonical || new URL(Astro.url.pathname, siteUrl).href;
 const fullOgImageUrl = new URL(ogImage, siteUrl).href;
+
+const htmlLang = lang === 'en' ? 'en' : 'es-AR';
 ---
 
 <!doctype html>
-<html lang="es-AR">
+<html lang={htmlLang}>
   <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />

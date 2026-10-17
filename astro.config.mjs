@@ -6,6 +6,13 @@ import tailwindcss from '@tailwindcss/vite';
 export default defineConfig({
   site: 'https://harness.studio',
   output: 'static',
+  i18n: {
+    defaultLocale: 'es',
+    locales: ['es', 'en'],
+    routing: {
+      prefixDefaultLocale: false,
+    },
+  },
   integrations: [
     sitemap({
       filter: (page) => !page.includes('/404'),

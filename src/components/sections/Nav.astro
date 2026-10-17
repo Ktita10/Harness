@@ -1,10 +1,22 @@
 ---
 import Button from '../ui/Button.astro';
+import { getLangFromUrl, useTranslations, getAlternatePath } from '../../i18n/utils';
+import type { Lang } from '../../i18n/ui';
+
+interface Props {
+  lang?: Lang;
+}
+
+const currentLang = Astro.props.lang || getLangFromUrl(Astro.url);
+const t = useTranslations(currentLang);
+const targetLang: Lang = currentLang === 'es' ? 'en' : 'es';
+const alternatePath = getAlternatePath(Astro.url.pathname, targetLang);
+const homePath = currentLang === 'en' ? '/en' : '/';
 
 const navLinks = [
-  { href: '#servicios', label: 'SERVICIOS' },
-  { href: '#proceso', label: 'CÓMO TRABAJAMOS' },
-  { href: '#faq', label: 'FAQ' },
+  { href: `${homePath}#servicios`, label: t('nav.services') },
+  { href: `${homePath}#proceso`, label: t('nav.process') },
+  { href: `${homePath}#faq`, label: t('nav.faq') },
 ];
 ---
 
@@ -17,7 +29,7 @@ const navLinks = [
   <div class="nav-container w-full px-6 sm:px-10 lg:px-12 xl:px-16 h-20 sm:h-24 flex items-center justify-between">
     <!-- Brand Logo: HARNESS + STUDIO debajo con tipografía serif itálica del mismo tamaño -->
     <a
-      href="/"
+      href={homePath}
       class="flex flex-col select-none group leading-none tracking-tighter py-1"
       aria-label="HARNESS STUDIO Home"
     >
@@ -29,52 +41,103 @@ const navLinks = [
       </span>
     </a>
 
-    <!-- Desktop Navigation Links (Esquinados a la derecha) -->
-    <nav class="hidden md:flex items-center gap-8 lg:gap-12 text-xs sm:text-sm lg:text-base font-bold uppercase tracking-widest ml-auto" aria-label="Navegación principal">
-      {
-        navLinks.map((link) => (
-          <a
-            href={link.href}
-            class="nav-link-item relative py-1 transition-colors duration-300 hover:after:w-full after:w-0 after:h-[2px] after:bg-accent after:absolute after:bottom-0 after:left-0 after:transition-all after:duration-250"
-          >
-            {link.label}
-          </a>
-        ))
-      }
-    </nav>
+    <!-- Desktop Navigation Links & Language Switcher -->
+    <div class="hidden md:flex items-center gap-6 lg:gap-10 ml-auto">
+      <nav class="flex items-center gap-8 lg:gap-12 text-xs sm:text-sm lg:text-base font-bold uppercase tracking-widest" aria-label="Navegación principal">
+        {
+          navLinks.map((link) => (
+            <a
+              href={link.href}
+              class="nav-link-item relative py-1 transition-colors duration-300 hover:after:w-full after:w-0 after:h-[2px] after:bg-accent after:absolute after:bottom-0 after:left-0 after:transition-all after:duration-250"
+            >
+              {link.label}
+            </a>
+          ))
+        }
+      </nav>
 
-    <!-- Mobile Menu Toggle Button -->
-    <button
-      id="mobile-menu-btn"
-      type="button"
-      class="md:hidden p-2.5 rounded-lg border transition-all duration-300"
-      aria-expanded="false"
-      aria-controls="mobile-menu-drawer"
-      aria-label="Abrir menú de navegación"
-    >
-      <svg
-        id="menu-open-icon"
-        xmlns="http://www.w3.org/2000/svg"
-        fill="none"
-        viewBox="0 0 24 24"
-        stroke-width="2"
-        stroke="currentColor"
-        class="w-6 h-6"
+      <!-- Botón compacto de idioma con ícono de globo (Desktop) -->
+      <a
+        href={alternatePath}
+        class="nav-lang-btn inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full border text-xs font-mono font-bold uppercase tracking-wider transition-all duration-300 hover:scale-105 select-none"
+        aria-label={t('nav.switchLang')}
+        title={t('nav.switchLang')}
       >
-        <path stroke-linecap="round" stroke-linejoin="round" d="M3.75 6.75h16.5M3.75 12h16.5m-16.5 5.25h16.5" />
-      </svg>
-      <svg
-        id="menu-close-icon"
-        xmlns="http://www.w3.org/2000/svg"
-        fill="none"
-        viewBox="0 0 24 24"
-        stroke-width="2"
-        stroke="currentColor"
-        class="w-6 h-6 hidden"
+        <svg
+          class="w-3.5 h-3.5"
+          viewBox="0 0 24 24"
+          fill="none"
+          stroke="currentColor"
+          stroke-width="2"
+          stroke-linecap="round"
+          stroke-linejoin="round"
+          aria-hidden="true"
+        >
+          <circle cx="12" cy="12" r="10"></circle>
+          <line x1="2" y1="12" x2="22" y2="12"></line>
+          <path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"></path>
+        </svg>
+        <span class="text-[11px] font-black">{targetLang.toUpperCase()}</span>
+      </a>
+    </div>
+
+    <!-- Mobile Menu Toggle Button & Mobile Switcher -->
+    <div class="md:hidden flex items-center gap-3">
+      <!-- Botón compacto de idioma con ícono de globo (Mobile Navbar) -->
+      <a
+        href={alternatePath}
+        class="nav-lang-btn inline-flex items-center gap-1 px-2.5 py-1.5 rounded-full border text-xs font-mono font-bold uppercase tracking-wider transition-all duration-300 select-none"
+        aria-label={t('nav.switchLang')}
       >
-        <path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12" />
-      </svg>
-    </button>
+        <svg
+          class="w-3.5 h-3.5"
+          viewBox="0 0 24 24"
+          fill="none"
+          stroke="currentColor"
+          stroke-width="2"
+          stroke-linecap="round"
+          stroke-linejoin="round"
+          aria-hidden="true"
+        >
+          <circle cx="12" cy="12" r="10"></circle>
+          <line x1="2" y1="12" x2="22" y2="12"></line>
+          <path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"></path>
+        </svg>
+        <span class="text-[10px] font-black">{targetLang.toUpperCase()}</span>
+      </a>
+
+      <button
+        id="mobile-menu-btn"
+        type="button"
+        class="p-2.5 rounded-lg border transition-all duration-300"
+        aria-expanded="false"
+        aria-controls="mobile-menu-drawer"
+        aria-label={t('nav.menuOpen')}
+      >
+        <svg
+          id="menu-open-icon"
+          xmlns="http://www.w3.org/2000/svg"
+          fill="none"
+          viewBox="0 0 24 24"
+          stroke-width="2"
+          stroke="currentColor"
+          class="w-6 h-6"
+        >
+          <path stroke-linecap="round" stroke-linejoin="round" d="M3.75 6.75h16.5M3.75 12h16.5m-16.5 5.25h16.5" />
+        </svg>
+        <svg
+          id="menu-close-icon"
+          xmlns="http://www.w3.org/2000/svg"
+          fill="none"
+          viewBox="0 0 24 24"
+          stroke-width="2"
+          stroke="currentColor"
+          class="w-6 h-6 hidden"
+        >
+          <path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12" />
+        </svg>
+      </button>
+    </div>
   </div>
 
   <!-- Mobile Menu Overlay Drawer -->
@@ -107,7 +170,7 @@ const navLinks = [
         size="md"
         class="w-full text-center flex items-center justify-center gap-2"
       >
-        <span>Hablar por WhatsApp</span>
+        <span>{t('nav.whatsapp')}</span>
         <svg class="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
           <path stroke-linecap="round" stroke-linejoin="round" d="M4.5 19.5l15-15m0 0H8.25m11.25 0v11.25" />
         </svg>
@@ -193,6 +256,11 @@ const navLinks = [
     border-color: rgba(255, 255, 255, 0.15);
     background-color: rgba(255, 255, 255, 0.05);
   }
+  #site-header[data-nav-tone="dark"] .nav-lang-btn {
+    color: #FFFFFF;
+    border-color: rgba(255, 255, 255, 0.2);
+    background-color: rgba(255, 255, 255, 0.05);
+  }
 
   /* Light mode: black elements over light/white backgrounds */
   #site-header[data-nav-tone="light"]:not(.is-mobile-open) .nav-brand-title {
@@ -206,12 +274,22 @@ const navLinks = [
     border-color: rgba(0, 0, 0, 0.18);
     background-color: rgba(0, 0, 0, 0.04);
   }
+  #site-header[data-nav-tone="light"]:not(.is-mobile-open) .nav-lang-btn {
+    color: #0D0D0D;
+    border-color: rgba(0, 0, 0, 0.2);
+    background-color: rgba(0, 0, 0, 0.04);
+  }
 
   /* Mobile open overrides */
   #site-header.is-mobile-open .nav-brand-title {
     color: #FFFFFF !important;
   }
   #site-header.is-mobile-open #mobile-menu-btn {
+    color: #FFFFFF !important;
+    border-color: rgba(255, 255, 255, 0.25) !important;
+    background-color: rgba(255, 255, 255, 0.1) !important;
+  }
+  #site-header.is-mobile-open .nav-lang-btn {
     color: #FFFFFF !important;
     border-color: rgba(255, 255, 255, 0.25) !important;
     background-color: rgba(255, 255, 255, 0.1) !important;
@@ -227,6 +305,11 @@ const navLinks = [
   #site-header #mobile-menu-btn:hover {
     color: var(--accent) !important;
     border-color: var(--accent) !important;
+  }
+  #site-header .nav-lang-btn:hover {
+    color: var(--accent) !important;
+    border-color: var(--accent) !important;
+    background-color: rgba(255, 90, 0, 0.1) !important;
   }
 
   @media (prefers-reduced-motion: reduce) {

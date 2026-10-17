@@ -1,11 +1,13 @@
 import type { CollectionEntry } from 'astro:content';
 
-type ServiceEntry = CollectionEntry<'services'>;
+type ServiceEntry = CollectionEntry<'services'> | CollectionEntry<'services_en'>;
 
 const SERVICE_ORDER = ['landing-pages', 'tiendanube', 'tienda-online', 'software-a-medida'];
 
 export function getServiceSlug(entry: ServiceEntry): string {
-  return (entry.data.slug || entry.id).replace(/\.md$/, '');
+  const raw = (entry.data.slug || entry.id).replace(/\.md$/, '');
+  const parts = raw.split('/');
+  return parts[parts.length - 1];
 }
 
 /**

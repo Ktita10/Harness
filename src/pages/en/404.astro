@@ -1,0 +1,39 @@
+---
+import Base from '../../layouts/Base.astro';
+import Nav from '../../components/sections/Nav.astro';
+import Button from '../../components/ui/Button.astro';
+import Badge from '../../components/ui/Badge.astro';
+import { useTranslations } from '../../i18n/utils';
+
+const t = useTranslations('en');
+---
+
+<Base
+  lang="en"
+  title={t('404.title')}
+  description={t('404.description')}
+>
+  <Nav slot="header" lang="en" />
+
+  <section class="min-h-[70vh] flex flex-col items-center justify-center px-4 py-32 text-center max-w-4xl mx-auto">
+    <Badge variant="orange" rotate={-2} class="mb-4">Error 404</Badge>
+    
+    <h1 class="font-display text-5xl sm:text-7xl font-black uppercase text-accent leading-none mb-6">
+      {t('404.heading')} — {t('404.subheading')}
+    </h1>
+    
+    <p class="text-xl text-text-secondary font-medium max-w-lg mb-8 leading-relaxed">
+      {t('404.description')}
+    </p>
+
+    <div class="flex flex-wrap gap-4 justify-center">
+      <Button href="/en" variant="primary" size="lg">
+        {t('404.btn')} ➔
+      </Button>
+      <Button href="/en#servicios" variant="secondary" size="lg">
+        {t('nav.services')}
+      </Button>
+    </div>
+  </section>
+
+</Base>

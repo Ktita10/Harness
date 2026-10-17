@@ -10,10 +10,11 @@ import ServiceHeroVisual from '../../components/ui/ServiceHeroVisual.astro';
 import { getServiceNumber, getServiceSlug } from '../../utils/services';
 
 export async function getStaticPaths() {
-  const services = await getCollection('services');
-  return services.map((entry) => ({
+  const allServices = await getCollection('services');
+  const esServices = allServices.filter((s) => (s.data.lang || 'es') === 'es');
+  return esServices.map((entry) => ({
     params: { slug: getServiceSlug(entry) },
-    props: { entry, number: getServiceNumber(services, getServiceSlug(entry)) },
+    props: { entry, number: getServiceNumber(esServices, getServiceSlug(entry)) },
   }));
 }
 
@@ -139,7 +140,7 @@ const displayProceso = (data as any).proceso && (data as any).proceso.length > 0
             Consultar por WhatsApp
           </Button>
           <Button href="#precios" variant="secondary" size="lg">
-            Ver planes y precios ↓
+            Ver planes ↓
           </Button>
         </div>
 
