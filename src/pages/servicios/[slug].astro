@@ -6,18 +6,27 @@ import CTASection from '../../components/sections/CTASection.astro';
 import Button from '../../components/ui/Button.astro';
 import Badge from '../../components/ui/Badge.astro';
 import Accordion from '../../components/ui/Accordion.astro';
+import ServiceHeroVisual from '../../components/ui/ServiceHeroVisual.astro';
+import { getServiceNumber, getServiceSlug } from '../../utils/services';
 
 export async function getStaticPaths() {
   const services = await getCollection('services');
   return services.map((entry) => ({
-    params: { slug: (entry.data.slug || entry.id).replace(/\.md$/, '') },
-    props: { entry },
+    params: { slug: getServiceSlug(entry) },
+    props: { entry, number: getServiceNumber(services, getServiceSlug(entry)) },
   }));
 }
 
-const { entry } = Astro.props;
+const { entry, number } = Astro.props;
 const { data } = entry;
-const slug = (data.slug || entry.id).replace(/\.md$/, '');
+const slug = getServiceSlug(entry);
+
+// H1 con el lenguaje tipográfico de la marca: las dos últimas palabras en serif itálica naranja.
+const h1Words = data.h1.trim().split(/\s+/);
+const h1Accent = h1Words.slice(-2).join(' ');
+const h1Lead = h1Words.slice(0, -2).join(' ');
+
+const heroHighlights = data.incluye.slice(0, 3).map((item) => item.titulo);
 
 const waHeroUrl = `https://wa.me/?text=${encodeURIComponent(data.whatsappMensaje)}`;
 const planWaUrl = (planName: string) =>
@@ -78,54 +87,81 @@ const displayProceso = (data as any).proceso && (data as any).proceso.length > 0
   <Nav slot="header" />
 
   <!-- 1. Hero del servicio -->
-  <section class="pt-32 pb-20 sm:pt-40 sm:pb-24 px-4 sm:px-6 lg:px-8 max-w-7xl mx-auto">
-    <!-- Breadcrumb visual y semántico -->
-    <nav aria-label="Breadcrumb" class="mb-6">
-      <ol class="flex items-center flex-wrap gap-2 text-xs sm:text-sm font-bold uppercase tracking-wider text-gray-500">
-        <li>
-          <a href="/" class="hover:text-accent transition-colors underline-offset-4 hover:underline">
-            Inicio
-          </a>
-        </li>
-        <li aria-hidden="true" class="text-gray-400">/</li>
-        <li>
-          <a href="/#servicios" class="hover:text-accent transition-colors underline-offset-4 hover:underline">
-            Servicios
-          </a>
-        </li>
-        <li aria-hidden="true" class="text-gray-400">/</li>
-        <li class="text-accent font-extrabold" aria-current="page">
-          {data.nombre}
-        </li>
-      </ol>
-    </nav>
+  <section aria-labelledby="service-hero-title" class="service-hero relative isolate overflow-hidden">
+    <!-- Atmósfera: grilla técnica enmascarada + resplandor naranja -->
+    <div class="pointer-events-none absolute inset-0 -z-10" aria-hidden="true">
+      <div class="service-hero__grid absolute inset-0"></div>
+      <div class="absolute right-[-10%] top-1/2 h-[42rem] w-[42rem] -translate-y-1/2 rounded-full bg-[radial-gradient(circle,var(--accent)_0%,transparent_65%)] opacity-[0.14] blur-3xl lg:right-[5%]"></div>
+    </div>
 
-    <div class="max-w-4xl flex flex-col gap-6">
-      <div class="self-start">
-        <Badge variant="orange">{data.nombre}</Badge>
+    <div class="mx-auto grid max-w-7xl grid-cols-1 items-center gap-16 px-4 pb-20 pt-32 sm:px-6 sm:pb-24 sm:pt-40 lg:grid-cols-12 lg:gap-10 lg:px-8">
+      <!-- Columna izquierda -->
+      <div class="flex flex-col gap-6 lg:col-span-7">
+        <nav aria-label="Breadcrumb">
+          <ol class="flex flex-wrap items-center gap-2 text-xs font-bold uppercase tracking-wider text-text-secondary sm:text-sm">
+            <li>
+              <a href="/" class="underline-offset-4 transition-colors hover:text-accent hover:underline">
+                Inicio
+              </a>
+            </li>
+            <li aria-hidden="true" class="text-text-muted">/</li>
+            <li>
+              <a href="/#servicios" class="underline-offset-4 transition-colors hover:text-accent hover:underline">
+                Servicios
+              </a>
+            </li>
+            <li aria-hidden="true" class="text-text-muted">/</li>
+            <li class="text-text-primary" aria-current="page">
+              {data.nombre}
+            </li>
+          </ol>
+        </nav>
+
+        <h1
+          id="service-hero-title"
+          class="font-display text-4xl font-black uppercase leading-[0.95] tracking-tight text-text-primary sm:text-6xl xl:text-7xl"
+        >
+          {h1Lead}{h1Lead && ' '}<span class="font-serif font-normal italic tracking-normal text-accent">{h1Accent}</span>
+        </h1>
+
+        <p class="max-w-2xl text-lg font-medium leading-relaxed text-text-secondary sm:text-xl">
+          {data.bajada}
+        </p>
+
+        <div class="flex flex-wrap items-center gap-4 pt-2">
+          <Button
+            href={waHeroUrl}
+            target="_blank"
+            rel="noopener noreferrer"
+            variant="primary"
+            size="lg"
+          >
+            Consultar por WhatsApp
+          </Button>
+          <Button href="#precios" variant="secondary" size="lg">
+            Ver planes y precios ↓
+          </Button>
+        </div>
+
+        <ul class="mt-4 grid grid-cols-1 gap-4 border-t border-border-subtle pt-6 sm:grid-cols-3">
+          {
+            heroHighlights.map((highlight) => (
+              <li class="flex items-start gap-3 text-sm font-medium leading-snug text-text-secondary">
+                <span class="mt-0.5 inline-flex h-5 w-5 shrink-0 items-center justify-center rounded-full border border-accent/40 bg-accent/10 text-accent" aria-hidden="true">
+                  <svg viewBox="0 0 16 16" fill="none" class="h-3 w-3">
+                    <path d="M3.5 8.5l3 3 6-7" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" />
+                  </svg>
+                </span>
+                {highlight}
+              </li>
+            ))
+          }
+        </ul>
       </div>
 
-      <h1 class="font-display text-4xl sm:text-6xl lg:text-7xl font-black uppercase text-accent leading-tight tracking-tight">
-        {data.h1}
-      </h1>
-
-      <p class="text-xl sm:text-2xl text-text-secondary font-medium leading-relaxed max-w-3xl">
-        {data.bajada}
-      </p>
-
-      <div class="pt-4 flex flex-wrap gap-4 items-center">
-        <Button
-          href={waHeroUrl}
-          target="_blank"
-          rel="noopener noreferrer"
-          variant="primary"
-          size="lg"
-        >
-          Consultar por WhatsApp
-        </Button>
-        <Button href="#precios" variant="secondary" size="lg">
-          Ver planes y precios ↓
-        </Button>
+      <!-- Columna derecha: composición visual (solo desktop) -->
+      <div class="hidden lg:col-span-5 lg:block">
+        <ServiceHeroVisual slug={slug} nombre={data.nombre} number={number} />
       </div>
     </div>
   </section>
@@ -239,9 +275,9 @@ const displayProceso = (data as any).proceso && (data as any).proceso.length > 0
                 href={planWaUrl(plan.nombre)}
                 target="_blank"
                 rel="noopener noreferrer"
-                variant={plan.destacado ? 'primary' : 'secondary'}
+                variant={plan.destacado ? 'primary' : 'outline-dark'}
                 size="md"
-                class="w-full text-center justify-center"
+                class="w-full text-center justify-center font-bold"
               >
                 Elegir este plan ➔
               </Button>
@@ -329,3 +365,14 @@ const displayProceso = (data as any).proceso && (data as any).proceso.length > 0
     message={data.whatsappMensaje}
   />
 </Base>
+
+<style>
+  .service-hero__grid {
+    background-image: 
+      linear-gradient(to right, var(--grid-line) 1px, transparent 1px),
+      linear-gradient(to bottom, var(--grid-line) 1px, transparent 1px);
+    background-size: 48px 48px;
+    mask-image: radial-gradient(ellipse 70% 65% at 60% 45%, #000 20%, transparent 80%);
+    -webkit-mask-image: radial-gradient(ellipse 70% 65% at 60% 45%, #000 20%, transparent 80%);
+  }
+</style>

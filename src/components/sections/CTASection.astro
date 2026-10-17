@@ -43,8 +43,7 @@ const socials = [
 
   <!-- Contenedor principal al 90% de ancho de la sección -->
   <div
-    style="--cta-3d-top: 24%; --cta-3d-height: 64%; --cta-3d-width: min(100%, 640px);"
-    class="relative z-10 w-[90%] mx-auto bg-accent text-[#0D0D0D] rounded-3xl sm:rounded-[2.5rem] lg:rounded-[3rem] p-6 sm:p-10 lg:p-14 shadow-[0_30px_80px_-15px_rgba(255,90,0,0.38)] border border-black/10 overflow-hidden min-h-[660px] sm:min-h-[740px] lg:min-h-[800px] flex flex-col justify-between"
+    class="cta-card relative z-10 w-[90%] mx-auto bg-accent text-[#0D0D0D] rounded-3xl sm:rounded-[2.5rem] lg:rounded-[3rem] p-6 sm:p-10 lg:p-14 shadow-[0_30px_80px_-15px_rgba(255,90,0,0.38)] border border-black/10 overflow-hidden flex flex-col justify-between"
   >
     <!-- Luz radial de fondo para despegar el cubo negro del naranja -->
     <div
@@ -62,16 +61,13 @@ const socials = [
       </svg>
     </div>
 
-    <!-- Objeto 3D interactivo -->
-    <CTASection3D sectionSelector="#contacto" triggerSelector="[data-cta-trigger]" />
-
-    <!-- Parte Superior: Frase célebre de software -->
+    <!-- Parte Superior: Frase célebre o Titular del Servicio -->
     <div class="relative z-[1] w-full flex flex-col items-center pt-2 sm:pt-4">
       {
         title ? (
           <h2
             id="cta-title"
-            class="font-display text-4xl sm:text-6xl md:text-7xl lg:text-8xl font-black uppercase text-[#0D0D0D] text-center tracking-tight leading-[0.9]"
+            class="font-display text-3xl sm:text-5xl md:text-6xl lg:text-[4.2rem] xl:text-[4.75rem] font-black uppercase text-[#0D0D0D] text-center tracking-tight leading-[0.92] max-w-5xl mx-auto"
           >
             {title}
           </h2>
@@ -91,15 +87,18 @@ const socials = [
       }
     </div>
 
-    <!-- Parte Inferior: Navegación secundaria, Botón WhatsApp y Redes -->
-    <footer role="contentinfo" class="relative z-[10] w-full pt-12 sm:pt-16 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-[1fr_auto_1fr] gap-8 lg:gap-6 items-end">
+    <!-- Enlaces y CTA (En mobile van arriba del cubo, en desktop forman las columnas del footer a los lados y el botón abajo del cubo) -->
+    <footer
+      role="contentinfo"
+      class="cta-footer relative z-[10] w-full pt-10 sm:pt-14 lg:pt-0 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-[1fr_auto_1fr] gap-8 lg:gap-6 items-end"
+    >
       
-      <!-- Columna Izquierda: NAVEGACIÓN -->
+      <!-- Columna Izquierda: NAVEGACIÓN (a la izquierda en desktop) -->
       <div class="flex flex-col items-center sm:items-start text-center sm:text-left order-2 sm:order-1 lg:order-1">
         <span class="text-[11px] sm:text-xs font-mono uppercase tracking-[0.22em] text-black/60 font-bold mb-3 sm:mb-4 block">
           // NAVEGACIÓN
         </span>
-        <nav aria-label="Navegación secundaria CTA" class="flex flex-col gap-2 sm:gap-2.5 lg:gap-3">
+        <nav aria-label="Navegación secundaria CTA" class="flex flex-col gap-2 sm:gap-2.5 lg:gap-3 items-center sm:items-start">
           {
             pages.map((item) => (
               <a
@@ -113,8 +112,8 @@ const socials = [
         </nav>
       </div>
 
-      <!-- Columna Central: Botón CTA WhatsApp Trigger -->
-      <div class="sm:col-span-2 lg:col-span-1 flex flex-col items-center text-center order-1 sm:order-3 lg:order-2">
+      <!-- Columna Central: Botón CTA WhatsApp Trigger (descansa en la base del cubo) -->
+      <div class="sm:col-span-2 lg:col-span-1 flex flex-col items-center text-center order-1 sm:order-3 lg:order-2 lg:translate-y-6 xl:translate-y-8">
         <a
           data-cta-trigger
           href={waUrl}
@@ -134,12 +133,12 @@ const socials = [
         </a>
       </div>
 
-      <!-- Columna Derecha: REDES -->
+      <!-- Columna Derecha: REDES (a la derecha en desktop) -->
       <div class="flex flex-col items-center sm:items-end text-center sm:text-right order-3 sm:order-2 lg:order-3">
         <span class="text-[11px] sm:text-xs font-mono uppercase tracking-[0.22em] text-black/60 font-bold mb-3 sm:mb-4 block">
           // REDES
         </span>
-        <div class="flex flex-col gap-2 sm:gap-2.5 lg:gap-3">
+        <div class="flex flex-col gap-2 sm:gap-2.5 lg:gap-3 items-center sm:items-end">
           {
             socials.map((item) => (
               <a
@@ -157,10 +156,57 @@ const socials = [
       </div>
 
     </footer>
+
+    <!-- Objeto 3D interactivo: en mobile queda al final, con altura definida en flujo; en desktop es absoluto en el centro -->
+    <div class="cta-3d-wrapper relative w-full flex items-center justify-center mt-6 lg:mt-0">
+      <CTASection3D sectionSelector="#contacto" triggerSelector="[data-cta-trigger]" />
+    </div>
   </div>
 </section>
 
 <style>
+  /* Altura y layout del card */
+  .cta-card {
+    /* En desktop: posiciona el cubo entre el título y el botón sin tapar ninguno */
+    --cta-3d-top: 22%;
+    --cta-3d-height: 56%;
+    --cta-3d-width: min(100%, 600px);
+  }
+
+  @media (min-width: 1024px) {
+    .cta-card {
+      min-height: 880px;
+      padding-bottom: 3.5rem;
+    }
+    .cta-3d-wrapper {
+      position: static;
+      margin-top: 0;
+    }
+  }
+
+  @media (max-width: 1023px) {
+    /* En responsive: el cubo va al pie, con altura propia en el flujo */
+    .cta-3d-wrapper {
+      height: 380px;
+      margin-top: 1.5rem;
+    }
+    :global(.cta-3d) {
+      position: relative !important;
+      left: auto !important;
+      top: auto !important;
+      transform: none !important;
+      width: 100% !important;
+      height: 100% !important;
+    }
+  }
+
+  @media (max-width: 639px) {
+    .cta-3d-wrapper {
+      height: 320px;
+      margin-top: 1rem;
+    }
+  }
+
   /* Gradiente atmosférico de alta intensidad:
      Nace limpio con el color de FAQ arriba y profundiza en tonos ámbar/naranja rico hacia abajo */
   .cta-atmosphere {

@@ -126,7 +126,27 @@ const navLinks = [
     transition:
       transform 440ms cubic-bezier(0.16, 1, 0.3, 1),
       opacity 320ms cubic-bezier(0.16, 1, 0.3, 1),
-      background-color 300ms ease;
+      background-color 300ms ease,
+      backdrop-filter 300ms ease,
+      border-color 300ms ease;
+  }
+
+  /* Scrolled state: difusión / desenfoque sutil y elegante */
+  #site-header.is-scrolled {
+    backdrop-filter: blur(12px);
+    -webkit-backdrop-filter: blur(12px);
+  }
+
+  /* Difusión sutil sobre fondo oscuro */
+  #site-header.is-scrolled[data-nav-tone="dark"] {
+    background-color: rgba(10, 10, 10, 0.65);
+    border-bottom: 1px solid rgba(255, 255, 255, 0.07);
+  }
+
+  /* Difusión sutil sobre fondo claro */
+  #site-header.is-scrolled[data-nav-tone="light"] {
+    background-color: rgba(255, 255, 255, 0.75);
+    border-bottom: 1px solid rgba(0, 0, 0, 0.06);
   }
 
   /* Inner container accordion compression */
@@ -329,6 +349,10 @@ const navLinks = [
       if (header?.getAttribute('data-nav-tone') !== targetTone) {
         header?.setAttribute('data-nav-tone', targetTone);
       }
+
+      // 3. Estado Scrolled: aplica difusión y desenfoque sutil
+      const isScrolled = window.scrollY > 20;
+      header?.classList.toggle('is-scrolled', isScrolled);
     }
 
     function onScroll() {

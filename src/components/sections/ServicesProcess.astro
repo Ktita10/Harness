@@ -1,18 +1,10 @@
 ---
 import { getCollection } from 'astro:content';
 import TopoBackground from '../ui/TopoBackground.astro';
+import { sortServices } from '../../utils/services';
 
 // ── 1. Datos de Servicios ──────────────────────────────────────────
-const services = await getCollection('services');
-
-const order = ['landing-pages', 'tiendanube', 'tienda-online', 'software-a-medida'];
-const sortedServices = services.sort((a, b) => {
-  const slugA = (a.data.slug || a.id).replace(/\.md$/, '');
-  const slugB = (b.data.slug || b.id).replace(/\.md$/, '');
-  const indexA = order.indexOf(slugA);
-  const indexB = order.indexOf(slugB);
-  return (indexA === -1 ? 99 : indexA) - (indexB === -1 ? indexB : 99);
-});
+const sortedServices = sortServices(await getCollection('services'));
 
 // Configuración visual del abanico (Fanned Cards) + Paleta de colores por carta
 const deckConfigs = [
@@ -428,10 +420,24 @@ const steps = [
         // Desactivamos temporalmente la transition de CSS durante la entrada para que GSAP tenga control total
         innerCards.forEach((c) => (c.style.transition = 'none'));
 
+        // Estado inicial inmediato (apenas corre el JS): las cartas quedan ocultas y preparadas en el fondo
+        gsap.set(cardEntries, {
+          x: (i) => getStackOffsetX(i),
+          y: 260,
+          opacity: 0,
+          scale: 0.88,
+        });
+
+        gsap.set(innerCards, {
+          rotate: 0,
+          y: 0,
+          x: 0,
+        });
+
         const deckTl = gsap.timeline({
           scrollTrigger: {
             trigger: fanContainer,
-            start: 'top 82%',
+            start: 'top 85%',
             toggleActions: 'play none none none',
           },
           onComplete: () => {
@@ -442,20 +448,6 @@ const steps = [
             });
             cardEntries.forEach((w) => gsap.set(w, { clearProps: 'transform,opacity' }));
           },
-        });
-
-        // Estado inicial: las 4 cartas juntas en el centro (como un solo mazo vertical) y abajo
-        deckTl.set(cardEntries, {
-          x: (i) => getStackOffsetX(i),
-          y: 260,
-          opacity: 0,
-          scale: 0.88,
-        });
-
-        deckTl.set(innerCards, {
-           rotate: 0,
-          y: 0,
-          x: 0,
         });
 
         // FASE 1: Salen todas juntas desde abajo hacia el centro
@@ -494,23 +486,25 @@ const steps = [
 
       // Mobile / Tablet (< 1024px): Suben desde abajo con ligero despliegue
       mm.add('(max-width: 1023px)', () => {
-        gsap.fromTo(
-          cardEntries,
-          { y: 120, opacity: 0, scale: 0.92 },
-          {
-            y: 0,
-            opacity: 1,
-            scale: 1,
-            duration: 0.8,
-            stagger: 0.12,
-            ease: 'power3.out',
-            scrollTrigger: {
-              trigger: fanContainer,
-              start: 'top 85%',
-              toggleActions: 'play none none none',
-            },
-          }
-        );
+        // Estado inicial inmediato para mobile/tablet
+        gsap.set(cardEntries, { y: 120, opacity: 0, scale: 0.92 });
+
+        gsap.to(cardEntries, {
+          y: 0,
+          opacity: 1,
+          scale: 1,
+          duration: 0.8,
+          stagger: 0.12,
+          ease: 'power3.out',
+          scrollTrigger: {
+            trigger: fanContainer,
+            start: 'top 88%',
+            toggleActions: 'play none none none',
+          },
+          onComplete: () => {
+            cardEntries.forEach((w) => gsap.set(w, { clearProps: 'transform,opacity' }));
+          },
+        });
       });
     }
 
