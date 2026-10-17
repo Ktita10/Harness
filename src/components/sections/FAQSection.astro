@@ -1,8 +1,17 @@
 ---
 import { getCollection } from 'astro:content';
 import FAQCubes3D from '../FAQCubes3D.astro';
+import { getLangFromUrl, useTranslations } from '../../i18n/utils';
+import type { Lang } from '../../i18n/ui';
 
-const allFaqs = await getCollection('faqs');
+interface Props {
+  lang?: Lang;
+}
+
+const currentLang = Astro.props.lang || getLangFromUrl(Astro.url);
+const t = useTranslations(currentLang);
+
+const allFaqs = currentLang === 'en' ? await getCollection('faqs_en') : await getCollection('faqs');
 const sortedFaqs = allFaqs.sort((a, b) => (a.data.orden ?? 0) - (b.data.orden ?? 0));
 ---
 
@@ -23,10 +32,10 @@ const sortedFaqs = allFaqs.sort((a, b) => (a.data.orden ?? 0) - (b.data.orden ??
         id="faq-title"
         class="font-display text-4xl sm:text-6xl lg:text-7xl font-black uppercase text-[#0D0D0D] leading-[0.95] tracking-tight mb-5 sm:mb-6"
       >
-        PREGUNTAS <span class="font-serif italic font-normal text-accent-on-light tracking-normal">FRECUENTES</span>
+        {t('faq.title')} <span class="font-serif italic font-normal text-accent-on-light tracking-normal">{t('faq.titleAccent')}</span>
       </h2>
       <p class="text-base sm:text-lg text-neutral-600 leading-relaxed max-w-xl font-medium">
-        Todo lo que necesitás saber sobre plazos, pagos, tecnología y formas de trabajo antes de arrancar.
+        {t('faq.subtitle')}
       </p>
     </div>
 

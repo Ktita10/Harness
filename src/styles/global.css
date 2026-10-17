@@ -22,6 +22,7 @@
   --color-accent-hover: var(--accent-hover);
   --color-accent-contrast: var(--accent-contrast);
   --color-accent-on-light: var(--accent-on-light);
+  --color-orange: var(--accent);
   --color-border-subtle: var(--border-subtle);
   --color-border-medium: var(--border-medium);
   --color-border-active: var(--border-active);
@@ -69,6 +70,68 @@ body {
 
 .skip-link:focus {
   top: 1rem;
+}
+
+/* Overlay de llegada de la transición de tarjetas: oculto salvo que el script lo active */
+#page-reveal {
+  position: fixed;
+  inset: 0;
+  z-index: 9999;
+  pointer-events: none;
+  display: none;
+}
+
+#page-reveal[data-active] {
+  display: block;
+}
+
+/* Marca "HARNESS / STUDIO" que acompaña la transición (mismo lenguaje que el logo del Nav) */
+.transition-brand {
+  position: fixed;
+  inset: 0;
+  z-index: 2147483647;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  pointer-events: none;
+}
+
+#page-reveal .transition-brand {
+  position: absolute;
+  z-index: auto;
+}
+
+.transition-brand__mark {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  font-size: clamp(3.25rem, 13vw, 9rem);
+  letter-spacing: -0.04em;
+  user-select: none;
+  contain: layout paint;
+  text-rendering: optimizeLegibility;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  opacity: 0;
+  transform-origin: center center;
+  will-change: transform, opacity;
+}
+
+.transition-brand__title {
+  font-family: 'Bricolage Grotesque', system-ui, sans-serif;
+  font-weight: 900;
+  text-transform: uppercase;
+  line-height: 0.85;
+  color: var(--transition-brand-main, var(--text-primary));
+}
+
+.transition-brand__accent {
+  font-family: 'Instrument Serif', Georgia, Cambria, serif;
+  font-style: italic;
+  font-weight: 400;
+  line-height: 0.9;
+  letter-spacing: 0;
+  color: var(--transition-brand-accent, var(--accent));
 }
 
 /* Modern High-Performance Utilities */

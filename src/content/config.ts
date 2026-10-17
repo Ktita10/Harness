@@ -4,6 +4,7 @@ const services = defineCollection({
   type: 'content',
   schema: z.object({
     slug: z.string().optional(),
+    lang: z.enum(['es', 'en']).default('es'),
     nombre: z.string(),
     metaTitle: z.string().max(60, 'metaTitle must be 60 characters or less'),
     metaDescription: z.string().max(155, 'metaDescription must be 155 characters or less'),
@@ -45,6 +46,7 @@ const services = defineCollection({
 const faqs = defineCollection({
   type: 'content',
   schema: z.object({
+    lang: z.enum(['es', 'en']).default('es'),
     pregunta: z.string(),
     respuesta: z.string(),
     orden: z.number().default(0),
@@ -54,4 +56,6 @@ const faqs = defineCollection({
 export const collections = {
   services,
   faqs,
+  services_en: services,
+  faqs_en: faqs,
 };

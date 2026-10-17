@@ -1,5 +1,14 @@
 ---
 import HeroObject3D from '../HeroObject3D.astro';
+import { getLangFromUrl, useTranslations } from '../../i18n/utils';
+import type { Lang } from '../../i18n/ui';
+
+interface Props {
+  lang?: Lang;
+}
+
+const currentLang = Astro.props.lang || getLangFromUrl(Astro.url);
+const t = useTranslations(currentLang);
 ---
 
 <section
@@ -22,18 +31,18 @@ import HeroObject3D from '../HeroObject3D.astro';
       data-hero-phrase-left
       class="absolute left-6 sm:left-10 lg:left-12 xl:left-16 top-32 sm:top-44 lg:top-52 max-w-[48%] font-display font-black uppercase leading-[0.95] tracking-tight text-white text-2xl sm:text-4xl lg:text-6xl xl:text-7xl"
     >
-      <span data-hero-word class="inline-block">Sitios</span>
-      <span data-hero-word class="inline-block">web</span><br />
-      <span data-hero-word class="inline-block font-serif italic font-normal normal-case tracking-normal text-accent">y</span>
-      <span data-hero-word class="inline-block font-serif italic font-normal normal-case tracking-normal text-accent">tiendas</span>
+      <span data-hero-word class="inline-block">{t('hero.phrase.left.1')}</span>
+      <span data-hero-word class="inline-block">{t('hero.phrase.left.2')}</span><br />
+      <span data-hero-word class="inline-block font-serif italic font-normal normal-case tracking-normal text-accent">{t('hero.phrase.left.3')}</span>
+      <span data-hero-word class="inline-block font-serif italic font-normal normal-case tracking-normal text-accent">{t('hero.phrase.left.4')}</span>
     </p>
     <p
       data-hero-phrase-right
       class="absolute right-6 sm:right-10 lg:right-12 xl:right-16 top-[17rem] sm:top-[24rem] lg:top-[28rem] xl:top-[31rem] max-w-[48%] text-right font-display font-black uppercase leading-[0.95] tracking-tight text-white text-2xl sm:text-4xl lg:text-6xl xl:text-7xl"
     >
-      <span data-hero-word class="inline-block">Software</span><br />
-      <span data-hero-word class="inline-block font-serif italic font-normal normal-case tracking-normal text-accent">a</span>
-      <span data-hero-word class="inline-block font-serif italic font-normal normal-case tracking-normal text-accent">medida</span>
+      <span data-hero-word class="inline-block">{t('hero.phrase.right.1')}</span><br />
+      <span data-hero-word class="inline-block font-serif italic font-normal normal-case tracking-normal text-accent">{t('hero.phrase.right.2')}</span>
+      <span data-hero-word class="inline-block font-serif italic font-normal normal-case tracking-normal text-accent">{t('hero.phrase.right.3')}</span>
     </p>
   </div>
 
@@ -43,13 +52,13 @@ import HeroObject3D from '../HeroObject3D.astro';
     class="pointer-events-none absolute left-1/2 -translate-x-1/2 z-10 bottom-[calc(4.5vw+1.75rem)] flex flex-col items-center gap-3"
     aria-hidden="true"
   >
-    <span class="font-mono text-[10px] uppercase tracking-[0.35em] text-white/50">Scroll</span>
+    <span class="font-mono text-[10px] uppercase tracking-[0.35em] text-white/50">{t('hero.scroll')}</span>
     <span class="hero-scroll-line relative block h-12 w-px overflow-hidden bg-white/15"></span>
   </div>
 
   <!-- Heading accesible para SEO y lectores de pantalla (h1 único según SPEC/AGENTS.md) -->
   <h1 id="hero-title" class="sr-only">
-    HARNESS STUDIO — Desarrollo Web, Tiendas y Software a Medida
+    {t('hero.srTitle')}
   </h1>
 </section>
 

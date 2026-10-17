@@ -1,0 +1,128 @@
+---
+/**
+ * Composición visual decorativa del Hero de cada servicio: tarjetas oscuras en
+ * capas (mismo lenguaje que el abanico de la Home), número del servicio de fondo
+ * y micro-elementos de UI/código flotando. Todo es aria-hidden.
+ */
+interface Props {
+  slug: string;
+  nombre: string;
+  number: string;
+}
+
+const { slug, nombre, number } = Astro.props;
+
+interface VisualConfig {
+  chip: string;
+  code: string[];
+}
+
+// Micro-etiquetas decorativas por servicio (con fallback para servicios nuevos).
+const visuals: Record<string, VisualConfig> = {
+  'landing-pages': { chip: 'Lighthouse 95+', code: ['<Hero />', '<CTA to="whatsapp" />'] },
+  tiendanube: { chip: 'Mobile first', code: ['.product-card {', '  color: var(--brand);', '}'] },
+  'tienda-online': { chip: 'Checkout en 1 paso', code: ['cart.checkout({', "  pago: 'mercadopago',", '})'] },
+  'software-a-medida': { chip: 'Roles y permisos', code: ['await sync(api);', "report.export('pdf');"] },
+};
+
+const visual = visuals[slug] ?? { chip: nombre, code: ['build();', 'deploy();'] };
+---
+
+<div class="service-visual relative mx-auto aspect-[4/5] w-full max-w-[420px]" aria-hidden="true">
+  <!-- Capas traseras -->
+  <div class="absolute inset-0 translate-x-6 -translate-y-4 rotate-[7deg] rounded-[2rem] border border-border-subtle bg-bg-surface/50"></div>
+  <div class="absolute inset-0 -translate-x-5 translate-y-3 -rotate-[4deg] rounded-[2rem] border border-border-subtle bg-bg-surface-hover/70"></div>
+
+  <!-- Tarjeta principal -->
+  <div class="absolute inset-0 flex flex-col justify-between overflow-hidden rounded-[2rem] border border-border-medium bg-bg-surface p-7 shadow-[var(--shadow-card)] sm:p-8">
+    <span class="pointer-events-none absolute -bottom-12 -right-4 select-none font-display text-[13rem] font-black leading-none tracking-tighter text-text-primary/[0.05]">
+      {number}
+    </span>
+
+    <!-- Barra de ventana -->
+    <div class="relative flex items-center justify-between">
+      <div class="flex gap-1.5">
+        <span class="h-2.5 w-2.5 rounded-full bg-accent"></span>
+        <span class="h-2.5 w-2.5 rounded-full bg-border-medium"></span>
+        <span class="h-2.5 w-2.5 rounded-full bg-border-medium"></span>
+      </div>
+      <span class="font-mono text-[10px] uppercase tracking-[0.2em] text-text-muted">harness://{slug}</span>
+    </div>
+
+    <!-- Contenido -->
+    <div class="relative flex flex-col gap-5">
+      <span class="font-mono text-[11px] font-bold uppercase tracking-[0.25em] text-accent">// Servicio {number}</span>
+      <p class="font-display text-3xl font-black uppercase leading-[0.95] tracking-tight text-text-primary">
+        {nombre}
+      </p>
+      <div class="flex flex-col gap-2.5">
+        <span class="h-2 w-11/12 rounded-full bg-border-medium"></span>
+        <span class="h-2 w-8/12 rounded-full bg-border-subtle"></span>
+        <span class="h-2 w-5/12 rounded-full bg-accent/70"></span>
+      </div>
+    </div>
+
+    <!-- Estado -->
+    <div class="relative flex items-center gap-3 border-t border-border-subtle pt-5">
+      <span class="font-mono text-[10px] uppercase tracking-[0.2em] text-text-muted">build</span>
+      <span class="h-1.5 flex-1 overflow-hidden rounded-full bg-border-subtle">
+        <span class="service-visual__progress block h-full w-full origin-left rounded-full bg-accent"></span>
+      </span>
+      <span class="font-mono text-[10px] font-bold uppercase tracking-[0.2em] text-accent">OK</span>
+    </div>
+  </div>
+
+  <!-- Micro-elementos flotantes -->
+  <div class="service-visual__float absolute -left-8 top-14 flex items-center gap-2 rounded-full border border-border-medium bg-bg-primary/80 px-4 py-2 shadow-[var(--shadow-hard)] backdrop-blur-md">
+    <span class="h-1.5 w-1.5 rounded-full bg-accent"></span>
+    <span class="font-mono text-[11px] font-bold uppercase tracking-[0.15em] text-text-primary">{visual.chip}</span>
+  </div>
+
+  <div class="service-visual__float service-visual__float--late absolute -right-8 bottom-24 rounded-2xl border border-border-medium bg-bg-primary/85 px-4 py-3 shadow-[var(--shadow-hard)] backdrop-blur-md">
+    <div class="font-mono text-[11px] leading-relaxed text-text-secondary">
+      {visual.code.map((line, i) => (
+        <span class="block whitespace-pre"><span class="mr-3 select-none text-text-muted">{i + 1}</span>{line}</span>
+      ))}
+    </div>
+  </div>
+</div>
+
+<style>
+  .service-visual__float {
+    animation: service-visual-float 6s ease-in-out infinite;
+  }
+
+  .service-visual__float--late {
+    animation-delay: -3s;
+  }
+
+  .service-visual__progress {
+    animation: service-visual-progress 2.4s cubic-bezier(0.22, 1, 0.36, 1) both;
+  }
+
+  @keyframes service-visual-float {
+    0%,
+    100% {
+      transform: translateY(0);
+    }
+    50% {
+      transform: translateY(-10px);
+    }
+  }
+
+  @keyframes service-visual-progress {
+    from {
+      transform: scaleX(0);
+    }
+    to {
+      transform: scaleX(1);
+    }
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    .service-visual__float,
+    .service-visual__progress {
+      animation: none;
+    }
+  }
+</style>
