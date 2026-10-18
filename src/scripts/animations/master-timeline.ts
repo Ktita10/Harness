@@ -3,6 +3,7 @@ import { initHeroAnimation } from './hero';
 import { initServicesAnimation } from './services';
 import { initProcessAnimation, cleanupProcessAnimation } from './process';
 import { initFAQAnimation } from './faq';
+import { initServiceDetailAnimation } from './service-detail';
 
 export function initMasterTimeline(): void {
   // Ensure ScrollTrigger is ready
@@ -13,6 +14,7 @@ export function initMasterTimeline(): void {
   initServicesAnimation();
   initProcessAnimation();
   initFAQAnimation();
+  initServiceDetailAnimation();
 }
 
 export function cleanupAnimations(): void {

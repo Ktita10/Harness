@@ -1,0 +1,333 @@
+---
+import { getCollection } from 'astro:content';
+import FAQCubes3D from '../FAQCubes3D.astro';
+import CTASection3D from '../CTASection3D.astro';
+import { getLangFromUrl, useTranslations } from '../../i18n/utils';
+import type { Lang } from '../../i18n/ui';
+
+interface FAQItem {
+  pregunta: string;
+  respuesta: string;
+}
+
+interface Props {
+  lang?: Lang;
+  items?: FAQItem[];
+  title?: string;
+  titleAccent?: string;
+  subtitle?: string;
+  isServicePage?: boolean;
+  ctaTitle?: string;
+  ctaMessage?: string;
+}
+
+const currentLang = Astro.props.lang || getLangFromUrl(Astro.url);
+const t = useTranslations(currentLang);
+const homePath = currentLang === 'en' ? '/en' : '/';
+
+const {
+  items,
+  title = t('faq.title'),
+  titleAccent = t('faq.titleAccent'),
+  subtitle = t('faq.subtitle'),
+  isServicePage = false,
+  ctaTitle,
+  ctaMessage = t('cta.message'),
+} = Astro.props;
+
+let faqList: FAQItem[] = [];
+if (items && items.length > 0) {
+  faqList = items;
+} else {
+  const allFaqs = currentLang === 'en' ? await getCollection('faqs_en') : await getCollection('faqs');
+  const sortedFaqs = allFaqs.sort((a, b) => (a.data.orden ?? 0) - (b.data.orden ?? 0));
+  faqList = sortedFaqs.map((f) => ({
+    pregunta: f.data.pregunta,
+    respuesta: f.data.respuesta,
+  }));
+}
+
+const waUrl = `https://wa.me/?text=${encodeURIComponent(ctaMessage)}`;
+
+const pages = [
+  { label: 'HOME', href: homePath },
+  { label: t('nav.services'), href: `${homePath}#servicios` },
+  { label: t('nav.process'), href: `${homePath}#proceso` },
+  { label: t('nav.faq'), href: `${homePath}#faq` },
+];
+
+const socials = [
+  { label: 'WHATSAPP', href: waUrl, external: true },
+  { label: 'INSTAGRAM', href: 'https://instagram.com/', external: true },
+  { label: 'LINKEDIN', href: 'https://linkedin.com/', external: true },
+  { label: 'GITHUB', href: 'https://github.com/', external: true },
+];
+---
+
+<!-- =====================================================================
+     SECCIÓN UNIFICADA FAQ + CTA (Sin línea divisoria, degradado natural continuo)
+     El fondo nace en Crema (#F2EEE6) en FAQ y desciende a un Naranja Intenso (#C22E00)
+     ===================================================================== -->
+<section
+  id="faq"
+  data-faq-cta-unified
+  data-nav-light
+  aria-labelledby="faq-title"
+  class:list={[
+    'faq-cta-unified relative z-20 w-full text-[#0D0D0D] rounded-none shadow-[0_-35px_80px_-15px_rgba(0,0,0,0.55)] border-t border-black/10 overflow-hidden select-none',
+    !isServicePage && 'lg:-mt-[100vh]',
+    isServicePage && 'service-curtain lg:-mt-[100vh]',
+  ]}
+>
+  <!-- PARTE 1: FAQ (Preguntas Frecuentes / del Servicio) -->
+  <div id="faq-preguntas" class="relative z-10 w-full overflow-hidden">
+    <!-- 5 Cubos 3D dispersos en los flancos laterales ÚNICAMENTE dentro del área de preguntas -->
+    <FAQCubes3D sectionSelector="#faq-preguntas" />
+
+    <div class="relative z-10 max-w-3xl mx-auto flex flex-col items-center pt-16 sm:pt-24 pb-8 sm:pb-12 px-6 sm:px-12 lg:px-20">
+      <!-- Encabezado con palabras emparejadas en ambos extremos -->
+      <div data-faq-header class="w-full flex flex-col items-center text-center mb-10 sm:mb-14">
+        <h2
+          id="faq-title"
+          data-heading-pair
+          class="inline-flex flex-col items-start text-left text-4xl sm:text-5xl lg:text-6xl font-black uppercase text-[#0D0D0D] leading-[0.88] tracking-tight mb-5 sm:mb-6"
+        >
+          <span data-heading-top class="font-display font-black uppercase block whitespace-nowrap leading-[0.88]">
+            {title}
+          </span>
+          <span data-heading-bottom class="font-serif italic font-normal text-[#FF5A00] tracking-normal block whitespace-nowrap leading-[0.88] pr-[0.04em] mt-1">
+            {titleAccent}
+          </span>
+        </h2>
+        <p class="text-base sm:text-lg text-neutral-700 leading-relaxed max-w-xl font-medium">
+          {subtitle}
+        </p>
+      </div>
+
+      <!-- Acordeón centrado en una sola columna -->
+      <div data-faq-list class="w-full border-t border-black/12">
+        {
+          faqList.map((faq, index) => (
+            <details
+              data-faq-item
+              name="faq"
+              open={index === 0}
+              class="group border-b border-black/12"
+            >
+              <summary class="flex justify-between items-center gap-6 py-5 sm:py-7 cursor-pointer list-none select-none font-display font-bold text-lg sm:text-xl text-[#0D0D0D] hover:text-[#FF5A00] transition-colors">
+                <span>{faq.pregunta}</span>
+                <span
+                  aria-hidden="true"
+                  class="inline-flex items-center justify-center w-9 h-9 rounded-full border border-black/20 bg-[#F2EEE6] text-[#0D0D0D] font-bold text-xl shrink-0 shadow-sm group-hover:border-[#FF5A00] group-hover:text-[#FF5A00] group-open:rotate-45 group-open:bg-[#FF5A00] group-open:text-[#0D0D0D] group-open:border-[#FF5A00] transition-all duration-200"
+                >
+                  +
+                </span>
+              </summary>
+              <div class="pb-7 pr-12 text-neutral-700 text-base sm:text-lg leading-relaxed font-medium">
+                <p>{faq.respuesta}</p>
+              </div>
+            </details>
+          ))
+        }
+      </div>
+    </div>
+  </div>
+
+  <!-- PARTE 2: CTA (Unificado directamente sin corte ni líneas divisorias) -->
+  <div
+    id="contacto"
+    aria-labelledby="cta-title"
+    class="relative z-10 w-full pt-8 sm:pt-12 lg:pt-16 pb-14 sm:pb-20 lg:pb-24"
+  >
+    <!-- Halo radial cálido difuso que acompaña la zona de transición hacia el cubo -->
+    <div
+      class="pointer-events-none absolute inset-x-0 bottom-0 top-0 z-0 bg-[radial-gradient(70%_58%_at_50%_60%,rgba(255,90,0,0.36)_0%,rgba(195,45,0,0.22)_58%,transparent_100%)] [mask-image:linear-gradient(to_bottom,transparent_0%,black_35%)] [-webkit-mask-image:linear-gradient(to_bottom,transparent_0%,black_35%)]"
+      aria-hidden="true"
+    ></div>
+
+    <!-- Contenedor principal al 90% de ancho de la sección -->
+    <div
+      class="cta-card relative z-10 w-[90%] mx-auto bg-accent text-[#0D0D0D] rounded-3xl sm:rounded-[2.5rem] lg:rounded-[3rem] p-6 sm:p-10 lg:p-14 shadow-[0_38px_95px_-12px_rgba(70,10,0,0.58)] border border-black/15 overflow-hidden flex flex-col justify-between"
+    >
+      <!-- Luz radial de fondo para despegar el cubo negro del naranja -->
+      <div
+        class="absolute inset-0 pointer-events-none z-0 bg-[radial-gradient(circle_at_50%_52%,rgba(242,238,230,0.22)_0%,transparent_60%)]"
+        aria-hidden="true"
+      ></div>
+
+      <!-- Curvas de nivel topográficas sutiles -->
+      <div class="absolute inset-0 pointer-events-none select-none opacity-15 z-0" aria-hidden="true">
+        <svg class="w-full h-full" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1200 800" preserveAspectRatio="none">
+          <path d="M-100,200 C300,100 500,450 900,300 C1200,180 1400,350 1600,250" fill="none" stroke="#000000" stroke-width="1.2" />
+          <path d="M-100,360 C340,260 460,560 860,460 C1160,340 1360,500 1600,420" fill="none" stroke="#000000" stroke-width="1.2" />
+          <path d="M-100,520 C380,420 420,680 820,620 C1120,500 1320,660 1600,580" fill="none" stroke="#000000" stroke-width="1.2" />
+          <path d="M-100,680 C420,580 380,800 780,780 C1080,660 1280,820 1600,740" fill="none" stroke="#000000" stroke-width="1.2" />
+        </svg>
+      </div>
+
+      <!-- Parte Superior: Frase o Titular -->
+      <div class="relative z-[1] w-full flex flex-col items-center pt-2 sm:pt-4">
+        {
+          ctaTitle ? (
+            <h2
+              id="cta-title"
+              class="font-display text-3xl sm:text-5xl md:text-6xl lg:text-[4.2rem] xl:text-[4.75rem] font-black uppercase text-[#0D0D0D] text-center tracking-tight leading-[0.92] max-w-5xl mx-auto"
+            >
+              {ctaTitle}
+            </h2>
+          ) : (
+            <h2
+              id="cta-title"
+              class="font-display text-[2.2rem] sm:text-6xl md:text-7xl lg:text-[5.25rem] xl:text-[6rem] font-black uppercase text-[#0D0D0D] text-center tracking-[-0.03em] leading-[0.88] max-w-6xl mx-auto"
+            >
+              <span class="block">
+                {t('cta.title.default1')}{' '}
+                <span class="font-serif italic font-normal text-[#F2EEE6] tracking-normal drop-shadow-[0_2px_12px_rgba(0,0,0,0.12)]">
+                  {t('cta.title.accent')}
+                </span>
+              </span>
+              <span class="block mt-1 sm:mt-0">
+                {t('cta.title.default2')}
+              </span>
+            </h2>
+          )
+        }
+      </div>
+
+      <!-- Enlaces y CTA: Navegación izquierda, Botón central, Redes derecha -->
+      <footer
+        role="contentinfo"
+        class="cta-footer relative z-[10] w-full pt-10 sm:pt-14 lg:pt-0 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-[1fr_auto_1fr] gap-8 lg:gap-6 items-end"
+      >
+        <!-- Columna Izquierda: NAVEGACIÓN -->
+        <div class="flex flex-col items-center sm:items-start text-center sm:text-left order-2 sm:order-1 lg:order-1">
+          <span class="text-[11px] sm:text-xs font-mono uppercase tracking-[0.22em] text-black/60 font-bold mb-3 sm:mb-4 block">
+            {t('cta.nav')}
+          </span>
+          <nav aria-label="Navegación secundaria CTA" class="flex flex-col gap-2 sm:gap-2.5 lg:gap-3 items-center sm:items-start">
+            {
+              pages.map((item) => (
+                <a
+                  href={item.href}
+                  class="group inline-flex items-center justify-center sm:justify-start gap-2 font-display text-2xl sm:text-3xl md:text-4xl lg:text-5xl font-black uppercase tracking-tight leading-none text-[#0D0D0D] hover:text-[#F2EEE6] hover:translate-x-1 transition-all duration-200"
+                >
+                  <span>{item.label}</span>
+                </a>
+              ))
+            }
+          </nav>
+        </div>
+
+        <!-- Columna Central: Botón CTA WhatsApp Trigger -->
+        <div class="sm:col-span-2 lg:col-span-1 flex flex-col items-center text-center order-1 sm:order-3 lg:order-2 lg:translate-y-6 xl:translate-y-8">
+          <a
+            data-cta-trigger
+            href={waUrl}
+            target="_blank"
+            rel="noopener noreferrer"
+            class="group relative inline-flex items-center gap-4 bg-[#0D0D0D] text-[#F2EEE6] pl-7 sm:pl-9 pr-3 sm:pr-4 py-3 sm:py-3.5 rounded-full border border-[#F2EEE6]/15 hover:bg-[#F2EEE6] hover:text-[#0D0D0D] hover:scale-[1.03] active:scale-95 transition-all duration-300 shadow-[0_20px_50px_rgba(0,0,0,0.45)] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-black cursor-pointer select-none whitespace-nowrap"
+          >
+            <span class="font-display font-black text-xs sm:text-sm md:text-base tracking-[0.08em] uppercase">
+              {t('cta.btn')}
+            </span>
+            <span
+              class="w-9 h-9 sm:w-11 sm:h-11 rounded-full bg-accent text-[#0D0D0D] group-hover:bg-[#0D0D0D] group-hover:text-[#F2EEE6] font-black flex items-center justify-center text-base sm:text-lg transition-all duration-300 group-hover:rotate-[-45deg]"
+              aria-hidden="true"
+            >
+              ➔
+            </span>
+          </a>
+        </div>
+
+        <!-- Columna Derecha: REDES -->
+        <div class="flex flex-col items-center sm:items-end text-center sm:text-right order-3 sm:order-2 lg:order-3">
+          <span class="text-[11px] sm:text-xs font-mono uppercase tracking-[0.22em] text-black/60 font-bold mb-3 sm:mb-4 block">
+            {t('cta.socials')}
+          </span>
+          <div class="flex flex-col gap-2 sm:gap-2.5 lg:gap-3 items-center sm:items-end">
+            {
+              socials.map((item) => (
+                <a
+                  href={item.href}
+                  target={item.external ? '_blank' : undefined}
+                  rel={item.external ? 'noopener noreferrer' : undefined}
+                  class="group inline-flex items-center justify-center sm:justify-end gap-2 font-display text-2xl sm:text-3xl md:text-4xl lg:text-5xl font-black uppercase tracking-tight leading-none text-[#0D0D0D] hover:text-[#F2EEE6] hover:-translate-x-1 transition-all duration-200"
+                >
+                  <span>{item.label}</span>
+                  <span class="text-[0.65em] opacity-60 group-hover:opacity-100 transition-transform duration-200 group-hover:translate-x-0.5 group-hover:-translate-y-0.5">↗</span>
+                </a>
+              ))
+            }
+          </div>
+        </div>
+      </footer>
+
+      <!-- Objeto 3D interactivo: cubo negro que se sella en el centro -->
+      <div class="cta-3d-wrapper relative w-full flex items-center justify-center mt-6 lg:mt-0">
+        <CTASection3D sectionSelector="#contacto" triggerSelector="[data-cta-trigger]" />
+      </div>
+    </div>
+  </div>
+</section>
+
+<style>
+  /* Degradado continuo y natural: nace en Crema (#F2EEE6) en FAQ, empieza a difuminar
+     temprano y culmina en un naranja volcánico profundo (#C22E00) al final, diferenciándose
+     claramente del naranja brillante (#FF5A00) del contenedor central. */
+  .faq-cta-unified {
+    background-color: #F2EEE6;
+    background-image: linear-gradient(
+      180deg,
+      #F2EEE6 0%,
+      #F2EEE6 22%,
+      #F5E8DC 34%,
+      #F8D3B7 44%,
+      #FAC094 54%,
+      #FEA96E 64%,
+      #FF8E44 74%,
+      #FA6F18 84%,
+      #EB5200 92%,
+      #C22E00 100%
+    );
+  }
+
+  /* Altura y layout del card */
+  .cta-card {
+    --cta-3d-top: 22%;
+    --cta-3d-height: 56%;
+    --cta-3d-width: min(100%, 600px);
+  }
+
+  @media (min-width: 1024px) {
+    .cta-card {
+      min-height: 880px;
+      padding-bottom: 3.5rem;
+    }
+    .cta-3d-wrapper {
+      position: static;
+      margin-top: 0;
+    }
+  }
+
+  @media (max-width: 1023px) {
+    .cta-3d-wrapper {
+      height: 380px;
+      margin-top: 1.5rem;
+    }
+    :global(.cta-3d) {
+      position: relative !important;
+      left: auto !important;
+      top: auto !important;
+      transform: none !important;
+      width: 100% !important;
+      height: 100% !important;
+    }
+  }
+
+  @media (max-width: 639px) {
+    .cta-3d-wrapper {
+      height: 320px;
+      margin-top: 1rem;
+    }
+  }
+</style>

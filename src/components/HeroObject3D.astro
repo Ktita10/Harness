@@ -27,10 +27,11 @@ interface Props {
   heroSelector?: string;
   /** PNG con transparencia del objeto, para dispositivos sin WebGL. Opcional. */
   fallbackSrc?: string;
+  showGlow?: boolean;
   class?: string;
 }
 
-const { heroSelector = '#hero', fallbackSrc, class: className = '' } = Astro.props;
+const { heroSelector = '#hero', fallbackSrc, showGlow = false, class: className = '' } = Astro.props;
 ---
 
 <div
@@ -39,7 +40,7 @@ const { heroSelector = '#hero', fallbackSrc, class: className = '' } = Astro.pro
   data-hero-selector={heroSelector}
   aria-hidden="true"
 >
-  <div class="hero-3d__glow"></div>
+  {showGlow && <div class="hero-3d__glow"></div>}
   <canvas class="hero-3d__canvas"></canvas>
   {
     fallbackSrc && (
@@ -57,7 +58,7 @@ const { heroSelector = '#hero', fallbackSrc, class: className = '' } = Astro.pro
 <style>
   .hero-3d {
     position: absolute;
-    z-index: 0;
+    z-index: 10;
     left: 50%;
     top: var(--hero-3d-top, 0px);
     width: var(--hero-3d-width, 100%);
@@ -400,6 +401,7 @@ const { heroSelector = '#hero', fallbackSrc, class: className = '' } = Astro.pro
 
   let disposeFn: (() => void) | null = null;
   let scrollTl: gsap.core.Timeline | null = null;
+  let mm: gsap.MatchMedia | null = null;
 
   if (root) {
     // El pin se crea de forma síncrona (antes de cargar three) para que
@@ -408,6 +410,7 @@ const { heroSelector = '#hero', fallbackSrc, class: className = '' } = Astro.pro
     boot(root).catch(() => {
       killScroll();
       root.setAttribute('data-fallback', '');
+      window.dispatchEvent(new CustomEvent('hero-3d-ready'));
     });
   }
 
@@ -424,6 +427,8 @@ const { heroSelector = '#hero', fallbackSrc, class: className = '' } = Astro.pro
     scrollTl?.scrollTrigger?.kill();
     scrollTl?.kill();
     scrollTl = null;
+    mm?.revert();
+    mm = null;
   }
 
   function setupScroll(root: HTMLElement) {
@@ -431,41 +436,77 @@ const { heroSelector = '#hero', fallbackSrc, class: className = '' } = Astro.pro
     const heroEl = document.querySelector<HTMLElement>(root.dataset.heroSelector || '#hero');
     if (!heroEl) return;
 
-    scrollTl = gsap.timeline({
-      scrollTrigger: {
-        trigger: heroEl,
-        start: 'top top',
-        end: CONFIG.scrollLength,
-        scrub: 1,
-        pin: true,
-        anticipatePin: 1,
-        invalidateOnRefresh: true,
-        refreshPriority: 10, // el pin del hero se calcula primero
-      },
+    mm = gsap.matchMedia();
+
+    // Desktop (>= 1024px): Pin completo con ventana de cortina (+100vh) para que ServicesProcess suba como cortina
+    mm.add('(min-width: 1024px)', () => {
+      scrollTl = gsap.timeline({
+        scrollTrigger: {
+          trigger: heroEl,
+          start: 'top top',
+          end: '+=280%',
+          scrub: 1,
+          pin: true,
+          anticipatePin: 1,
+          invalidateOnRefresh: true,
+          refreshPriority: 10,
+        },
+      });
+
+      scrollTl
+        // 1) Los bloques encajan y el cubo da su vuelta
+        .to(
+          state,
+          {
+            assemble: 1,
+            spin: CONFIG.spinTurns,
+            scale: CONFIG.scaleAssembled,
+            duration: 0.95,
+            ease: 'power1.inOut',
+          },
+          0,
+        )
+        // 2) Listón se tensa y abraza el cubo
+        .to(state, { strap: 1, duration: 0.75, ease: 'power2.inOut' }, 0.7)
+        // 3) Destello de bloqueo
+        .to(state, { lock: 1, duration: 0.08, ease: 'power2.out' }, 1.45)
+        .to(state, { lock: 0, duration: 0.2, ease: 'power2.in' }, 1.53)
+        // 4) El cubo queda completamente armado durante el resto del scroll mientras la cortina asciende
+        .set({}, {}, 2.8);
     });
 
-    scrollTl
-      // 1) Los bloques encajan y el cubo da su vuelta
-      .to(
-        state,
-        {
-          assemble: 1,
-          spin: CONFIG.spinTurns,
-          scale: CONFIG.scaleAssembled,
-          duration: 0.75,
-          ease: 'power1.inOut',
+    // Mobile / Tablet (< 1024px): Pin estándar de armado
+    mm.add('(max-width: 1023px)', () => {
+      scrollTl = gsap.timeline({
+        scrollTrigger: {
+          trigger: heroEl,
+          start: 'top top',
+          end: '+=190%',
+          scrub: 1,
+          pin: true,
+          anticipatePin: 1,
+          invalidateOnRefresh: true,
+          refreshPriority: 10,
         },
-        0,
-      )
-      // 2) Con el cubo ya armado, el listón se tensa: la ola de cierre parte de la
-      //    hebilla y recorre la cinta hasta pegarla al cuerpo del cubo.
-      //    (Empieza tarde a propósito: así ningún bloque cruza la cinta al encajar.)
-      .to(state, { strap: 1, duration: 0.65, ease: 'power2.inOut' }, 0.55)
-      // 3) Destello de "bloqueo" cuando el listón queda ceñido
-      .to(state, { lock: 1, duration: 0.06, ease: 'power2.out' }, 1.12)
-      .to(state, { lock: 0, duration: 0.18, ease: 'power2.in' }, 1.18)
-      // 4) Tramo final: el cubo atrapado queda en pantalla
-      .set({}, {}, 1.5);
+      });
+
+      scrollTl
+        .to(
+          state,
+          {
+            assemble: 1,
+            spin: CONFIG.spinTurns,
+            scale: CONFIG.scaleAssembled,
+            duration: 0.75,
+            ease: 'power1.inOut',
+          },
+          0,
+        )
+        .to(state, { strap: 1, duration: 0.65, ease: 'power2.inOut' }, 0.55)
+        .to(state, { lock: 1, duration: 0.06, ease: 'power2.out' }, 1.12)
+        .to(state, { lock: 0, duration: 0.18, ease: 'power2.in' }, 1.18)
+        .set({}, {}, 1.5);
+    });
 
     ScrollTrigger.sort();
     ScrollTrigger.refresh();
@@ -481,6 +522,10 @@ const { heroSelector = '#hero', fallbackSrc, class: className = '' } = Astro.pro
   }
 
   function whenIdle(): Promise<void> {
+    // Si el preloader de la home está activo, priorizamos la carga inmediata del hero
+    if (document.getElementById('harness-preloader') || document.getElementById('home-preloader')) {
+      return Promise.resolve();
+    }
     return new Promise((resolve) => {
       const w = window as any;
       if (w.requestIdleCallback) w.requestIdleCallback(() => resolve(), { timeout: 600 });
@@ -505,6 +550,7 @@ const { heroSelector = '#hero', fallbackSrc, class: className = '' } = Astro.pro
 
     if (!hasWebGL()) {
       root.setAttribute('data-fallback', '');
+      window.dispatchEvent(new CustomEvent('hero-3d-ready'));
       return;
     }
 
@@ -955,6 +1001,7 @@ const { heroSelector = '#hero', fallbackSrc, class: className = '' } = Astro.pro
       if (firstFrame) {
         firstFrame = false;
         gsap.to(canvas, { opacity: 1, duration: 1.2, ease: 'power2.out' });
+        window.dispatchEvent(new CustomEvent('hero-3d-ready'));
       }
     };
 
@@ -977,6 +1024,7 @@ const { heroSelector = '#hero', fallbackSrc, class: className = '' } = Astro.pro
       // Cubo armado y atrapado, estático: un solo frame
       canvas.style.opacity = '1';
       render();
+      window.dispatchEvent(new CustomEvent('hero-3d-ready'));
     } else {
       gsap.ticker.add(tick);
 

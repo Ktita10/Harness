@@ -42,15 +42,15 @@ const socials = [
   aria-labelledby="cta-title"
   class="cta-atmosphere relative w-full max-w-full overflow-hidden select-none pt-16 sm:pt-24 lg:pt-28 pb-12 sm:pb-16 lg:pb-20"
 >
-  <!-- Halo radial de alta intensidad que envuelve con fuerza los bordes de la tarjeta -->
+  <!-- Halo radial cálido que acompaña la transición sin cortar el borde superior -->
   <div
-    class="pointer-events-none absolute inset-x-0 bottom-0 top-0 z-0 bg-[radial-gradient(65%_55%_at_50%_60%,rgba(255,90,0,0.45)_0%,rgba(255,110,25,0.22)_55%,transparent_100%)] [mask-image:linear-gradient(to_bottom,transparent_0%,black_45%)] [-webkit-mask-image:linear-gradient(to_bottom,transparent_0%,black_45%)]"
+    class="pointer-events-none absolute inset-x-0 bottom-0 top-0 z-0 bg-[radial-gradient(70%_58%_at_50%_58%,rgba(255,90,0,0.38)_0%,rgba(215,55,0,0.22)_58%,transparent_100%)] [mask-image:linear-gradient(to_bottom,transparent_0%,black_40%)] [-webkit-mask-image:linear-gradient(to_bottom,transparent_0%,black_40%)]"
     aria-hidden="true"
   ></div>
 
   <!-- Contenedor principal al 90% de ancho de la sección -->
   <div
-    class="cta-card relative z-10 w-[90%] mx-auto bg-accent text-[#0D0D0D] rounded-3xl sm:rounded-[2.5rem] lg:rounded-[3rem] p-6 sm:p-10 lg:p-14 shadow-[0_30px_80px_-15px_rgba(255,90,0,0.38)] border border-black/10 overflow-hidden flex flex-col justify-between"
+    class="cta-card relative z-10 w-[90%] mx-auto bg-accent text-[#0D0D0D] rounded-3xl sm:rounded-[2.5rem] lg:rounded-[3rem] p-6 sm:p-10 lg:p-14 shadow-[0_35px_90px_-12px_rgba(85,15,0,0.52)] border border-black/15 overflow-hidden flex flex-col justify-between"
   >
     <!-- Luz radial de fondo para despegar el cubo negro del naranja -->
     <div
@@ -214,25 +214,23 @@ const socials = [
     }
   }
 
-  /* Gradiente atmosférico de alta intensidad:
-     Nace limpio con el color de FAQ arriba y profundiza en tonos ámbar/naranja rico hacia abajo */
+  /* Transición continua que nace en #FAD3B2 (idéntico al borde inferior de #faq)
+     y desciende hasta un naranja volcánico intenso (#C83200) al final, diferenciándose
+     con claridad del contenedor central (#FF5A00). */
   .cta-atmosphere {
-    background-color: var(--bg-secondary);
+    background-color: #FAD3B2;
     background-image:
-      /* Velo superior: los primeros píxeles son idénticos al fondo de FAQ */
-      linear-gradient(180deg, var(--bg-secondary) 0%, rgba(248, 249, 250, 0) 28%),
-      radial-gradient(45% 45% at 8% 55%, rgba(255, 107, 30, 0.38) 0%, rgba(255, 107, 30, 0) 100%),
-      radial-gradient(45% 45% at 92% 55%, rgba(255, 107, 30, 0.38) 0%, rgba(255, 107, 30, 0) 100%),
       linear-gradient(
         180deg,
-        var(--bg-secondary) 0%,
-        #fbeee3 10%,
-        #f9ddc7 22%,
-        #fccaa6 36%,
-        #fdb685 52%,
-        #ff9f61 70%,
-        #ff8d45 85%,
-        #ff8236 100%
+        #FAD3B2 0%,
+        #FCC396 11%,
+        #FDB076 23%,
+        #FF9B54 36%,
+        #FF8330 50%,
+        #FA6B10 64%,
+        #EA5200 77%,
+        #DA3F00 89%,
+        #C83200 100%
       );
   }
 

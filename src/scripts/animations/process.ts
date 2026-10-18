@@ -61,6 +61,7 @@ export function initProcessAnimation(): gsap.core.Timeline | null {
   if (!section) return null;
 
   const track = section.querySelector<HTMLElement>('[data-process-track]');
+  if (!track) return null;
   const mm = gsap.matchMedia();
 
   // Desktop (>= 1024px): un único pin. Se extiende un viewport extra (ventana de

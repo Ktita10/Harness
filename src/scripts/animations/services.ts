@@ -7,6 +7,28 @@ export function initServicesAnimation(): gsap.core.Timeline | null {
   const section = document.getElementById('servicios');
   if (!section) return null;
 
+  // 1. Cortina: #hero queda fijo y ServicesProcess ([data-topo-unified-wrapper]) sube por encima
+  // Oscurecimiento progresivo del hero cubierto (data-hero-curtain-overlay)
+  const heroSection = document.getElementById('hero');
+  const overlay = heroSection?.querySelector<HTMLElement>('[data-hero-curtain-overlay]');
+  const curtain = document.querySelector<HTMLElement>('[data-topo-unified-wrapper]');
+
+  if (overlay && curtain && !window.matchMedia('(prefers-reduced-motion: reduce)').matches) {
+    const mm = gsap.matchMedia();
+    mm.add('(min-width: 1024px)', () => {
+      gsap.to(overlay, {
+        opacity: 0.65,
+        ease: 'none',
+        scrollTrigger: {
+          trigger: curtain,
+          start: 'top bottom',
+          end: 'top top',
+          scrub: true,
+        },
+      });
+    });
+  }
+
   const header = section.querySelector('[data-services-header]');
   const cardsDown = section.querySelectorAll('[data-parallax-dir="down"]');
   const cardsUp = section.querySelectorAll('[data-parallax-dir="up"]');

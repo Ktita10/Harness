@@ -14,7 +14,7 @@ interface Props {
   class?: string;
 }
 
-const { sectionSelector = '#faq', class: className = '' } = Astro.props;
+const { sectionSelector = '#faq-preguntas', class: className = '' } = Astro.props;
 ---
 
 <div
@@ -128,11 +128,15 @@ const { sectionSelector = '#faq', class: className = '' } = Astro.props;
     },
   ];
 
-  async function initFAQCubes() {
-    const root = document.querySelector<HTMLElement>('[data-faq-3d]');
-    if (!root || !hasWebGL()) return;
+  async function setupSingleFAQCubes(root: HTMLElement) {
+    if ((root as any).__faqCubesInit || !hasWebGL()) return;
+    (root as any).__faqCubesInit = true;
 
-    const sectionElement = document.querySelector<HTMLElement>(root.dataset.sectionSelector || '#faq');
+    const selector = root.dataset.sectionSelector;
+    const sectionElement =
+      (selector ? document.querySelector<HTMLElement>(selector) : null) ||
+      root.closest<HTMLElement>('section') ||
+      root.parentElement;
     const canvas = root.querySelector<HTMLCanvasElement>('.faq-3d__canvas');
     if (!sectionElement || !canvas) return;
 
@@ -286,6 +290,12 @@ const { sectionSelector = '#faq', class: className = '' } = Astro.props;
     resize();
     window.addEventListener('resize', resize, { passive: true });
 
+    let resizeObserver: ResizeObserver | null = null;
+    if (typeof ResizeObserver !== 'undefined') {
+      resizeObserver = new ResizeObserver(() => resize());
+      resizeObserver.observe(sec);
+    }
+
     // Animación y visibilidad
     let isVisible = false;
     let animId = 0;
@@ -357,6 +367,7 @@ const { sectionSelector = '#faq', class: className = '' } = Astro.props;
       () => {
         cancelAnimationFrame(animId);
         observer.disconnect();
+        if (resizeObserver) resizeObserver.disconnect();
         window.removeEventListener('resize', resize);
         pmrem.dispose();
         envRT.dispose();
@@ -364,6 +375,13 @@ const { sectionSelector = '#faq', class: className = '' } = Astro.props;
       },
       { once: true }
     );
+  }
+
+  function initFAQCubes() {
+    const roots = document.querySelectorAll<HTMLElement>('[data-faq-3d]');
+    roots.forEach((root) => {
+      setupSingleFAQCubes(root);
+    });
   }
 
   // Inicializar al cargar el DOM o en cambios de página

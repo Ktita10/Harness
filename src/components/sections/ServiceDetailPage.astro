@@ -1,0 +1,393 @@
+---
+import type { CollectionEntry } from 'astro:content';
+import TopoBackground from '../ui/TopoBackground.astro';
+import FAQCTASection from './FAQCTASection.astro';
+import { useTranslations } from '../../i18n/utils';
+import type { Lang } from '../../i18n/ui';
+
+interface Props {
+  entry: CollectionEntry<'services'> | CollectionEntry<'services_en'>;
+  lang?: Lang;
+}
+
+const { entry, lang = 'es' } = Astro.props;
+const { data } = entry;
+const isEn = lang === 'en';
+const t = useTranslations(lang);
+
+// Dividimos el H1 en dos líneas equilibradas: arriba tipografía gruesa, abajo tipografía fina naranja
+const h1Words = data.h1.trim().split(/\s+/);
+const splitIndex = Math.ceil(h1Words.length / 2);
+const h1Lead = h1Words.slice(0, splitIndex).join(' ');
+const h1Accent = h1Words.slice(splitIndex).join(' ');
+
+const waHeroUrl = `https://wa.me/?text=${encodeURIComponent(data.whatsappMensaje)}`;
+const planWaUrl = (planName: string) =>
+  `https://wa.me/?text=${encodeURIComponent(
+    isEn
+      ? `Hello, I am interested in the "${planName}" modality for ${data.nombre}. Can we coordinate?`
+      : `Hola, me interesa la modalidad "${planName}" para el servicio de ${data.nombre}. ¿Podemos coordinar?`
+  )}`;
+
+const backHref = isEn ? '/en#servicios' : '/#servicios';
+const backLabel = isEn ? '← SERVICES' : '← SERVICIOS';
+
+const faqItems = (data.faqs || []).map((f) => ({
+  pregunta: f.pregunta,
+  respuesta: f.respuesta,
+}));
+
+// Desfase asimétrico en eje X y eje Y para los 4 pilares de "Qué incluye" (sin contenedores)
+const scopeOffsets = [
+  {
+    offsetClass: 'md:ml-0 md:mr-auto',
+    parallaxDir: 'up',
+  },
+  {
+    offsetClass: 'md:ml-10 lg:ml-20 md:mt-20 lg:mt-28',
+    parallaxDir: 'down',
+  },
+  {
+    offsetClass: 'md:ml-12 lg:ml-24',
+    parallaxDir: 'up',
+  },
+  {
+    offsetClass: 'md:ml-0 md:mr-auto md:mt-20 lg:mt-28',
+    parallaxDir: 'down',
+  },
+];
+
+// Configuración visual del abanico de 3 cartas idéntica a ServicesProcess.astro (Home)
+const planDeckConfigs = [
+  {
+    wrapperPos: 'lg:z-[10]',
+    fanClass: 'lg:-rotate-[8deg] lg:translate-y-6 lg:translate-x-5',
+    cardBg: 'bg-[#121214] text-[#F2EEE6]',
+    numColor: 'text-[#FF5A00]',
+    tagBg: 'bg-white/10 text-zinc-300',
+    listColor: 'text-zinc-300',
+    bulletColor: 'text-[#FF5A00]',
+    btnClass: 'bg-[#FF5A00] text-[#0A0A0A] group-hover:bg-[#F2EEE6]',
+    patternStroke: '#FFFFFF',
+  },
+  {
+    wrapperPos: 'lg:-ml-8 xl:-ml-10 lg:z-[20]',
+    fanClass: 'lg:rotate-0 lg:-translate-y-2',
+    cardBg: 'bg-[#FF5A00] text-[#0A0A0A]',
+    numColor: 'text-[#0A0A0A]',
+    tagBg: 'bg-black/15 text-[#0A0A0A]',
+    listColor: 'text-black/85 font-medium',
+    bulletColor: 'text-[#0A0A0A]',
+    btnClass: 'bg-[#0A0A0A] text-[#F2EEE6] group-hover:bg-[#F2EEE6] group-hover:text-[#0A0A0A]',
+    patternStroke: '#000000',
+  },
+  {
+    wrapperPos: 'lg:-ml-8 xl:-ml-10 lg:z-[30]',
+    fanClass: 'lg:rotate-[8deg] lg:translate-y-6 lg:-translate-x-5',
+    cardBg: 'bg-[#F2EEE6] text-[#0A0A0A]',
+    numColor: 'text-[#FF5A00]',
+    tagBg: 'bg-black/10 text-zinc-800',
+    listColor: 'text-zinc-700 font-medium',
+    bulletColor: 'text-[#FF5A00]',
+    btnClass: 'bg-[#0A0A0A] text-[#F2EEE6] group-hover:bg-[#FF5A00] group-hover:text-[#0A0A0A]',
+    patternStroke: '#000000',
+  },
+];
+---
+
+<div data-service-page class="relative w-full max-w-full bg-[#0A0A0A]">
+  <!-- =====================================================================
+       ACTO I: INMERSIÓN (Hero Editorial + Alcance con Parallax + Abanico de Cartas)
+       Fondo Obsidiana (#0A0A0A) con un único TopoBackground sticky continuo
+       ===================================================================== -->
+  <div
+    data-service-act-one
+    class="relative w-full max-w-full bg-[#0A0A0A] text-[#F2EEE6] z-10 pb-0"
+  >
+    <TopoBackground sticky={true} density={4.8} initialTheme={0} />
+
+    <!-- 1. HERO EDITORIAL (Emparejado en ambos extremos) -->
+    <section
+      aria-labelledby="service-hero-title"
+      class="relative z-10 pt-28 sm:pt-36 lg:pt-44 pb-16 sm:pb-24 lg:pb-32 px-6 sm:px-10 lg:px-12 xl:px-16"
+    >
+      <div class="max-w-7xl mx-auto">
+        <!-- Navegación superior mínima -->
+        <div class="mb-8 sm:mb-12 flex justify-center lg:justify-start" data-service-hero-reveal>
+          <a
+            href={backHref}
+            class="inline-flex items-center gap-2 font-mono text-xs sm:text-sm uppercase tracking-[0.2em] text-[#A1A1AA] hover:text-[#FF5A00] transition-colors duration-200"
+          >
+            {backLabel}
+          </a>
+        </div>
+
+        <!-- H1 con Tipografía gruesa arriba y fina abajo emparejadas en ambos extremos -->
+        <div class="flex flex-col items-center lg:items-start">
+          <h1
+            id="service-hero-title"
+            data-service-hero-reveal
+            data-heading-pair
+            class="inline-flex flex-col items-start text-left text-4xl sm:text-6xl lg:text-7xl xl:text-[5.25rem] font-black uppercase leading-[0.88] tracking-[-0.03em] text-white will-change-transform"
+          >
+            <span data-heading-top class="font-display font-black uppercase block whitespace-nowrap leading-[0.88]">
+              {h1Lead}
+            </span>
+            <span data-heading-bottom class="font-serif font-normal italic tracking-normal text-[#FF5A00] block whitespace-nowrap leading-[0.88] pr-[0.04em] mt-1">
+              {h1Accent}
+            </span>
+          </h1>
+        </div>
+
+        <!-- Grilla inferior: Bajada comercial + Acción principal -->
+        <div
+          data-service-hero-reveal
+          class="mt-10 sm:mt-16 pt-8 sm:pt-10 border-t border-white/10 grid grid-cols-1 lg:grid-cols-12 gap-8 lg:gap-12 items-end will-change-transform"
+        >
+          <p class="lg:col-span-7 text-lg sm:text-xl lg:text-2xl text-[#A1A1AA] font-normal leading-relaxed max-w-2xl">
+            {data.bajada}
+          </p>
+
+          <div class="lg:col-span-5 flex flex-wrap items-center lg:justify-end gap-6 sm:gap-8">
+            <a
+              href={waHeroUrl}
+              target="_blank"
+              rel="noopener noreferrer"
+              class="inline-flex items-center justify-center gap-3 bg-[#FF5A00] text-[#0D0D0D] hover:bg-[#F2EEE6] hover:text-[#0D0D0D] font-display font-black text-xs sm:text-sm uppercase tracking-[0.1em] px-7 sm:px-8 py-4 rounded-full transition-colors duration-300 cursor-pointer"
+            >
+              <span>{t('service.consultWhatsApp')}</span>
+              <span aria-hidden="true" class="text-base leading-none">➔</span>
+            </a>
+
+            <a
+              href="#precios"
+              class="font-mono text-xs sm:text-sm uppercase tracking-[0.18em] text-[#F2EEE6] hover:text-[#FF5A00] transition-colors duration-200 py-2"
+            >
+              {t('service.viewPlans')} ↓
+            </a>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- 2. QUÉ INCLUYE EL SERVICIO (Título emparejado + 2 columnas sin recuadros, desparejadas en X y con parallax) -->
+    <section
+      id="alcance"
+      aria-labelledby="incluye-heading"
+      class="relative z-10 py-20 sm:py-28 lg:py-36 px-6 sm:px-10 lg:px-12 xl:px-16"
+    >
+      <div class="max-w-7xl mx-auto">
+        <!-- Encabezado con palabras emparejadas en ambos extremos -->
+        <div data-service-section-header class="mb-16 sm:mb-24 lg:mb-28">
+          <h2
+            id="incluye-heading"
+            data-service-reveal-text
+            data-heading-pair
+            class="inline-flex flex-col items-start text-left text-4xl sm:text-5xl lg:text-6xl font-black uppercase text-white leading-[0.88] tracking-tight will-change-transform"
+          >
+            <span data-heading-top class="font-display font-black uppercase block whitespace-nowrap leading-[0.88]">
+              {isEn ? "WHAT'S" : 'QUÉ INCLUYE'}
+            </span>
+            <span data-heading-bottom class="font-serif italic font-normal text-[#FF5A00] tracking-normal block whitespace-nowrap leading-[0.88] mt-1 pr-[0.04em]">
+              {isEn ? 'INCLUDED' : 'EL SERVICIO'}
+            </span>
+          </h2>
+        </div>
+
+        <!-- 2 Columnas sin contenedores, desparejadas en eje X y con parallax al scrollear -->
+        <div
+          data-service-scope-grid
+          class="grid grid-cols-1 md:grid-cols-2 gap-x-12 lg:gap-x-24 gap-y-16 sm:gap-y-24 items-start"
+        >
+          {
+            data.incluye.map((item, idx) => {
+              const cfg = scopeOffsets[idx % scopeOffsets.length];
+              return (
+                <article
+                  data-service-scope-card
+                  data-scope-parallax={cfg.parallaxDir}
+                  class:list={[
+                    'group relative max-w-lg flex flex-col gap-4 will-change-transform',
+                    cfg.offsetClass,
+                  ]}
+                >
+                  <div class="flex items-center gap-4">
+                    <span
+                      class="font-display text-5xl sm:text-6xl font-black tracking-tighter leading-none select-none"
+                      style="-webkit-text-stroke: 1.5px #FF5A00; color: transparent;"
+                    >
+                      0{idx + 1}
+                    </span>
+                    <span class="h-[1px] w-12 bg-white/20 group-hover:w-20 group-hover:bg-[#FF5A00] transition-all duration-300" aria-hidden="true"></span>
+                  </div>
+
+                  <h3 class="font-display text-2xl sm:text-3xl lg:text-4xl font-black uppercase tracking-tight text-white leading-[1.02]">
+                    {item.titulo}
+                  </h3>
+
+                  <p class="text-base sm:text-lg lg:text-xl text-[#A1A1AA] font-normal leading-relaxed">
+                    {item.descripcion}
+                  </p>
+                </article>
+              );
+            })
+          }
+        </div>
+      </div>
+    </section>
+
+    <!-- 3. PLANES Y ESTIMACIONES (Abanico de Cartas idéntico a ServicesProcess.astro en la Home) -->
+    <section
+      id="precios"
+      aria-labelledby="precios-heading"
+      class="relative z-10 min-h-screen flex flex-col justify-start lg:justify-center pt-20 sm:pt-24 lg:pt-16 pb-36 sm:pb-44 lg:pb-52 xl:pb-60 px-4 sm:px-6 md:px-8 lg:px-10 xl:px-14 w-full max-w-full overflow-x-clip select-none"
+    >
+      <!-- Overlay para oscurecer la sección de precios mientras la cortina crema sube -->
+      <div
+        data-pricing-curtain-overlay
+        class="absolute inset-0 bg-black pointer-events-none opacity-0 z-40"
+        aria-hidden="true"
+      ></div>
+
+      <div class="max-w-7xl mx-auto w-full" data-service-pricing-container>
+        <!-- Encabezado centrado simétrico con Servicios de la Home -->
+        <div
+          data-service-section-header
+          class="max-w-3xl mx-auto mb-10 sm:mb-14 lg:mb-16 flex flex-col items-center text-center gap-3"
+        >
+          <h2
+            id="precios-heading"
+            data-service-reveal-text
+            data-heading-pair
+            class="inline-flex flex-col items-start text-left text-4xl sm:text-5xl lg:text-6xl font-black uppercase text-white leading-[0.88] tracking-tight will-change-transform"
+          >
+            <span data-heading-top class="font-display font-black uppercase block whitespace-nowrap leading-[0.88]">
+              {t('service.pricingTitle')}
+            </span>
+            <span data-heading-bottom class="font-serif italic font-normal text-[#FF5A00] tracking-normal block whitespace-nowrap leading-[0.88] pr-[0.04em] mt-1">
+              {t('service.pricingTitleAccent')}
+            </span>
+          </h2>
+          <p
+            data-service-reveal-text
+            class="mt-1 text-base sm:text-lg lg:text-xl text-zinc-400 font-normal leading-relaxed max-w-2xl mx-auto will-change-transform"
+          >
+            {isEn
+              ? 'Structured modalities adapted to the stage and complexity of your operation.'
+              : 'Modalidades estructuradas según la etapa y complejidad de tu operación.'}
+          </p>
+        </div>
+
+        <!-- Contenedor Centrado del Abanico de Cartas (Fanned Deck) replicado de ServicesProcess.astro -->
+        <div
+          data-service-deck-fan
+          class="deck-fan relative w-full max-w-7xl mx-auto flex flex-col sm:grid sm:grid-cols-2 lg:flex lg:flex-row items-center justify-center gap-6 sm:gap-6 lg:gap-0 pt-2 pb-14 sm:pb-20 lg:pb-24 z-10"
+        >
+          {
+            data.planes.map((plan, idx) => {
+              const cfg = planDeckConfigs[idx % planDeckConfigs.length];
+              return (
+                <article
+                  data-service-deck-entry
+                  class:list={[
+                    'deck-card-wrapper relative w-full max-w-[335px] sm:max-w-none lg:w-[315px] xl:w-[350px] 2xl:w-[365px] will-change-transform hover:!z-50 focus-within:!z-50',
+                    cfg.wrapperPos,
+                  ]}
+                >
+                  <a
+                    href={planWaUrl(plan.nombre)}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    class:list={[
+                      'deck-card group relative w-full aspect-[3/4.2] rounded-[2rem] sm:rounded-[2.25rem] p-7 sm:p-8 flex flex-col justify-between overflow-hidden cursor-pointer',
+                      'shadow-[0_30px_70px_-15px_rgba(0,0,0,0.85)] transition-all duration-500 ease-[cubic-bezier(0.22,1,0.36,1)]',
+                      'lg:origin-bottom hover:!rotate-0 hover:!-translate-y-8 hover:scale-[1.06] focus-visible:!rotate-0 focus-visible:!-translate-y-8 focus-visible:outline focus-visible:outline-2 focus-visible:outline-[#FF5A00]',
+                      cfg.cardBg,
+                      cfg.fanClass,
+                    ]}
+                  >
+                    <!-- Curvas decorativas internas sutiles dentro de cada carta -->
+                    <svg
+                      class="absolute inset-0 w-full h-full pointer-events-none opacity-[0.08] group-hover:opacity-[0.15] transition-opacity duration-500 z-0"
+                      xmlns="http://www.w3.org/2000/svg"
+                      viewBox="0 0 400 560"
+                      preserveAspectRatio="none"
+                      aria-hidden="true"
+                    >
+                      <circle cx="380" cy="40" r="180" fill="none" stroke={cfg.patternStroke} stroke-width="1.5" />
+                      <circle cx="380" cy="40" r="260" fill="none" stroke={cfg.patternStroke} stroke-width="1.5" />
+                      <path d="M-40,420 C120,340 240,520 440,380" fill="none" stroke={cfg.patternStroke} stroke-width="1.5" />
+                      <path d="M-40,490 C140,410 260,580 440,450" fill="none" stroke={cfg.patternStroke} stroke-width="1.5" />
+                    </svg>
+
+                    <!-- Parte Superior de la Carta: Número + Tag de modalidad -->
+                    <div class="relative z-10 flex items-center justify-between gap-2">
+                      <span class:list={['font-display text-4xl sm:text-5xl font-black tracking-tighter leading-none', cfg.numColor]}>
+                        0{idx + 1}
+                      </span>
+                      <span class:list={['px-3 py-1 rounded-full text-[9px] sm:text-[10px] font-mono uppercase tracking-[0.16em] font-bold', cfg.tagBg]}>
+                        {plan.precio}
+                      </span>
+                    </div>
+
+                    <!-- Centro de la Carta: Nombre del Plan + Entregables -->
+                    <div class="relative z-10 my-auto py-4 sm:py-5 flex flex-col gap-3.5 text-left">
+                      <h3 class="font-display text-2xl sm:text-3xl font-black uppercase tracking-tight leading-[0.98] group-hover:translate-x-0.5 transition-transform duration-300">
+                        {plan.nombre}
+                      </h3>
+
+                      <ul class:list={['space-y-2 text-xs sm:text-sm leading-relaxed', cfg.listColor]}>
+                        {plan.incluye.map((feat) => (
+                          <li class="flex items-start gap-2">
+                            <span class:list={['font-mono font-bold select-none shrink-0', cfg.bulletColor]} aria-hidden="true">
+                              —
+                            </span>
+                            <span>{feat}</span>
+                          </li>
+                        ))}
+                      </ul>
+                    </div>
+
+                    <!-- Pie de la Carta: Call to Action Clickeable -->
+                    <div class="relative z-10 pt-4 border-t border-current/10 flex items-center justify-between">
+                      <span class="font-mono text-[11px] sm:text-xs uppercase tracking-[0.18em] font-bold">
+                        {t('service.pricingBtn')}
+                      </span>
+                      <span
+                        class:list={[
+                          'w-10 h-10 sm:w-11 sm:h-11 rounded-full flex items-center justify-center text-sm sm:text-base font-black transition-all duration-300 group-hover:rotate-[-45deg] group-hover:scale-110 shadow-md',
+                          cfg.btnClass,
+                        ]}
+                        aria-hidden="true"
+                      >
+                        ➔
+                      </span>
+                    </div>
+                  </a>
+                </article>
+              );
+            })
+          }
+        </div>
+      </div>
+    </section>
+  </div>
+
+  <!-- =====================================================================
+       ACTO II: CIERRE (Cortina Crema #F2EEE6 unificada con esquinas cuadradas,
+       Cubos 3D y Degradado continuo hacia Naranja Intenso)
+       ===================================================================== -->
+  <FAQCTASection
+    lang={lang}
+    items={faqItems}
+    title={t('service.faqTitle')}
+    titleAccent={t('service.faqTitleAccent')}
+    subtitle={
+      isEn
+        ? 'Concrete answers regarding deliverables, ownership, and operational workflow.'
+        : 'Respuestas concretas sobre entregables, propiedad técnica y modalidad de trabajo.'
+    }
+    isServicePage={true}
+    ctaMessage={data.whatsappMensaje}
+  />
+</div>
