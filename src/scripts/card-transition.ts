@@ -78,7 +78,6 @@ function createBrandLayer(card: HTMLAnchorElement): { layer: HTMLElement } {
   layer.innerHTML =
     '<div class="transition-brand__mark">' +
     '<span class="transition-brand__title">HARNESS</span>' +
-    '<span class="transition-brand__accent">STUDIO</span>' +
     '</div>';
   document.body.appendChild(layer);
 

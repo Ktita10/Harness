@@ -3,8 +3,8 @@ import { ScrollTrigger } from 'gsap/ScrollTrigger';
 
 gsap.registerPlugin(ScrollTrigger);
 
-// Debe coincidir con CONFIG.scrollLength de HeroObject3D (el hero se fija durante ese tramo).
-const HERO_SCROLL_LENGTH = '+=190%';
+// Debe coincidir con HeroObject3D (el hero se fija durante ese tramo; en desktop incluye ventana de cortina).
+const getHeroScrollLength = () => (window.innerWidth >= 1024 ? '+=280%' : '+=190%');
 
 function hasWebGL(): boolean {
   try {
@@ -25,17 +25,19 @@ export function initHeroAnimation(): gsap.core.Timeline | null {
   const left = hero.querySelectorAll<HTMLElement>('[data-hero-phrase-left] [data-hero-word]');
   const right = hero.querySelectorAll<HTMLElement>('[data-hero-phrase-right] [data-hero-word]');
   const indicator = hero.querySelector<HTMLElement>('[data-hero-scroll]');
-  if (!left.length && !right.length) return null;
+  if (!left.length && !right.length && !indicator) return null;
 
   // Estado inicial: solo el cubo en pantalla
-  gsap.set([...left, ...right], { opacity: 0, x: -48 });
+  if (left.length || right.length) {
+    gsap.set([...left, ...right], { opacity: 0, x: -48 });
+  }
 
   const tl = gsap.timeline({
     defaults: { ease: 'power2.out' },
     scrollTrigger: {
       trigger: hero,
       start: 0,
-      end: HERO_SCROLL_LENGTH,
+      end: getHeroScrollLength,
       scrub: 1,
       invalidateOnRefresh: true,
     },
@@ -45,9 +47,9 @@ export function initHeroAnimation(): gsap.core.Timeline | null {
   if (indicator) tl.to(indicator, { opacity: 0, y: 8, duration: 0.08 }, 0);
 
   // Mitad izquierda: aparece de izquierda a derecha
-  tl.to(left, { opacity: 1, x: 0, duration: 0.2, stagger: 0.07 }, 0.18);
+  if (left.length) tl.to(left, { opacity: 1, x: 0, duration: 0.2, stagger: 0.07 }, 0.18);
   // Mitad derecha: continúa el recorrido, más abajo
-  tl.to(right, { opacity: 1, x: 0, duration: 0.2, stagger: 0.07 }, 0.5);
+  if (right.length) tl.to(right, { opacity: 1, x: 0, duration: 0.2, stagger: 0.07 }, 0.5);
 
   // Padding final para que dure exactamente el tramo fijado
   tl.set({}, {}, 1);

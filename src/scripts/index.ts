@@ -1,8 +1,12 @@
 import { initSmoothScroll, destroySmoothScroll } from './smooth-scroll';
 import { initMasterTimeline, cleanupAnimations } from './animations/master-timeline';
+import { initHeadingFit } from './animations/heading-fit';
 
 function bootstrapMotion(): void {
   if (typeof window === 'undefined') return;
+
+  // Always pair two-font headings regardless of motion preference
+  initHeadingFit();
 
   // Strict compliance with prefers-reduced-motion: reduce
   const prefersReducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;

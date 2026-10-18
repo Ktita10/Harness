@@ -23,7 +23,7 @@ const deckConfigs = [
     tag: isEn ? 'DIRECT CONVERSION' : 'CONVERSIÓN DIRECTA',
     wrapperPos: 'lg:z-[10]',
     fanClass: 'lg:-rotate-[11deg] lg:translate-y-10 lg:translate-x-6',
-    cardBg: 'bg-[#121214] text-[#F2EEE6] border-white/15 hover:border-[#FF5A00]',
+    cardBg: 'bg-[#121214] text-[#F2EEE6]',
     numColor: 'text-[#FF5A00]',
     tagBg: 'bg-white/10 text-zinc-300',
     descColor: 'text-zinc-400',
@@ -35,7 +35,7 @@ const deckConfigs = [
     tag: isEn ? 'CLOUD ECOMMERCE' : 'ECOMMERCE NUBE',
     wrapperPos: 'lg:-ml-10 xl:-ml-12 lg:z-[20]',
     fanClass: 'lg:-rotate-[3.5deg] lg:translate-y-1',
-    cardBg: 'bg-[#FF5A00] text-[#0A0A0A] border-black/15 hover:border-[#F2EEE6]',
+    cardBg: 'bg-[#FF5A00] text-[#0A0A0A]',
     numColor: 'text-[#0A0A0A]',
     tagBg: 'bg-black/15 text-[#0A0A0A]',
     descColor: 'text-black/80 font-medium',
@@ -47,7 +47,7 @@ const deckConfigs = [
     tag: isEn ? 'ONLINE STORE' : 'TIENDA INDEPENDIENTE',
     wrapperPos: 'lg:-ml-10 xl:-ml-12 lg:z-[30]',
     fanClass: 'lg:rotate-[3.5deg] lg:translate-y-0',
-    cardBg: 'bg-[#F2EEE6] text-[#0A0A0A] border-black/10 hover:border-[#FF5A00]',
+    cardBg: 'bg-[#F2EEE6] text-[#0A0A0A]',
     numColor: 'text-[#FF5A00]',
     tagBg: 'bg-black/10 text-zinc-800',
     descColor: 'text-zinc-700 font-medium',
@@ -59,7 +59,7 @@ const deckConfigs = [
     tag: isEn ? 'CUSTOM SOFTWARE' : 'ARQUITECTURA A MEDIDA',
     wrapperPos: 'lg:-ml-10 xl:-ml-12 lg:z-[25]',
     fanClass: 'lg:rotate-[11deg] lg:translate-y-10 lg:-translate-x-6',
-    cardBg: 'bg-[#1B1B1F] text-[#F2EEE6] border-[#FF5A00]/35 hover:border-[#FF5A00]',
+    cardBg: 'bg-[#1B1B1F] text-[#F2EEE6]',
     numColor: 'text-[#F2EEE6]',
     tagBg: 'bg-[#FF5A00]/20 text-[#FF5A00]',
     descColor: 'text-zinc-300',
@@ -137,10 +137,10 @@ const steps = isEn
     ];
 ---
 
-<!-- Contenedor Maestro Unificado: Fondo #0A0A0A fijo sin transiciones de color -->
+<!-- Contenedor Maestro Unificado: Cortina que asciende sobre Hero con esquinas cuadradas y sombra pronunciada -->
 <div
   data-topo-unified-wrapper
-  class="relative w-full max-w-full bg-[#0A0A0A] z-10"
+  class="relative z-20 w-full max-w-full bg-[#0A0A0A] lg:-mt-[100vh] rounded-none shadow-[0_-35px_80px_-15px_rgba(0,0,0,0.85)] border-t border-white/10 select-none"
 >
   <!-- Pista absoluta que mantiene el TopoBackground vivo y continuo en Servicios + Proceso -->
   <div class="absolute inset-0 w-full h-full pointer-events-none z-0">
@@ -162,18 +162,18 @@ const steps = isEn
       data-services-header
       class="max-w-3xl mx-auto mb-14 sm:mb-20 lg:mb-24 flex flex-col items-center text-center gap-4 relative z-10"
     >
-      <span
-        data-services-text
-        class="text-[11px] sm:text-xs font-mono uppercase tracking-[0.25em] text-[#FF5A00] font-bold will-change-transform"
-      >
-        {t('services.tag')}
-      </span>
       <h2
         id="services-title"
         data-services-text
-        class="font-display text-4xl sm:text-6xl lg:text-7xl font-black uppercase text-white tracking-tight leading-[0.95] will-change-transform"
+        data-heading-pair
+        class="inline-flex flex-col items-start text-left text-3xl sm:text-5xl lg:text-6xl font-black uppercase text-white tracking-tight leading-[0.88] will-change-transform"
       >
-        {t('services.title')} <span class="font-serif italic font-normal text-[#FF5A00] tracking-normal">{t('services.titleAccent')}</span>
+        <span data-heading-top class="font-display font-black uppercase block whitespace-nowrap leading-[0.88]">
+          {t('services.title')}
+        </span>
+        <span data-heading-bottom class="font-serif italic font-normal text-[#FF5A00] tracking-normal block whitespace-nowrap leading-[0.88] pr-[0.04em] mt-1">
+          {t('services.titleAccent')}
+        </span>
       </h2>
       <p
         data-services-text
@@ -212,7 +212,7 @@ const steps = isEn
                 href={serviceUrl}
                 aria-label={`${t('services.viewService')}: ${service.data.nombre}`}
                 class:list={[
-                  'deck-card group relative w-full aspect-[3/4.2] rounded-[2rem] sm:rounded-[2.25rem] p-7 sm:p-8 flex flex-col justify-between border overflow-hidden cursor-pointer',
+                  'deck-card group relative w-full aspect-[3/4.2] rounded-[2rem] sm:rounded-[2.25rem] p-7 sm:p-8 flex flex-col justify-between overflow-hidden cursor-pointer',
                   'shadow-[0_30px_70px_-15px_rgba(0,0,0,0.85)] transition-all duration-500 ease-[cubic-bezier(0.22,1,0.36,1)]',
                   'lg:origin-bottom hover:!rotate-0 hover:!-translate-y-8 hover:scale-[1.06] focus-visible:!rotate-0 focus-visible:!-translate-y-8 focus-visible:outline focus-visible:outline-2 focus-visible:outline-[#FF5A00]',
                   cfg.cardBg,
@@ -308,9 +308,15 @@ const steps = isEn
           <h2
             id="process-title"
             data-process-intro-text
-            class="font-display text-6xl xl:text-8xl 2xl:text-9xl font-black uppercase tracking-tight text-white leading-[0.9] mb-8 will-change-transform"
+            data-heading-pair
+            class="inline-flex flex-col items-start text-left text-5xl xl:text-6xl 2xl:text-7xl font-black uppercase tracking-tight text-white leading-[0.88] mb-8 will-change-transform"
           >
-            {t('process.title')} <span class="font-serif italic font-normal text-[#FF5A00] tracking-normal">{t('process.titleAccent')}</span>
+            <span data-heading-top class="font-display font-black uppercase block whitespace-nowrap leading-[0.88]">
+              {t('process.title')}
+            </span>
+            <span data-heading-bottom class="font-serif italic font-normal text-[#FF5A00] tracking-normal block whitespace-nowrap leading-[0.88] mt-1 pr-[0.04em]">
+              {t('process.titleAccent')}
+            </span>
           </h2>
           <p
             data-process-intro-text
@@ -363,9 +369,15 @@ const steps = isEn
       <div class="mb-10" data-process-mobile-header>
         <h2
           data-process-mobile-text
-          class="font-display text-4xl sm:text-6xl font-black uppercase tracking-tight text-white leading-none mb-4"
+          data-heading-pair
+          class="inline-flex flex-col items-start text-left text-4xl sm:text-5xl font-black uppercase tracking-tight text-white leading-[0.88] mb-4"
         >
-          {t('process.title')} <span class="font-serif italic font-normal text-[#FF5A00] tracking-normal">{t('process.titleAccent')}</span>
+          <span data-heading-top class="font-display font-black uppercase block whitespace-nowrap leading-[0.88]">
+            {t('process.title')}
+          </span>
+          <span data-heading-bottom class="font-serif italic font-normal text-[#FF5A00] tracking-normal block whitespace-nowrap leading-[0.88] mt-1 pr-[0.04em]">
+            {t('process.titleAccent')}
+          </span>
         </h2>
         <p
           data-process-mobile-text

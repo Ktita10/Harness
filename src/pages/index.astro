@@ -4,8 +4,8 @@ import Base from '../layouts/Base.astro';
 import Nav from '../components/sections/Nav.astro';
 import Hero from '../components/sections/Hero.astro';
 import ServicesProcess from '../components/sections/ServicesProcess.astro';
-import FAQSection from '../components/sections/FAQSection.astro';
-import CTASection from '../components/sections/CTASection.astro';
+import FAQCTASection from '../components/sections/FAQCTASection.astro';
+import Preloader from '../components/ui/Preloader.astro';
 
 const allFaqs = await getCollection('faqs');
 const esFaqs = allFaqs.filter((f) => (f.data.lang || 'es') === 'es');
@@ -21,14 +21,14 @@ const faqData = sortedFaqs.map((f) => ({
   description="Desarrollo de sitios web ultrarrápidos, personalización de Tienda Nube, tiendas online y software a medida para pymes y emprendedores."
   faqs={faqData}
 >
+  <Preloader />
+
   <Nav slot="header" />
 
   <Hero />
 
   <ServicesProcess />
 
-  <FAQSection />
-
-  <CTASection />
+  <FAQCTASection />
 
 </Base>

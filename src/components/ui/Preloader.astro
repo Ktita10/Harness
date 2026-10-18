@@ -1,0 +1,223 @@
+---
+interface Props {
+  /** Si es true, solo se muestra una vez por sesión en la pestaña */
+  oncePerSession?: boolean;
+  /** Tiempo mínimo en segundos para que el llenado de HARNESS se perciba fluido */
+  minDuration?: number;
+}
+
+const {
+  oncePerSession = false,
+  minDuration = 1.0,
+} = Astro.props;
+---
+
+<script is:inline define:vars={{ oncePerSession }}>
+  (function () {
+    try {
+      if (!oncePerSession) {
+        try { sessionStorage.removeItem('harness_preloader_done'); } catch (_) {}
+      }
+      const reduced = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+      const seen = oncePerSession && sessionStorage.getItem('harness_preloader_done') === '1';
+      if (reduced || seen) {
+        document.documentElement.classList.add('preloader-skip');
+      } else {
+        document.documentElement.classList.remove('preloader-skip');
+        document.documentElement.classList.add('preloader-lock');
+      }
+    } catch (_) {}
+  })();
+</script>
+
+<div
+  id="harness-preloader"
+  data-preloader
+  data-once={oncePerSession ? 'true' : 'false'}
+  data-min-duration={minDuration}
+  aria-hidden="true"
+  class="fixed inset-0 z-[9999] flex items-center justify-center bg-bg-primary select-none pointer-events-auto overflow-hidden"
+>
+  <div
+    data-preloader-mark
+    class="relative flex items-center justify-center font-display font-black text-[clamp(3.5rem,14vw,9.5rem)] leading-none tracking-[-0.04em] uppercase text-white"
+  >
+    <!-- Letra H: permanece y viaja al centro -->
+    <div
+      data-preloader-h
+      class="relative inline-grid place-items-center will-change-transform"
+      style="transform-origin: 50% 50%;"
+    >
+      <span class="col-start-1 row-start-1 text-white/10">H</span>
+      <span
+        data-preloader-fill-h
+        class="col-start-1 row-start-1 text-white will-change-[clip-path]"
+        style="clip-path: inset(100% 0% 0% 0%);"
+      >
+        H
+      </span>
+    </div>
+
+    <!-- Letras restantes (ARNESS): desaparecen tras la carga -->
+    <div
+      data-preloader-rest
+      class="relative inline-grid place-items-center will-change-[opacity,transform]"
+    >
+      <span class="col-start-1 row-start-1 text-white/10">ARNESS</span>
+      <span
+        data-preloader-fill-rest
+        class="col-start-1 row-start-1 text-white will-change-[clip-path]"
+        style="clip-path: inset(100% 0% 0% 0%);"
+      >
+        ARNESS
+      </span>
+    </div>
+  </div>
+</div>
+
+<style is:global>
+  html.preloader-skip #harness-preloader {
+    display: none !important;
+  }
+
+  html.preloader-lock,
+  html.preloader-lock body {
+    overflow: hidden !important;
+  }
+</style>
+
+<script>
+  import gsap from 'gsap';
+
+  function initPreloader() {
+    const root = document.querySelector<HTMLElement>('[data-preloader]');
+    if (!root || document.documentElement.classList.contains('preloader-skip')) return;
+    const rootEl = root;
+
+    const fillH = root.querySelector<HTMLElement>('[data-preloader-fill-h]')!;
+    const fillRest = root.querySelector<HTMLElement>('[data-preloader-fill-rest]')!;
+    const hEl = root.querySelector<HTMLElement>('[data-preloader-h]')!;
+    const restEl = root.querySelector<HTMLElement>('[data-preloader-rest]')!;
+    gsap.set(hEl, { transformOrigin: '50% 50%' });
+    const once = root.dataset.once === 'true';
+    const minDuration = parseFloat(root.dataset.minDuration || '1.0');
+
+    const progress = { value: 0 };
+    let isLoaded = document.readyState === 'complete';
+
+    window.addEventListener('load', () => {
+      isLoaded = true;
+    }, { once: true });
+
+    const renderFill = () => {
+      const topInset = 100 - progress.value;
+      const clip = `inset(${topInset.toFixed(2)}% 0% 0% 0%)`;
+      if (fillH) fillH.style.clipPath = clip;
+      if (fillRest) fillRest.style.clipPath = clip;
+    };
+
+    // 1. Llenado fluido inicial hasta el 80% mientras cargan fuentes y recursos
+    gsap.to(progress, {
+      value: 80,
+      duration: minDuration * 0.7,
+      ease: 'sine.inOut',
+      onUpdate: renderFill,
+      onComplete: finishLoading,
+    });
+
+    async function finishLoading() {
+      if ('fonts' in document) {
+        try {
+          await Promise.race([
+            (document as any).fonts.ready,
+            new Promise((r) => setTimeout(r, 600)),
+          ]);
+        } catch (_) {}
+      }
+
+      if (!isLoaded) {
+        await new Promise<void>((resolve) => {
+          const t = setTimeout(resolve, 800);
+          window.addEventListener('load', () => {
+            clearTimeout(t);
+            resolve();
+          }, { once: true });
+        });
+      }
+
+      // 2. Completa el 100% del llenado blanco
+      await new Promise<void>((resolve) => {
+        gsap.to(progress, {
+          value: 100,
+          duration: minDuration * 0.3,
+          ease: 'power2.out',
+          onUpdate: renderFill,
+          onComplete: () => resolve(),
+        });
+      });
+
+      // Breve pausa para contemplar HARNESS completo
+      await new Promise((r) => setTimeout(r, 100));
+
+      // 3. Calculamos la distancia exacta para centrar la letra H
+      const hRect = hEl.getBoundingClientRect();
+      const deltaX = (window.innerWidth / 2) - (hRect.left + hRect.width / 2);
+
+      // 4. Secuencia cinematográfica:
+      //    ARNESS desaparece -> H se traslada al centro -> Zoom masivo por la barra central -> Fade a Home
+      const exitTl = gsap.timeline({
+        onComplete: () => {
+          document.documentElement.classList.remove('preloader-lock');
+          if (once) {
+            try {
+              sessionStorage.setItem('harness_preloader_done', '1');
+            } catch (_) {}
+          }
+          rootEl.remove();
+        },
+      });
+
+      // Paso 1: ARNESS desaparece suavemente
+      exitTl.to(restEl, {
+        opacity: 0,
+        y: -4,
+        duration: 0.32,
+        ease: 'power2.out',
+      });
+
+      // Paso 2: H se mueve al centro exacto de la pantalla
+      exitTl.to(hEl, {
+        x: deltaX,
+        duration: 0.48,
+        ease: 'power3.inOut',
+      }, '-=0.12');
+
+      // Paso 3: H se acerca rápidamente a la pantalla (zoom extremo apuntando al centro / barra media)
+      exitTl.to(hEl, {
+        scale: 75,
+        duration: 0.75,
+        ease: 'power3.in',
+      }, '+=0.04');
+
+      // Paso 4: Se vuelve transparente y disuelve el fondo del preloader para ingresar a la Home
+      exitTl.to(hEl, {
+        opacity: 0,
+        duration: 0.35,
+        ease: 'power2.out',
+      }, '-=0.35');
+
+      exitTl.to(rootEl, {
+        opacity: 0,
+        duration: 0.42,
+        ease: 'power2.inOut',
+      }, '-=0.35');
+    }
+  }
+
+  if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', initPreloader, { once: true });
+  } else {
+    initPreloader();
+  }
+  document.addEventListener('astro:page-load', initPreloader);
+</script>

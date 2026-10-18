@@ -14,42 +14,22 @@ const t = useTranslations(currentLang);
 <section
   id="hero"
   aria-labelledby="hero-title"
-  class="relative min-h-[calc(100svh+4vw)] sm:min-h-[calc(100svh+4.5vw)] lg:min-h-[calc(100svh+5.2vw)] flex flex-col overflow-hidden bg-bg-primary select-none [--hero-3d-top:4rem] [--hero-3d-width:min(96vw,600px)] [--hero-3d-height:calc(100svh_-_4rem_-_24vw)] sm:[--hero-3d-height:calc(100svh_-_4rem_-_18vw)] lg:[--hero-3d-top:2.5rem] lg:[--hero-3d-width:min(80vw,1100px)] lg:[--hero-3d-height:calc(100svh_-_2.5rem_-_6vw)]"
+  class="relative h-screen min-h-screen flex flex-col overflow-hidden bg-bg-primary select-none [--hero-3d-top:4rem] [--hero-3d-width:min(96vw,600px)] [--hero-3d-height:calc(100svh_-_4rem_-_24vw)] sm:[--hero-3d-height:calc(100svh_-_4rem_-_18vw)] lg:[--hero-3d-top:2.5rem] lg:[--hero-3d-width:min(80vw,1100px)] lg:[--hero-3d-height:calc(100svh_-_2.5rem_-_6vw)]"
 >
-  <!-- Ambient Atmospheric Glow -->
+  <!-- Capa z-10: objeto 3D modular en el centro sin brillo de fondo -->
+  <HeroObject3D heroSelector="#hero" showGlow={false} />
+
+  <!-- Overlay para el efecto cortina de ServicesProcess -->
   <div
-    class="absolute inset-0 pointer-events-none -z-10 bg-[radial-gradient(ellipse_80%_60%_at_50%_45%,rgba(255,90,0,0.15),transparent_70%)]"
+    data-hero-curtain-overlay
+    class="absolute inset-0 bg-black pointer-events-none opacity-0 z-20"
     aria-hidden="true"
   ></div>
-
-  <!-- Capa z-0: objeto 3D modular en el centro -->
-  <HeroObject3D heroSelector="#hero" />
-
-  <!-- Frase partida: mitad izquierda (debajo del logo) y mitad derecha (más abajo). Aparece con el scroll. -->
-  <div class="pointer-events-none absolute inset-0 z-10" data-hero-phrase>
-    <p
-      data-hero-phrase-left
-      class="absolute left-6 sm:left-10 lg:left-12 xl:left-16 top-32 sm:top-44 lg:top-52 max-w-[48%] font-display font-black uppercase leading-[0.95] tracking-tight text-white text-2xl sm:text-4xl lg:text-6xl xl:text-7xl"
-    >
-      <span data-hero-word class="inline-block">{t('hero.phrase.left.1')}</span>
-      <span data-hero-word class="inline-block">{t('hero.phrase.left.2')}</span><br />
-      <span data-hero-word class="inline-block font-serif italic font-normal normal-case tracking-normal text-accent">{t('hero.phrase.left.3')}</span>
-      <span data-hero-word class="inline-block font-serif italic font-normal normal-case tracking-normal text-accent">{t('hero.phrase.left.4')}</span>
-    </p>
-    <p
-      data-hero-phrase-right
-      class="absolute right-6 sm:right-10 lg:right-12 xl:right-16 top-[17rem] sm:top-[24rem] lg:top-[28rem] xl:top-[31rem] max-w-[48%] text-right font-display font-black uppercase leading-[0.95] tracking-tight text-white text-2xl sm:text-4xl lg:text-6xl xl:text-7xl"
-    >
-      <span data-hero-word class="inline-block">{t('hero.phrase.right.1')}</span><br />
-      <span data-hero-word class="inline-block font-serif italic font-normal normal-case tracking-normal text-accent">{t('hero.phrase.right.2')}</span>
-      <span data-hero-word class="inline-block font-serif italic font-normal normal-case tracking-normal text-accent">{t('hero.phrase.right.3')}</span>
-    </p>
-  </div>
 
   <!-- Indicador de scroll minimalista: solo una línea fina que se desliza -->
   <div
     data-hero-scroll
-    class="pointer-events-none absolute left-1/2 -translate-x-1/2 z-10 bottom-[calc(4.5vw+1.75rem)] flex flex-col items-center gap-3"
+    class="pointer-events-none absolute left-1/2 -translate-x-1/2 z-10 bottom-8 sm:bottom-10 lg:bottom-12 flex flex-col items-center gap-3"
     aria-hidden="true"
   >
     <span class="font-mono text-[10px] uppercase tracking-[0.35em] text-white/50">{t('hero.scroll')}</span>

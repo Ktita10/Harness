@@ -4,8 +4,8 @@ import Base from '../../layouts/Base.astro';
 import Nav from '../../components/sections/Nav.astro';
 import Hero from '../../components/sections/Hero.astro';
 import ServicesProcess from '../../components/sections/ServicesProcess.astro';
-import FAQSection from '../../components/sections/FAQSection.astro';
-import CTASection from '../../components/sections/CTASection.astro';
+import FAQCTASection from '../../components/sections/FAQCTASection.astro';
+import Preloader from '../../components/ui/Preloader.astro';
 import { useTranslations } from '../../i18n/utils';
 
 const t = useTranslations('en');
@@ -24,14 +24,14 @@ const faqData = sortedFaqs.map((f) => ({
   description={t('meta.home.description')}
   faqs={faqData}
 >
+  <Preloader />
+
   <Nav slot="header" lang="en" />
 
   <Hero lang="en" />
 
   <ServicesProcess lang="en" />
 
-  <FAQSection lang="en" />
-
-  <CTASection lang="en" />
+  <FAQCTASection lang="en" />
 
 </Base>

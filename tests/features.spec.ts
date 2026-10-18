@@ -23,7 +23,7 @@ test.describe('Transversal Features & Technical SEO Assets (Phase 3)', () => {
     await expect(homeBtn).toBeVisible();
 
     // Services button
-    const servicesBtn = page.locator('a[href="/#servicios"]');
+    const servicesBtn = page.locator('a[href="/#servicios"]').filter({ hasText: 'Ver Servicios' });
     await expect(servicesBtn).toBeVisible();
   });
 

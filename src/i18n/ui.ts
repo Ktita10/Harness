@@ -19,13 +19,9 @@ export const ui = {
     'nav.menuClose': 'Cerrar menú de navegación',
 
     // Hero
-    'hero.phrase.left.1': 'Sitios',
-    'hero.phrase.left.2': 'web',
-    'hero.phrase.left.3': 'y',
-    'hero.phrase.left.4': 'tiendas',
-    'hero.phrase.right.1': 'Software',
-    'hero.phrase.right.2': 'a',
-    'hero.phrase.right.3': 'medida',
+    'hero.phrase.part1': 'SOBRA CÓDIGO',
+    'hero.phrase.part2': 'FALTA',
+    'hero.phrase.part3': 'CRITERIO',
     'hero.scroll': 'Scroll',
     'hero.srTitle': 'HARNESS STUDIO — Desarrollo Web, Tiendas y Software a Medida',
 
@@ -92,13 +88,9 @@ export const ui = {
     'nav.menuClose': 'Close navigation menu',
 
     // Hero
-    'hero.phrase.left.1': 'Websites',
-    'hero.phrase.left.2': '&',
-    'hero.phrase.left.3': 'online',
-    'hero.phrase.left.4': 'stores',
-    'hero.phrase.right.1': 'Custom',
-    'hero.phrase.right.2': 'built',
-    'hero.phrase.right.3': 'software',
+    'hero.phrase.part1': 'CODE IS CHEAP',
+    'hero.phrase.part2': 'LACKING',
+    'hero.phrase.part3': 'JUDGMENT',
     'hero.scroll': 'Scroll',
     'hero.srTitle': 'HARNESS STUDIO — Web Development, Online Stores & Custom Software',
 
