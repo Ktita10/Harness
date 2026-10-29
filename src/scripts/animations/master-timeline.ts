@@ -2,6 +2,7 @@ import { ScrollTrigger } from 'gsap/ScrollTrigger';
 import { initHeroAnimation } from './hero';
 import { initServicesAnimation } from './services';
 import { initProcessAnimation, cleanupProcessAnimation } from './process';
+import { initAboutAnimation, cleanupAboutAnimation } from './about';
 import { initFAQAnimation } from './faq';
 import { initServiceDetailAnimation } from './service-detail';
 
@@ -13,11 +14,13 @@ export function initMasterTimeline(): void {
   initHeroAnimation();
   initServicesAnimation();
   initProcessAnimation();
+  initAboutAnimation();
   initFAQAnimation();
   initServiceDetailAnimation();
 }
 
 export function cleanupAnimations(): void {
   cleanupProcessAnimation();
+  cleanupAboutAnimation();
   ScrollTrigger.getAll().forEach((trigger) => trigger.kill());
 }

@@ -53,6 +53,7 @@ const pages = [
   { label: 'HOME', href: homePath },
   { label: t('nav.services'), href: `${homePath}#servicios` },
   { label: t('nav.process'), href: `${homePath}#proceso` },
+  { label: t('nav.about'), href: `${homePath}#nosotros` },
   { label: t('nav.faq'), href: `${homePath}#faq` },
 ];
 
@@ -79,10 +80,17 @@ const socials = [
     isServicePage && 'service-curtain lg:-mt-[100vh]',
   ]}
 >
+  <!-- Fondo decorativo desacoplado de la altura dinámica del acordeón -->
+  <div class="faq-cta-bg absolute inset-0 overflow-hidden pointer-events-none z-0" aria-hidden="true">
+    <div class="faq-cta-gradient absolute inset-x-0 top-0 h-[2200px]"></div>
+  </div>
+
   <!-- PARTE 1: FAQ (Preguntas Frecuentes / del Servicio) -->
   <div id="faq-preguntas" class="relative z-10 w-full overflow-hidden">
-    <!-- 5 Cubos 3D dispersos en los flancos laterales ÚNICAMENTE dentro del área de preguntas -->
-    <FAQCubes3D sectionSelector="#faq-preguntas" />
+    <!-- Contenedor de fondo estático para los 5 Cubos 3D anclado al eje Y superior -->
+    <div class="absolute inset-0 overflow-hidden pointer-events-none z-0" aria-hidden="true">
+      <FAQCubes3D sectionSelector="#faq-preguntas" />
+    </div>
 
     <div class="relative z-10 max-w-3xl mx-auto flex flex-col items-center pt-16 sm:pt-24 pb-8 sm:pb-12 px-6 sm:px-12 lg:px-20">
       <!-- Encabezado con palabras emparejadas en ambos extremos -->
@@ -105,29 +113,43 @@ const socials = [
       </div>
 
       <!-- Acordeón centrado en una sola columna -->
-      <div data-faq-list class="w-full border-t border-black/12">
+      <div data-faq-list class="w-full border-t border-black/12 min-h-[480px] sm:min-h-[520px]">
         {
-          faqList.map((faq, index) => (
-            <details
-              data-faq-item
-              name="faq"
-              open={index === 0}
-              class="group border-b border-black/12"
-            >
-              <summary class="flex justify-between items-center gap-6 py-5 sm:py-7 cursor-pointer list-none select-none font-display font-bold text-lg sm:text-xl text-[#0D0D0D] hover:text-[#FF5A00] transition-colors">
-                <span>{faq.pregunta}</span>
-                <span
-                  aria-hidden="true"
-                  class="inline-flex items-center justify-center w-9 h-9 rounded-full border border-black/20 bg-[#F2EEE6] text-[#0D0D0D] font-bold text-xl shrink-0 shadow-sm group-hover:border-[#FF5A00] group-hover:text-[#FF5A00] group-open:rotate-45 group-open:bg-[#FF5A00] group-open:text-[#0D0D0D] group-open:border-[#FF5A00] transition-all duration-200"
+          faqList.map((faq, index) => {
+            const isOpen = index === 0;
+            return (
+              <details
+                data-faq-item
+                data-open={isOpen ? 'true' : 'false'}
+                name="faq"
+                open={isOpen}
+                class="faq-accordion-item group border-b border-black/12"
+              >
+                <summary
+                  data-faq-trigger
+                  aria-expanded={isOpen ? 'true' : 'false'}
+                  class="w-full flex justify-between items-center gap-6 py-5 sm:py-7 cursor-pointer list-none select-none font-display font-bold text-lg sm:text-xl text-[#0D0D0D] hover:text-[#FF5A00] transition-colors"
                 >
-                  +
-                </span>
-              </summary>
-              <div class="pb-7 pr-12 text-neutral-700 text-base sm:text-lg leading-relaxed font-medium">
-                <p>{faq.respuesta}</p>
-              </div>
-            </details>
-          ))
+                  <span>{faq.pregunta}</span>
+                  <span
+                    aria-hidden="true"
+                    class="faq-accordion-icon inline-flex items-center justify-center w-9 h-9 rounded-full border border-black/20 bg-[#F2EEE6] text-[#0D0D0D] font-bold text-xl shrink-0 shadow-sm group-hover:border-[#FF5A00] group-hover:text-[#FF5A00] group-data-[open=true]:rotate-45 group-data-[open=true]:bg-[#FF5A00] group-data-[open=true]:text-[#0D0D0D] group-data-[open=true]:border-[#FF5A00] transition-all duration-300"
+                  >
+                    +
+                  </span>
+                </summary>
+                <div
+                  class="faq-accordion-content grid grid-rows-[0fr] group-data-[open=true]:grid-rows-[1fr] transition-[grid-template-rows] duration-300 ease-out"
+                >
+                  <div class="overflow-hidden">
+                    <div class="pb-7 pr-12 text-neutral-700 text-base sm:text-lg leading-relaxed font-medium">
+                      <p>{faq.respuesta}</p>
+                    </div>
+                  </div>
+                </div>
+              </details>
+            );
+          })
         }
       </div>
     </div>
@@ -271,23 +293,27 @@ const socials = [
 </section>
 
 <style>
-  /* Degradado continuo y natural: nace en Crema (#F2EEE6) en FAQ, empieza a difuminar
-     temprano y culmina en un naranja volcánico profundo (#C22E00) al final, diferenciándose
-     claramente del naranja brillante (#FF5A00) del contenedor central. */
+  /* Degradado continuo y natural anclado de forma estática al eje Y superior:
+     nace en Crema (#F2EEE6) en FAQ, empieza a difuminar a una distancia fija
+     desde arriba y culmina en un naranja volcánico profundo (#C22E00) sin recalcularse
+     cuando el acordeón cambia de altura. */
   .faq-cta-unified {
-    background-color: #F2EEE6;
+    background-color: #C22E00;
+  }
+
+  .faq-cta-gradient {
     background-image: linear-gradient(
       180deg,
-      #F2EEE6 0%,
-      #F2EEE6 22%,
-      #F5E8DC 34%,
-      #F8D3B7 44%,
-      #FAC094 54%,
-      #FEA96E 64%,
-      #FF8E44 74%,
-      #FA6F18 84%,
-      #EB5200 92%,
-      #C22E00 100%
+      #F2EEE6 0px,
+      #F2EEE6 480px,
+      #F5E8DC 750px,
+      #F8D3B7 970px,
+      #FAC094 1190px,
+      #FEA96E 1410px,
+      #FF8E44 1630px,
+      #FA6F18 1850px,
+      #EB5200 2020px,
+      #C22E00 2200px
     );
   }
 
@@ -331,3 +357,59 @@ const socials = [
     }
   }
 </style>
+
+<script>
+  function initFAQAccordion() {
+    const faqLists = document.querySelectorAll<HTMLElement>('[data-faq-list]');
+    faqLists.forEach((list) => {
+      if ((list as any).__faqAccordionInit) return;
+      (list as any).__faqAccordionInit = true;
+
+      const items = Array.from(list.querySelectorAll<HTMLDetailsElement>('details[data-faq-item]'));
+
+      items.forEach((item) => {
+        const trigger = item.querySelector<HTMLElement>('[data-faq-trigger]');
+        if (!trigger) return;
+
+        trigger.addEventListener('click', (e) => {
+          e.preventDefault();
+          const isCurrentlyOpen = item.getAttribute('data-open') === 'true';
+
+          // Comportamiento exclusivo con transición suave de altura (grid-rows-[0fr] -> grid-rows-[1fr])
+          items.forEach((otherItem) => {
+            const otherTrigger = otherItem.querySelector<HTMLElement>('[data-faq-trigger]');
+            if (otherItem === item) {
+              const nextState = !isCurrentlyOpen;
+              otherItem.setAttribute('data-open', nextState ? 'true' : 'false');
+              otherTrigger?.setAttribute('aria-expanded', nextState ? 'true' : 'false');
+              if (nextState) {
+                otherItem.setAttribute('open', '');
+              } else {
+                window.setTimeout(() => {
+                  if (otherItem.getAttribute('data-open') === 'false') {
+                    otherItem.removeAttribute('open');
+                  }
+                }, 300);
+              }
+            } else {
+              otherItem.setAttribute('data-open', 'false');
+              otherTrigger?.setAttribute('aria-expanded', 'false');
+              window.setTimeout(() => {
+                if (otherItem.getAttribute('data-open') === 'false') {
+                  otherItem.removeAttribute('open');
+                }
+              }, 300);
+            }
+          });
+        });
+      });
+    });
+  }
+
+  if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', initFAQAccordion);
+  } else {
+    initFAQAccordion();
+  }
+  document.addEventListener('astro:page-load', initFAQAccordion);
+</script>

@@ -12,6 +12,7 @@ export const ui = {
     // Nav
     'nav.services': 'SERVICIOS',
     'nav.process': 'CÓMO TRABAJAMOS',
+    'nav.about': 'NOSOTROS',
     'nav.faq': 'FAQ',
     'nav.whatsapp': 'Hablar por WhatsApp',
     'nav.switchLang': 'Switch to English',
@@ -33,6 +34,25 @@ export const ui = {
     'process.tag': '// METODOLOGÍA',
     'process.title': 'CÓMO',
     'process.titleAccent': 'TRABAJAMOS',
+
+    // About Section
+    'about.tag': '// EL EQUIPO DETRÁS DEL CÓDIGO',
+    'about.title': 'QUIÉNES',
+    'about.titleAccent': 'SOMOS',
+    'about.subtitle': 'Ingeniería directa, sin intermediarios ni cuentas que diluyan tu mensaje.',
+    'about.description': 'En Harness resolvemos los problemas reales de cada cliente con criterio técnico, compromiso y responsabilidad. Sin intermediarios: quien diseña tu solución es quien la construye. ',
+    'about.dev1.name': 'Matias Fuentes',
+    'about.dev1.role': 'Co-Founder & Creative Technologist',
+    'about.dev1.specialty': 'Frontend & Experiencia Interactiva',
+    'about.dev1.bio': 'Enfocado en interfaces de alta conversión, animaciones fluidas, optimización SEO técnica y experiencias de e-commerce pensadas para vender.',
+    'about.dev2.name': 'Ignacio Diaz',
+    'about.dev2.role': 'Co-Founder & Full-Stack Engineer',
+    'about.dev2.specialty': 'Arquitectura & Sistemas',
+    'about.dev2.bio': 'Especializado en arquitecturas escalables, desarrollo de software a medida e integraciones de alto rendimiento con foco en velocidad y estabilidad.',
+    'about.dev3.name': 'Francisco Singla',
+    'about.dev3.role': 'Co-Founder & Software Engineer',
+    'about.dev3.specialty': 'Backend & Automatización',
+    'about.dev3.bio': 'Especializado en lógica de negocio compleja, APIs robustas, bases de datos y automatización de procesos operativos para escalar sin fricción.',
 
     // FAQ Section
     'faq.title': 'PREGUNTAS',
@@ -81,6 +101,7 @@ export const ui = {
     // Nav
     'nav.services': 'SERVICES',
     'nav.process': 'HOW WE WORK',
+    'nav.about': 'ABOUT US',
     'nav.faq': 'FAQ',
     'nav.whatsapp': 'Chat on WhatsApp',
     'nav.switchLang': 'Cambiar a Español',
@@ -102,6 +123,25 @@ export const ui = {
     'process.tag': '// METHODOLOGY',
     'process.title': 'HOW WE',
     'process.titleAccent': 'WORK',
+
+    // About Section
+    'about.tag': '// THE TEAM BEHIND THE CODE',
+    'about.title': 'WHO WE',
+    'about.titleAccent': 'ARE',
+    'about.subtitle': 'Direct engineering, zero middlemen or account managers diluting your vision.',
+    'about.description': 'At Harness, we solve our clients real problems with technical judgment, commitment, and accountability. No middlemen: the people who design your solution are the ones who build it.',
+    'about.dev1.name': 'Matias Fuentes',
+    'about.dev1.role': 'Co-Founder & Creative Technologist',
+    'about.dev1.specialty': 'Frontend & Interactive Experience',
+    'about.dev1.bio': 'Focused on high-converting interfaces, fluid motion systems, technical SEO optimization, and e-commerce experiences built to sell.',
+    'about.dev2.name': 'Ignacio Diaz',
+    'about.dev2.role': 'Co-Founder & Full-Stack Engineer',
+    'about.dev2.specialty': 'Architecture & Systems',
+    'about.dev2.bio': 'Specialized in scalable architectures, tailor-made software development, and high-performance integrations focused on speed and reliability.',
+    'about.dev3.name': 'Francisco Singla',
+    'about.dev3.role': 'Co-Founder & Software Engineer',
+    'about.dev3.specialty': 'Backend & Automation',
+    'about.dev3.bio': 'Specialized in complex business logic, robust APIs, databases, and operational workflow automation designed to scale seamlessly.',
 
     // FAQ Section
     'faq.title': 'FREQUENTLY ASKED',

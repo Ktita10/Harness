@@ -64,18 +64,19 @@ export function initProcessAnimation(): gsap.core.Timeline | null {
   if (!track) return null;
   const mm = gsap.matchMedia();
 
-  // Desktop (>= 1024px): un único pin. Se extiende un viewport extra (ventana de
-  // cortina) durante el cual #faq sube por encima de la sección fija.
+  // Desktop (>= 1024px): un único pin para el recorrido horizontal de #proceso.
+  // Si existe #nosotros después de #proceso, la ventana de cortina hacia #faq la maneja #nosotros.
   mm.add('(min-width: 1024px)', () => {
     if (!track) return;
 
+    const hasAboutSection = Boolean(document.getElementById('nosotros'));
     const scrollDistance = () => track.scrollWidth - window.innerWidth;
 
     ScrollTrigger.create({
       trigger: section,
       pin: true,
       start: 'top top',
-      end: () => `+=${scrollDistance() + window.innerHeight}`,
+      end: () => `+=${scrollDistance() + (hasAboutSection ? 0 : window.innerHeight)}`,
       invalidateOnRefresh: true,
     });
 

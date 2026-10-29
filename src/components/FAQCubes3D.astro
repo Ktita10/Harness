@@ -18,7 +18,7 @@ const { sectionSelector = '#faq-preguntas', class: className = '' } = Astro.prop
 ---
 
 <div
-  class:list={['faq-3d-cubes absolute inset-0 pointer-events-none select-none z-0 overflow-hidden', className]}
+  class:list={['faq-3d-cubes absolute inset-x-0 top-0 h-[820px] pointer-events-none select-none z-0 overflow-hidden', className]}
   data-faq-3d
   data-section-selector={sectionSelector}
   aria-hidden="true"
@@ -245,11 +245,15 @@ const { sectionSelector = '#faq-preguntas', class: className = '' } = Astro.prop
     let height = 0;
 
     function resize() {
-      const rect = sec.getBoundingClientRect();
-      width = rect.width || window.innerWidth;
-      height = rect.height || window.innerHeight;
+      const rect = root.getBoundingClientRect();
+      const newWidth = rect.width || window.innerWidth;
+      const newHeight = rect.height || 820;
 
-      if (width === 0 || height === 0) return;
+      if (newWidth === 0 || newHeight === 0) return;
+      if (Math.abs(newWidth - width) < 1 && Math.abs(newHeight - height) < 1) return;
+
+      width = newWidth;
+      height = newHeight;
 
       renderer.setSize(width, height, false);
       camera.aspect = width / height;
@@ -293,7 +297,7 @@ const { sectionSelector = '#faq-preguntas', class: className = '' } = Astro.prop
     let resizeObserver: ResizeObserver | null = null;
     if (typeof ResizeObserver !== 'undefined') {
       resizeObserver = new ResizeObserver(() => resize());
-      resizeObserver.observe(sec);
+      resizeObserver.observe(root);
     }
 
     // Animación y visibilidad
@@ -303,7 +307,7 @@ const { sectionSelector = '#faq-preguntas', class: className = '' } = Astro.prop
     let scrollProgress = 0;
 
     function updateScrollProgress() {
-      const rect = sec.getBoundingClientRect();
+      const rect = root.getBoundingClientRect();
       const windowH = window.innerHeight;
       const totalDist = rect.height + windowH;
       const current = windowH - rect.top;
