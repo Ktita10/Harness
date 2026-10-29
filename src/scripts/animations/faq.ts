@@ -10,9 +10,12 @@ export function initFAQAnimation(): gsap.core.Timeline | null {
 
   if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) return null;
 
-  // Cortina: #proceso queda fijo (pin en process.ts) y #faq sube por encima.
-  // Aquí solo se oscurece progresivamente la sección cubierta.
-  const overlay = processSection?.querySelector<HTMLElement>('[data-process-curtain-overlay]');
+  // Cortina: si #nosotros está presente, su propio módulo (about.ts) maneja el overlay de cortina.
+  // Si no está #nosotros, se oscurece #proceso cuando #faq sube por encima.
+  const hasAboutSection = Boolean(document.getElementById('nosotros'));
+  const overlay = !hasAboutSection
+    ? processSection?.querySelector<HTMLElement>('[data-process-curtain-overlay]')
+    : null;
   if (overlay) {
     gsap.to(overlay, {
       opacity: 0.5,

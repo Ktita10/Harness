@@ -1,0 +1,329 @@
+---
+import AboutCardCubes3D from '../AboutCardCubes3D.astro';
+import { getLangFromUrl, useTranslations } from '../../i18n/utils';
+import type { Lang } from '../../i18n/ui';
+
+interface Props {
+  lang?: Lang;
+}
+
+const currentLang = Astro.props.lang || getLangFromUrl(Astro.url);
+const t = useTranslations(currentLang);
+
+const developers = [
+  {
+    name: t('about.dev1.name'),
+    role: t('about.dev1.role'),
+    specialty: t('about.dev1.specialty'),
+    bio: t('about.dev1.bio'),
+    imageSrc: '/images/matias fuentes desarrollador 1.png',
+    imageAlt: `${t('about.dev1.name')} — ${t('about.dev1.role')} en HARNESS STUDIO`,
+    scale: 0.65,
+    cubesSeed: 202,
+    socials: [
+      { label: 'LinkedIn', href: 'https://linkedin.com/' },
+      { label: 'GitHub', href: 'https://github.com/' },
+    ],
+  },
+  {
+    name: t('about.dev2.name'),
+    role: t('about.dev2.role'),
+    specialty: t('about.dev2.specialty'),
+    bio: t('about.dev2.bio'),
+    imageSrc: '/images/ignacio diaz desarrollador 2.png',
+    imageAlt: `${t('about.dev2.name')} — ${t('about.dev2.role')} en HARNESS STUDIO`,
+    scale: 0.81,
+    cubesSeed: 101,
+    socials: [
+      { label: 'LinkedIn', href: 'https://linkedin.com/' },
+      { label: 'GitHub', href: 'https://github.com/' },
+    ],
+  },
+  {
+    name: t('about.dev3.name'),
+    role: t('about.dev3.role'),
+    specialty: t('about.dev3.specialty'),
+    bio: t('about.dev3.bio'),
+    imageSrc: '/images/desarrollador 3.png',
+    imageAlt: `${t('about.dev3.name')} — ${t('about.dev3.role')} en HARNESS STUDIO`,
+    scale: 0.64,
+    cubesSeed: 303,
+    socials: [
+      { label: 'LinkedIn', href: 'https://linkedin.com/' },
+      { label: 'GitHub', href: 'https://github.com/' },
+    ],
+  },
+];
+---
+
+<section
+  id="nosotros"
+  aria-labelledby="about-title"
+  class="about-section relative pt-20 sm:pt-28 lg:pt-36 pb-28 sm:pb-36 lg:pb-48 px-6 sm:px-10 lg:px-12 xl:px-16 w-full max-w-full overflow-x-clip select-none !bg-transparent z-10"
+>
+  <!-- Overlay para el efecto cortina de FAQ (oscurece gradualmente #nosotros mientras #faq asciende) -->
+  <div
+    data-about-curtain-overlay
+    class="absolute inset-0 bg-black pointer-events-none opacity-0 z-40"
+    aria-hidden="true"
+  ></div>
+
+  <div class="max-w-7xl mx-auto relative z-10">
+    <!-- Encabezado editorial superior estructurado -->
+    <div
+      data-about-header
+      class="w-full mb-14 sm:mb-20 lg:mb-24"
+    >
+      <!-- Tag en la esquina superior izquierda -->
+      <div class="text-left mb-6 sm:mb-8">
+        <span
+          data-about-reveal
+          class="inline-block font-mono text-xs sm:text-sm uppercase tracking-[0.22em] text-[#FF5A00] font-bold will-change-transform"
+        >
+          {t('about.tag')}
+        </span>
+      </div>
+
+      <!-- Título grande y abarcativo con bajada en dos columnas / bloque equilibrado -->
+      <div class="grid grid-cols-1 lg:grid-cols-12 gap-6 lg:gap-12 items-end">
+        <div class="lg:col-span-7">
+          <h2
+            id="about-title"
+            data-about-reveal
+            data-heading-pair
+            class="inline-flex flex-col items-start text-left text-5xl sm:text-6xl md:text-7xl lg:text-8xl xl:text-[5.5rem] font-black uppercase text-white tracking-[-0.03em] leading-[0.88] will-change-transform"
+          >
+            <span data-heading-top class="font-display font-black uppercase block whitespace-nowrap leading-[0.88]">
+              {t('about.title')}
+            </span>
+            <span data-heading-bottom class="font-serif italic font-normal text-[#FF5A00] tracking-normal block whitespace-nowrap leading-[0.88] pr-[0.04em] mt-1 sm:mt-2">
+              {t('about.titleAccent')}
+            </span>
+          </h2>
+        </div>
+
+        <div class="lg:col-span-5 flex flex-col justify-end text-left pt-2 lg:pt-0">
+          <p
+            data-about-reveal
+            class="text-lg sm:text-xl lg:text-2xl font-display font-bold text-[#F2EEE6] leading-snug mb-3 will-change-transform"
+          >
+            {t('about.subtitle')}
+          </p>
+
+          <p
+            data-about-reveal
+            class="text-sm sm:text-base text-zinc-400 leading-relaxed will-change-transform"
+          >
+            {t('about.description')}
+          </p>
+        </div>
+      </div>
+    </div>
+
+    <!-- Área Visual Interactiva: Los 3 Desarrolladores horizontalmente en 3 columnas, con desfase orgánico -->
+    <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-8 sm:gap-6 lg:gap-6 xl:gap-8 items-start">
+      {
+        developers.map((dev, index) => (
+          <article
+            data-about-card
+            style={`--scale: ${dev.scale};`}
+            class:list={[
+              'member group relative flex flex-col w-full will-change-transform',
+              index === 0 && 'lg:mt-0',
+              index === 1 && 'sm:mt-8 lg:mt-14',
+              index === 2 && 'sm:col-span-2 sm:max-w-md sm:mx-auto lg:col-span-1 lg:max-w-none lg:mx-0 lg:mt-6',
+            ]}
+          >
+              <!-- 1. Tarjeta de Foto (.member__photo) con líneas topográficas naranja suave + lluvia lenta de cubos 6x6 -->
+              <div
+                data-about-stage
+                class="member__photo relative w-full isolate"
+              >
+                <!-- Capa 1 (Patrón de líneas topográficas naranja suave + Lluvia de cubos estilo Rubik 6x6) -->
+                <div
+                  data-about-bg
+                  class="member__backdrop absolute -inset-4 pointer-events-none will-change-transform"
+                  aria-hidden="true"
+                >
+                  <!-- Patrón de curvas topográficas en naranja suave detrás de la lluvia de cubos -->
+                  <svg
+                    class="member__topo absolute inset-0 w-full h-full pointer-events-none select-none z-0"
+                    xmlns="http://www.w3.org/2000/svg"
+                    viewBox="0 0 600 750"
+                    preserveAspectRatio="xMidYMid slice"
+                  >
+                    <g fill="none" stroke="var(--member-topo-color)" stroke-width="1.25">
+                      <path d="M-80,90 C110,20 260,180 430,100 C540,45 620,110 700,75" />
+                      <path d="M-80,175 C130,105 240,265 420,190 C530,140 610,195 700,160" />
+                      <path d="M-80,265 C150,195 220,350 405,280 C520,235 600,285 700,250" />
+                      <path d="M-80,355 C170,285 205,435 390,375 C510,330 595,375 700,340" />
+                      <path d="M-80,445 C190,375 190,520 375,470 C495,425 585,465 700,430" />
+                      <path d="M-80,535 C205,465 175,605 360,565 C480,520 575,555 700,520" />
+                      <path d="M-80,625 C220,555 160,690 345,660 C465,615 565,645 700,610" />
+                      <circle cx="520" cy="110" r="145" stroke-opacity="0.65" />
+                      <circle cx="520" cy="110" r="225" stroke-opacity="0.45" />
+                      <circle cx="95" cy="580" r="160" stroke-opacity="0.5" />
+                    </g>
+                  </svg>
+
+                  <!-- Lluvia lenta de cubos Rubik 6x6 por encima del patrón topográfico -->
+                  <AboutCardCubes3D seed={dev.cubesSeed} class="z-[1]" />
+                </div>
+
+                <!-- Capa 2 (Retrato Cutout centrado y anclado al borde inferior) -->
+                <div
+                  data-about-portrait
+                  class="member__portrait-wrap absolute inset-0 z-[2] flex items-end justify-center pointer-events-none will-change-transform"
+                >
+                  <img
+                    src={dev.imageSrc}
+                    alt={dev.imageAlt}
+                    width="720"
+                    height="900"
+                    loading="lazy"
+                    decoding="async"
+                    class="member__img select-none"
+                  />
+                </div>
+              </div>
+
+              <!-- 2. Tarjeta de Información (.member__info) unificada y oscura con alto contraste -->
+              <div
+                data-about-glass
+                class="member__info relative z-[3] will-change-transform"
+              >
+                <!-- Rol / Especialidad en naranja monoespaciado -->
+                <div class="flex items-center justify-between gap-2 mb-2">
+                  <span class="font-mono text-[10px] sm:text-[11px] uppercase tracking-[0.18em] text-[#FF5F00] font-bold">
+                    // {dev.specialty}
+                  </span>
+                </div>
+
+                <!-- Nombre en mayúsculas y cargo -->
+                <h3 class="font-display text-2xl sm:text-3xl font-black uppercase tracking-tight text-white leading-none mb-1.5">
+                  {dev.name}
+                </h3>
+                <p class="font-mono text-xs sm:text-sm text-zinc-300 font-medium mb-3.5">
+                  {dev.role}
+                </p>
+
+                <!-- Descripción breve con alto contraste -->
+                <p class="text-xs sm:text-sm text-zinc-300/95 leading-relaxed mb-5 font-normal">
+                  {dev.bio}
+                </p>
+
+                <!-- Links a LinkedIn y GitHub con flecha -->
+                <div class="pt-3.5 border-t border-white/10 flex items-center gap-5">
+                  {dev.socials.map((social) => (
+                    <a
+                      href={social.href}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      aria-label={`${social.label} — ${dev.name}`}
+                      class="inline-flex items-center gap-1.5 font-mono text-xs uppercase tracking-[0.14em] font-bold text-white/90 hover:text-[#FF5F00] transition-all duration-200 hover:translate-x-0.5"
+                    >
+                      <span>{social.label}</span>
+                      <span aria-hidden="true" class="text-[0.85em] leading-none">↗</span>
+                    </a>
+                  ))}
+                </div>
+              </div>
+            </article>
+          ))
+        }
+      </div>
+  </div>
+</section>
+
+<style>
+  /* Variables de ajuste rápido para colores, tamaños y líneas topográficas */
+  .about-section {
+    --member-bg-top: #141416;
+    --member-bg-bottom: #0a0a0a;
+    --member-border: rgba(255, 255, 255, 0.08);
+    --member-topo-color: rgba(255, 122, 48, 0.22);
+    --member-info-bg: rgba(20, 20, 20, 0.72);
+    --member-info-border: rgba(255, 255, 255, 0.1);
+    --member-info-overlap: -70px;
+    --member-filter: brightness(0.9) contrast(0.95) saturate(0.9);
+  }
+
+  /* 1. Contenedor de la tarjeta de foto (.member__photo) limpio, sin resplandor naranja */
+  .member__photo {
+    aspect-ratio: 4 / 4.8;
+    border-radius: 24px;
+    overflow: hidden;
+    border: 1px solid var(--member-border);
+    background: linear-gradient(180deg, var(--member-bg-top) 0%, var(--member-bg-bottom) 100%);
+    box-shadow: 0 25px 60px -15px rgba(0, 0, 0, 0.85);
+    transition: border-color 0.35s ease, box-shadow 0.35s ease;
+  }
+
+  .member:hover .member__photo {
+    border-color: rgba(255, 95, 0, 0.32);
+  }
+
+  /* Contenedor interno de líneas topográficas + lluvia de cubos sincronizado con el parallax de GSAP */
+  .member__backdrop {
+    z-index: 0;
+  }
+
+  /* 2. Retrato recortado anclado al borde inferior, 100% opaco para tapar siempre los cubos detrás */
+  .member__portrait-wrap {
+    overflow: hidden;
+  }
+
+  .member__img {
+    position: relative;
+    z-index: 1;
+    height: calc(var(--scale, 0.65) * 100%);
+    width: auto;
+    max-width: none;
+    flex-shrink: 0;
+    object-fit: contain;
+    object-position: bottom center;
+    transform-origin: bottom center;
+    filter: drop-shadow(0 18px 32px rgba(0, 0, 0, 0.75)) var(--member-filter);
+    transition: transform 0.45s cubic-bezier(0.22, 1, 0.36, 1);
+  }
+
+  /* Fundido oscuro inferior sobre toda la escena (retrato + fondo) para que la persona nunca sea semitransparente */
+  .member__photo::after {
+    content: '';
+    position: absolute;
+    inset: 0;
+    z-index: 3;
+    pointer-events: none;
+    background: linear-gradient(to bottom, rgba(10, 10, 10, 0) 68%, #0a0a0a 96%);
+  }
+
+  /* 3. Tarjeta de información (.member__info) unificada, compacta y elegante */
+  .member__info {
+    margin: var(--member-info-overlap) 12px 0;
+    padding: 18px 20px 20px;
+    border-radius: 20px;
+    background: var(--member-info-bg);
+    backdrop-filter: blur(16px);
+    -webkit-backdrop-filter: blur(16px);
+    border: 1px solid var(--member-info-border);
+    box-shadow: 0 20px 40px -10px rgba(0, 0, 0, 0.75);
+    transition: border-color 0.3s ease, background-color 0.3s ease;
+  }
+
+  .member:hover .member__info {
+    background: rgba(24, 24, 26, 0.82);
+    border-color: rgba(255, 255, 255, 0.18);
+  }
+
+  @media (max-width: 639px) {
+    .about-section {
+      --member-info-overlap: -60px;
+    }
+
+    .member__info {
+      margin: var(--member-info-overlap) 8px 0;
+      padding: 16px 18px 18px;
+      border-radius: 18px;
+    }
+  }
+</style>

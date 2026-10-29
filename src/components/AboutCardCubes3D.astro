@@ -1,0 +1,401 @@
+---
+/**
+ * AboutCardCubes3D — Lluvia lenta de bloques modulares estilo Rubik 6x6 (6 cubos por lado)
+ * con el mismo ADN y materiales físicos (obsidian metal + electric papaya) de FAQCubes3D.
+ * Usa InstancedMesh por cada cubo para renderizar la grilla 6x6 con costo GPU mínimo y
+ * velocidad vertical uniforme en carriles separados para garantizar cero solapamiento.
+ */
+interface Props {
+  seed?: number;
+  class?: string;
+}
+
+const { seed = 101, class: className = '' } = Astro.props;
+---
+
+<div
+  class:list={['about-cubes-rain absolute inset-0 pointer-events-none select-none z-0 overflow-hidden', className]}
+  data-about-cubes-rain
+  data-seed={seed}
+  aria-hidden="true"
+>
+  <canvas class="about-cubes-rain__canvas w-full h-full block opacity-0"></canvas>
+</div>
+
+<style>
+  .about-cubes-rain {
+    mask-image: linear-gradient(to bottom, transparent 0%, #000 12%, #000 88%, transparent 100%);
+    -webkit-mask-image: linear-gradient(to bottom, transparent 0%, #000 12%, #000 88%, transparent 100%);
+  }
+
+  .about-cubes-rain__canvas {
+    transition: opacity 700ms cubic-bezier(0.16, 1, 0.3, 1);
+  }
+</style>
+
+<script>
+  function hasWebGL(): boolean {
+    try {
+      const c = document.createElement('canvas');
+      return !!(c.getContext('webgl2') || c.getContext('webgl'));
+    } catch {
+      return false;
+    }
+  }
+
+  function whenIdle(): Promise<void> {
+    return new Promise((resolve) => {
+      const w = window as any;
+      if (w.requestIdleCallback) w.requestIdleCallback(() => resolve(), { timeout: 600 });
+      else setTimeout(resolve, 150);
+    });
+  }
+
+  function makeRng(seed: number) {
+    let a = seed >>> 0;
+    return () => {
+      a |= 0;
+      a = (a + 0x6d2b79f5) | 0;
+      let t = Math.imul(a ^ (a >>> 15), 1 | a);
+      t = (t + Math.imul(t ^ (t >>> 7), 61 | t)) ^ t;
+      return ((t ^ (t >>> 14)) >>> 0) / 4294967296;
+    };
+  }
+
+  // Carriles estrictamente separados en X e Y con velocidad vertical UNIFORME (UNIFORM_FALL_SPEED)
+  // para que ningún cubo alcance ni se solape con otro en ningún momento.
+  const UNIFORM_FALL_SPEED = 0.21;
+
+  const RAIN_ITEMS = [
+    // Carril Izquierdo (relX: 0.17) — 2 cubos a 50% de ciclo de distancia vertical
+    { relX: 0.17, startY: 0.16, z: -0.1, scale: 0.96, rotSpeed: [0.11, 0.16, 0.07], swayAmp: 0.04, swayFreq: 0.45 },
+    { relX: 0.17, startY: 0.66, z: -0.25, scale: 0.86, rotSpeed: [0.09, -0.14, 0.10], swayAmp: 0.04, swayFreq: 0.52 },
+
+    // Carril Central Alto (relX: 0.50) — 1 cubo detrás de la silueta superior
+    { relX: 0.50, startY: 0.38, z: -0.75, scale: 0.82, rotSpeed: [-0.08, 0.13, -0.06], swayAmp: 0.03, swayFreq: 0.40 },
+
+    // Carril Derecho (relX: 0.83) — 2 cubos a 50% de ciclo de distancia vertical
+    { relX: 0.83, startY: 0.28, z: 0.05, scale: 0.94, rotSpeed: [-0.13, 0.15, -0.08], swayAmp: 0.04, swayFreq: 0.48 },
+    { relX: 0.83, startY: 0.78, z: -0.2, scale: 0.88, rotSpeed: [0.12, -0.13, 0.09], swayAmp: 0.04, swayFreq: 0.50 },
+  ];
+
+  async function setupSingleCardCubes(root: HTMLElement) {
+    if ((root as any).__aboutCubesInit || !hasWebGL()) return;
+    (root as any).__aboutCubesInit = true;
+
+    const canvas = root.querySelector<HTMLCanvasElement>('.about-cubes-rain__canvas');
+    if (!canvas) return;
+
+    const seedAttr = parseInt(root.dataset.seed || '101', 10);
+    const rng = makeRng(seedAttr);
+    const reduced = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+
+    await whenIdle();
+    const [THREE, { RoundedBoxGeometry }, { RoomEnvironment }] = await Promise.all([
+      import('three'),
+      import('three/examples/jsm/geometries/RoundedBoxGeometry.js'),
+      import('three/examples/jsm/environments/RoomEnvironment.js'),
+    ]);
+
+    if (!canvas.isConnected) return;
+
+    const lowEnd =
+      (navigator.hardwareConcurrency ?? 8) <= 2 ||
+      ((navigator as any).deviceMemory ?? 8) <= 2;
+    const dpr = Math.min(window.devicePixelRatio || 1, lowEnd ? 1 : 1.65);
+
+    const renderer = new THREE.WebGLRenderer({
+      canvas,
+      alpha: true,
+      antialias: true,
+      powerPreference: 'high-performance',
+    });
+    renderer.setPixelRatio(dpr);
+    renderer.setClearColor(0x000000, 0);
+    renderer.toneMapping = THREE.ACESFilmicToneMapping;
+    renderer.toneMappingExposure = 1.08;
+    renderer.outputColorSpace = THREE.SRGBColorSpace;
+
+    const scene = new THREE.Scene();
+    const camera = new THREE.PerspectiveCamera(36, 1, 0.1, 100);
+    camera.position.set(0, 0, 9.5);
+
+    // Entorno RoomEnvironment idéntico a FAQCubes3D
+    const pmrem = new THREE.PMREMGenerator(renderer);
+    const envRT = pmrem.fromScene(new RoomEnvironment(), 0.04);
+    scene.environment = envRT.texture;
+    (scene as any).environmentIntensity = 0.58;
+
+    // Iluminación idéntica a FAQCubes3D
+    const keyLight = new THREE.DirectionalLight(0xffffff, 1.9);
+    keyLight.position.set(-5, 7, 7);
+    scene.add(keyLight);
+
+    const rimLightA = new THREE.DirectionalLight('#FF5A00', 3.4);
+    rimLightA.position.set(7, 3, -4);
+    const rimLightB = new THREE.DirectionalLight('#FF5A00', 2.2);
+    rimLightB.position.set(-7, -2, -4);
+    scene.add(rimLightA, rimLightB);
+
+    const fillLight = new THREE.DirectionalLight(0xf8f9fa, 1.0);
+    fillLight.position.set(0, -5, 5);
+    scene.add(fillLight);
+
+    // Materiales de FAQCubes3D (negro metalizado obsidian + naranja eléctrico)
+    const darkMat = new THREE.MeshPhysicalMaterial({
+      color: 0x121212,
+      metalness: 0.92,
+      roughness: 0.22,
+      clearcoat: 0.85,
+      clearcoatRoughness: 0.18,
+    });
+
+    const orangeMat = new THREE.MeshPhysicalMaterial({
+      color: 0xff5a00,
+      metalness: 0.35,
+      roughness: 0.3,
+      clearcoat: 1.0,
+      clearcoatRoughness: 0.14,
+      emissive: 0xff5a00,
+      emissiveIntensity: 0.24,
+    });
+
+    // Geometría compartida para cada sub-cubo del Rubik de 6 cubos por lado (GRID = 6)
+    const GRID = 6;
+    const half = (GRID - 1) / 2;
+    const subSize = 0.145;
+    const gap = 0.018;
+    const step = subSize + gap;
+    const subGeo = new RoundedBoxGeometry(subSize, subSize, subSize, 2, 0.12 * subSize);
+
+    type RubikRainItem = {
+      cluster: InstanceType<typeof THREE.Group>;
+      relX: number;
+      normY: number;
+      z: number;
+      baseScale: number;
+      rotSpeed: [number, number, number];
+      swayAmp: number;
+      swayFreq: number;
+      phase: number;
+    };
+
+    const rainClusters: RubikRainItem[] = [];
+    const mainGroup = new THREE.Group();
+    scene.add(mainGroup);
+
+    const dummy = new THREE.Object3D();
+
+    // Construye un cubo estilo Rubik de 6 cubos por lado (cascara exterior 6x6x6 con InstancedMesh)
+    function createRubik6x6Cluster(): InstanceType<typeof THREE.Group> {
+      const cluster = new THREE.Group();
+      const darkPositions: [number, number, number][] = [];
+      const orangePositions: [number, number, number][] = [];
+
+      for (let ix = 0; ix < GRID; ix++) {
+        for (let iy = 0; iy < GRID; iy++) {
+          for (let iz = 0; iz < GRID; iz++) {
+            // Solo renderizamos la cáscara exterior visible del cubo 6x6x6
+            const isShell =
+              ix === 0 || ix === GRID - 1 ||
+              iy === 0 || iy === GRID - 1 ||
+              iz === 0 || iz === GRID - 1;
+            if (!isShell) continue;
+
+            const px = (ix - half) * step;
+            const py = (iy - half) * step;
+            const pz = (iz - half) * step;
+
+            // ~18% de sub-cubos en naranja eléctrico distribuidos orgánicamente
+            if (rng() < 0.18) {
+              orangePositions.push([px, py, pz]);
+            } else {
+              darkPositions.push([px, py, pz]);
+            }
+          }
+        }
+      }
+
+      if (darkPositions.length > 0) {
+        const darkInst = new THREE.InstancedMesh(subGeo, darkMat, darkPositions.length);
+        darkPositions.forEach(([x, y, z], i) => {
+          dummy.position.set(x, y, z);
+          dummy.updateMatrix();
+          darkInst.setMatrixAt(i, dummy.matrix);
+        });
+        darkInst.instanceMatrix.needsUpdate = true;
+        cluster.add(darkInst);
+      }
+
+      if (orangePositions.length > 0) {
+        const orangeInst = new THREE.InstancedMesh(subGeo, orangeMat, orangePositions.length);
+        orangePositions.forEach(([x, y, z], i) => {
+          dummy.position.set(x, y, z);
+          dummy.updateMatrix();
+          orangeInst.setMatrixAt(i, dummy.matrix);
+        });
+        orangeInst.instanceMatrix.needsUpdate = true;
+        cluster.add(orangeInst);
+      }
+
+      return cluster;
+    }
+
+    const phaseOffset = (seedAttr % 10) * 0.03;
+
+    for (const cfg of RAIN_ITEMS) {
+      const cluster = createRubik6x6Cluster();
+      cluster.rotation.set(rng() * Math.PI * 2, rng() * Math.PI * 2, rng() * Math.PI * 2);
+      mainGroup.add(cluster);
+
+      rainClusters.push({
+        cluster,
+        relX: cfg.relX,
+        normY: (cfg.startY + phaseOffset) % 1,
+        z: cfg.z,
+        baseScale: cfg.scale,
+        rotSpeed: [cfg.rotSpeed[0], cfg.rotSpeed[1], cfg.rotSpeed[2]],
+        swayAmp: cfg.swayAmp,
+        swayFreq: cfg.swayFreq,
+        phase: rng() * Math.PI * 2,
+      });
+    }
+
+    let width = 0;
+    let height = 0;
+    let visibleWidth = 6;
+    let visibleHeight = 7.5;
+
+    function updateLayout() {
+      const rect = root.getBoundingClientRect();
+      const newW = rect.width || 360;
+      const newH = rect.height || 450;
+
+      if (Math.abs(newW - width) < 1 && Math.abs(newH - height) < 1) return;
+      width = newW;
+      height = newH;
+
+      renderer.setSize(width, height, false);
+      camera.aspect = width / height;
+      camera.updateProjectionMatrix();
+
+      const vFOV = (camera.fov * Math.PI) / 180;
+      visibleHeight = 2 * Math.tan(vFOV / 2) * camera.position.z;
+      visibleWidth = visibleHeight * camera.aspect;
+
+      const scaleMult = width < 480 ? 0.8 : 1.0;
+      for (const item of rainClusters) {
+        item.cluster.scale.setScalar(item.baseScale * scaleMult);
+      }
+    }
+
+    updateLayout();
+    window.addEventListener('resize', updateLayout, { passive: true });
+
+    let resizeObserver: ResizeObserver | null = null;
+    if (typeof ResizeObserver !== 'undefined') {
+      resizeObserver = new ResizeObserver(() => updateLayout());
+      resizeObserver.observe(root);
+    }
+
+    let isVisible = false;
+    let animId = 0;
+    let lastTime = performance.now();
+
+    function syncPositions(elapsed: number, dt: number) {
+      const marginY = 1.6;
+      const totalSpanY = visibleHeight + marginY * 2;
+      const topBound = visibleHeight * 0.5 + marginY;
+
+      for (const item of rainClusters) {
+        if (!reduced) {
+          // Velocidad de caída idéntica para todos: mantiene la distancia entre cubos constante (cero solapamiento)
+          item.normY = (item.normY + (UNIFORM_FALL_SPEED * dt) / totalSpanY) % 1;
+
+          item.cluster.rotation.x += item.rotSpeed[0] * dt;
+          item.cluster.rotation.y += item.rotSpeed[1] * dt;
+          item.cluster.rotation.z += item.rotSpeed[2] * dt;
+        }
+
+        const baseX = (item.relX - 0.5) * visibleWidth;
+        const swayX = reduced ? 0 : Math.sin(elapsed * item.swayFreq + item.phase) * item.swayAmp;
+        const currentY = topBound - item.normY * totalSpanY;
+
+        item.cluster.position.set(baseX + swayX, currentY, item.z);
+      }
+    }
+
+    function animate(now: number) {
+      if (!isVisible) return;
+
+      const dt = Math.min((now - lastTime) * 0.001, 0.05);
+      lastTime = now;
+      const elapsed = now * 0.001;
+
+      syncPositions(elapsed, dt);
+      renderer.render(scene, camera);
+
+      if (!reduced) {
+        animId = requestAnimationFrame(animate);
+      }
+    }
+
+    const observer = new IntersectionObserver(
+      (entries) => {
+        for (const entry of entries) {
+          if (entry.isIntersecting) {
+            if (!isVisible) {
+              isVisible = true;
+              lastTime = performance.now();
+              syncPositions(lastTime * 0.001, 0);
+              renderer.render(scene, camera);
+              canvas.style.opacity = '1';
+              if (!reduced) {
+                animId = requestAnimationFrame(animate);
+              }
+            }
+          } else {
+            if (isVisible) {
+              isVisible = false;
+              cancelAnimationFrame(animId);
+            }
+          }
+        }
+      },
+      { threshold: 0.02 }
+    );
+
+    observer.observe(root);
+
+    document.addEventListener(
+      'astro:before-swap',
+      () => {
+        cancelAnimationFrame(animId);
+        observer.disconnect();
+        if (resizeObserver) resizeObserver.disconnect();
+        window.removeEventListener('resize', updateLayout);
+        subGeo.dispose();
+        darkMat.dispose();
+        orangeMat.dispose();
+        pmrem.dispose();
+        envRT.dispose();
+        renderer.dispose();
+      },
+      { once: true }
+    );
+  }
+
+  function initAboutCardCubes() {
+    const roots = document.querySelectorAll<HTMLElement>('[data-about-cubes-rain]');
+    roots.forEach((root) => {
+      setupSingleCardCubes(root);
+    });
+  }
+
+  if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', initAboutCardCubes);
+  } else {
+    initAboutCardCubes();
+  }
+  document.addEventListener('astro:page-load', initAboutCardCubes);
+</script>

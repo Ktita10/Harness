@@ -1,6 +1,7 @@
 ---
 import { getCollection } from 'astro:content';
 import TopoBackground from '../ui/TopoBackground.astro';
+import AboutSection from './AboutSection.astro';
 import { sortServices, getServiceSlug } from '../../utils/services';
 import { getLangFromUrl, useTranslations } from '../../i18n/utils';
 import type { Lang } from '../../i18n/ui';
@@ -415,6 +416,11 @@ const steps = isEn
       </div>
     </div>
   </section>
+
+  <!-- =====================================================================
+       PARTE 3: QUIÉNES SOMOS (Retratos Cutout + Parallax 3D + Glassmorphism)
+       ===================================================================== -->
+  <AboutSection lang={currentLang} />
 </div>
 
 <script>
