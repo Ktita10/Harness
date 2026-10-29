@@ -128,7 +128,7 @@ const developers = [
             data-about-card
             style={`--scale: ${dev.scale};`}
             class:list={[
-              'member group relative flex flex-col w-full will-change-transform',
+              'member group relative flex flex-col w-full',
               index === 0 && 'lg:mt-0',
               index === 1 && 'sm:mt-8 lg:mt-14',
               index === 2 && 'sm:col-span-2 sm:max-w-md sm:mx-auto lg:col-span-1 lg:max-w-none lg:mx-0 lg:mt-6',
@@ -142,7 +142,7 @@ const developers = [
                 <!-- Capa 1 (Patrón de líneas topográficas naranja suave + Lluvia de cubos estilo Rubik 6x6) -->
                 <div
                   data-about-bg
-                  class="member__backdrop absolute -inset-4 pointer-events-none will-change-transform"
+                  class="member__backdrop absolute -inset-4 pointer-events-none"
                   aria-hidden="true"
                 >
                   <!-- Patrón de curvas topográficas en naranja suave detrás de la lluvia de cubos -->
@@ -173,7 +173,7 @@ const developers = [
                 <!-- Capa 2 (Retrato Cutout centrado y anclado al borde inferior) -->
                 <div
                   data-about-portrait
-                  class="member__portrait-wrap absolute inset-0 z-[2] flex items-end justify-center pointer-events-none will-change-transform"
+                  class="member__portrait-wrap absolute inset-0 z-[2] flex items-end justify-center pointer-events-none"
                 >
                   <img
                     src={dev.imageSrc}
@@ -190,7 +190,7 @@ const developers = [
               <!-- 2. Tarjeta de Información (.member__info) unificada y oscura con alto contraste -->
               <div
                 data-about-glass
-                class="member__info relative z-[3] will-change-transform"
+                class="member__info relative z-[3]"
               >
                 <!-- Rol / Especialidad en naranja monoespaciado -->
                 <div class="flex items-center justify-between gap-2 mb-2">
@@ -287,6 +287,16 @@ const developers = [
     transition: transform 0.45s cubic-bezier(0.22, 1, 0.36, 1);
   }
 
+  /* Fundido oscuro superior para que los cubos nazcan suavemente sin requerir mask-image sobre el canvas WebGL */
+  .member__photo::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    z-index: 1;
+    pointer-events: none;
+    background: linear-gradient(to bottom, var(--member-bg-top) 0%, rgba(20, 20, 22, 0) 14%);
+  }
+
   /* Fundido oscuro inferior sobre toda la escena (retrato + fondo) para que la persona nunca sea semitransparente */
   .member__photo::after {
     content: '';
@@ -313,6 +323,27 @@ const developers = [
   .member:hover .member__info {
     background: rgba(24, 24, 26, 0.82);
     border-color: rgba(255, 255, 255, 0.18);
+  }
+
+  @media (hover: hover) and (pointer: fine) {
+    .member,
+    .member__backdrop,
+    .member__portrait-wrap,
+    .member__info {
+      will-change: transform;
+    }
+  }
+
+  @media (max-width: 1023px) {
+    .member__img {
+      filter: var(--member-filter);
+    }
+
+    .member__info {
+      background: rgba(18, 18, 20, 0.88);
+      backdrop-filter: blur(8px);
+      -webkit-backdrop-filter: blur(8px);
+    }
   }
 
   @media (max-width: 639px) {

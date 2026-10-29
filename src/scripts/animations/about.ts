@@ -151,64 +151,6 @@ export function initAboutAnimation(): void {
         card.removeEventListener('mouseleave', onMouseLeave);
       });
     });
-  } else {
-    // 3B. Dispositivos táctiles (móviles/tablets): Parallax vertical suave vinculado al scroll
-    cards.forEach((card) => {
-      const bg = card.querySelector<HTMLElement>('[data-about-bg]');
-      const portrait = card.querySelector<HTMLElement>('[data-about-portrait]');
-      const glass = card.querySelector<HTMLElement>('[data-about-glass]');
-
-      if (portrait) {
-        gsap.fromTo(
-          portrait,
-          { y: 16 },
-          {
-            y: -16,
-            ease: 'none',
-            scrollTrigger: {
-              trigger: card,
-              start: 'top bottom',
-              end: 'bottom top',
-              scrub: 1,
-            },
-          }
-        );
-      }
-
-      if (bg) {
-        gsap.fromTo(
-          bg,
-          { y: -12 },
-          {
-            y: 12,
-            ease: 'none',
-            scrollTrigger: {
-              trigger: card,
-              start: 'top bottom',
-              end: 'bottom top',
-              scrub: 1,
-            },
-          }
-        );
-      }
-
-      if (glass) {
-        gsap.fromTo(
-          glass,
-          { y: 8 },
-          {
-            y: -6,
-            ease: 'none',
-            scrollTrigger: {
-              trigger: card,
-              start: 'top bottom',
-              end: 'bottom top',
-              scrub: 1,
-            },
-          }
-        );
-      }
-    });
   }
 
   // 4. Efecto Cortina hacia FAQ en Desktop (>= 1024px):
