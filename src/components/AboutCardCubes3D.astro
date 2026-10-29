@@ -23,11 +23,6 @@ const { seed = 101, class: className = '' } = Astro.props;
 </div>
 
 <style>
-  .about-cubes-rain {
-    mask-image: linear-gradient(to bottom, transparent 0%, #000 12%, #000 88%, transparent 100%);
-    -webkit-mask-image: linear-gradient(to bottom, transparent 0%, #000 12%, #000 88%, transparent 100%);
-  }
-
   .about-cubes-rain__canvas {
     transition: opacity 700ms cubic-bezier(0.16, 1, 0.3, 1);
   }
@@ -89,26 +84,24 @@ const { seed = 101, class: className = '' } = Astro.props;
     const seedAttr = parseInt(root.dataset.seed || '101', 10);
     const rng = makeRng(seedAttr);
     const reduced = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+    const isMobile = window.matchMedia('(max-width: 1023px), (hover: none) and (pointer: coarse)').matches;
 
     await whenIdle();
-    const [THREE, { RoundedBoxGeometry }, { RoomEnvironment }] = await Promise.all([
-      import('three'),
-      import('three/examples/jsm/geometries/RoundedBoxGeometry.js'),
-      import('three/examples/jsm/environments/RoomEnvironment.js'),
-    ]);
+    const THREE = await import('three');
 
     if (!canvas.isConnected) return;
 
     const lowEnd =
-      (navigator.hardwareConcurrency ?? 8) <= 2 ||
-      ((navigator as any).deviceMemory ?? 8) <= 2;
-    const dpr = Math.min(window.devicePixelRatio || 1, lowEnd ? 1 : 1.65);
+      isMobile ||
+      (navigator.hardwareConcurrency ?? 8) <= 4 ||
+      ((navigator as any).deviceMemory ?? 8) <= 4;
+    const dpr = isMobile ? 1 : Math.min(window.devicePixelRatio || 1, lowEnd ? 1.2 : 1.5);
 
     const renderer = new THREE.WebGLRenderer({
       canvas,
       alpha: true,
-      antialias: true,
-      powerPreference: 'high-performance',
+      antialias: !isMobile,
+      powerPreference: isMobile ? 'default' : 'high-performance',
     });
     renderer.setPixelRatio(dpr);
     renderer.setClearColor(0x000000, 0);
@@ -120,53 +113,88 @@ const { seed = 101, class: className = '' } = Astro.props;
     const camera = new THREE.PerspectiveCamera(36, 1, 0.1, 100);
     camera.position.set(0, 0, 9.5);
 
-    // Entorno RoomEnvironment idéntico a FAQCubes3D
-    const pmrem = new THREE.PMREMGenerator(renderer);
-    const envRT = pmrem.fromScene(new RoomEnvironment(), 0.04);
-    scene.environment = envRT.texture;
-    (scene as any).environmentIntensity = 0.58;
+    let pmrem: InstanceType<typeof THREE.PMREMGenerator> | null = null;
+    let envRT: { texture: any; dispose: () => void } | null = null;
 
-    // Iluminación idéntica a FAQCubes3D
-    const keyLight = new THREE.DirectionalLight(0xffffff, 1.9);
+    // En desktop usamos RoomEnvironment; en móvil usamos AmbientLight + DirectionalLights
+    // para ahorrar 3 cubemaps IBL pesados y mantener 60fps estables al scrollear.
+    if (!isMobile) {
+      const { RoomEnvironment } = await import('three/examples/jsm/environments/RoomEnvironment.js');
+      if (!canvas.isConnected) {
+        renderer.dispose();
+        return;
+      }
+      pmrem = new THREE.PMREMGenerator(renderer);
+      envRT = pmrem.fromScene(new RoomEnvironment(), 0.04);
+      scene.environment = envRT.texture;
+      (scene as any).environmentIntensity = 0.58;
+    } else {
+      const ambientLight = new THREE.AmbientLight(0xffffff, 0.9);
+      scene.add(ambientLight);
+    }
+
+    // Iluminación direccional (obsidian + naranja eléctrico)
+    const keyLight = new THREE.DirectionalLight(0xffffff, isMobile ? 2.4 : 1.9);
     keyLight.position.set(-5, 7, 7);
     scene.add(keyLight);
 
-    const rimLightA = new THREE.DirectionalLight('#FF5A00', 3.4);
+    const rimLightA = new THREE.DirectionalLight('#FF5A00', isMobile ? 3.8 : 3.4);
     rimLightA.position.set(7, 3, -4);
-    const rimLightB = new THREE.DirectionalLight('#FF5A00', 2.2);
+    const rimLightB = new THREE.DirectionalLight('#FF5A00', isMobile ? 2.5 : 2.2);
     rimLightB.position.set(-7, -2, -4);
     scene.add(rimLightA, rimLightB);
 
-    const fillLight = new THREE.DirectionalLight(0xf8f9fa, 1.0);
+    const fillLight = new THREE.DirectionalLight(0xf8f9fa, 1.1);
     fillLight.position.set(0, -5, 5);
     scene.add(fillLight);
 
-    // Materiales de FAQCubes3D (negro metalizado obsidian + naranja eléctrico)
-    const darkMat = new THREE.MeshPhysicalMaterial({
-      color: 0x121212,
-      metalness: 0.92,
-      roughness: 0.22,
-      clearcoat: 0.85,
-      clearcoatRoughness: 0.18,
-    });
+    // En móvil usamos MeshStandardMaterial (un solo lóbulo especular, 3× más liviano en GPU móvil)
+    // y BoxGeometry (12 triángulos vs 384 por sub-cubo = 32× menos vértices).
+    const darkMat = isMobile
+      ? new THREE.MeshStandardMaterial({
+          color: 0x141416,
+          metalness: 0.78,
+          roughness: 0.26,
+        })
+      : new THREE.MeshPhysicalMaterial({
+          color: 0x121212,
+          metalness: 0.92,
+          roughness: 0.22,
+          clearcoat: 0.85,
+          clearcoatRoughness: 0.18,
+        });
 
-    const orangeMat = new THREE.MeshPhysicalMaterial({
-      color: 0xff5a00,
-      metalness: 0.35,
-      roughness: 0.3,
-      clearcoat: 1.0,
-      clearcoatRoughness: 0.14,
-      emissive: 0xff5a00,
-      emissiveIntensity: 0.24,
-    });
+    const orangeMat = isMobile
+      ? new THREE.MeshStandardMaterial({
+          color: 0xff5a00,
+          metalness: 0.3,
+          roughness: 0.28,
+          emissive: 0xff5a00,
+          emissiveIntensity: 0.28,
+        })
+      : new THREE.MeshPhysicalMaterial({
+          color: 0xff5a00,
+          metalness: 0.35,
+          roughness: 0.3,
+          clearcoat: 1.0,
+          clearcoatRoughness: 0.14,
+          emissive: 0xff5a00,
+          emissiveIntensity: 0.24,
+        });
 
-    // Geometría compartida para cada sub-cubo del Rubik de 6 cubos por lado (GRID = 6)
+    // Geometría para cada sub-cubo del Rubik de 6 cubos por lado (GRID = 6)
     const GRID = 6;
     const half = (GRID - 1) / 2;
     const subSize = 0.145;
     const gap = 0.018;
     const step = subSize + gap;
-    const subGeo = new RoundedBoxGeometry(subSize, subSize, subSize, 2, 0.12 * subSize);
+    let subGeo: InstanceType<typeof THREE.BoxGeometry>;
+    if (isMobile) {
+      subGeo = new THREE.BoxGeometry(subSize, subSize, subSize);
+    } else {
+      const { RoundedBoxGeometry } = await import('three/examples/jsm/geometries/RoundedBoxGeometry.js');
+      subGeo = new RoundedBoxGeometry(subSize, subSize, subSize, 1, 0.12 * subSize);
+    }
 
     type RubikRainItem = {
       cluster: InstanceType<typeof THREE.Group>;
@@ -271,6 +299,8 @@ const { seed = 101, class: className = '' } = Astro.props;
       const newW = rect.width || 360;
       const newH = rect.height || 450;
 
+      // En móvil ignoramos variaciones pequeñas o solo verticales por la barra de direcciones del navegador
+      if (isMobile && width > 0 && Math.abs(newW - width) < 2) return;
       if (Math.abs(newW - width) < 1 && Math.abs(newH - height) < 1) return;
       width = newW;
       height = newH;
@@ -290,17 +320,19 @@ const { seed = 101, class: className = '' } = Astro.props;
     }
 
     updateLayout();
-    window.addEventListener('resize', updateLayout, { passive: true });
 
     let resizeObserver: ResizeObserver | null = null;
     if (typeof ResizeObserver !== 'undefined') {
       resizeObserver = new ResizeObserver(() => updateLayout());
       resizeObserver.observe(root);
+    } else {
+      window.addEventListener('resize', updateLayout, { passive: true });
     }
 
     let isVisible = false;
     let animId = 0;
     let lastTime = performance.now();
+    const minFrameMs = isMobile ? 33 : 0; // ~30fps en móvil para dejar ancho de banda libre al scroll
 
     function syncPositions(elapsed: number, dt: number) {
       const marginY = 1.6;
@@ -328,7 +360,13 @@ const { seed = 101, class: className = '' } = Astro.props;
     function animate(now: number) {
       if (!isVisible) return;
 
-      const dt = Math.min((now - lastTime) * 0.001, 0.05);
+      const deltaMs = now - lastTime;
+      if (minFrameMs > 0 && deltaMs < minFrameMs) {
+        animId = requestAnimationFrame(animate);
+        return;
+      }
+
+      const dt = Math.min(deltaMs * 0.001, 0.06);
       lastTime = now;
       const elapsed = now * 0.001;
 
@@ -377,8 +415,8 @@ const { seed = 101, class: className = '' } = Astro.props;
         subGeo.dispose();
         darkMat.dispose();
         orangeMat.dispose();
-        pmrem.dispose();
-        envRT.dispose();
+        if (pmrem) pmrem.dispose();
+        if (envRT) envRT.dispose();
         renderer.dispose();
       },
       { once: true }
